@@ -14,7 +14,7 @@ A free, self-hosted personal finance app for tracking investments, institutions,
 [![Angular](https://img.shields.io/badge/Angular-20-DD0031.svg)](https://angular.dev/)
 [![Data](https://img.shields.io/badge/data-100%25%20local-FBBF24.svg)](#-privacy)
 
-[Features](#-features) · [Quick Start](#-quick-start) · [Installation](#-installation) · [Backup & Restore](#-backup--restore) · [Documentation](#-documentation)
+[🌐 Visit the Website](https://lcarlini.github.io/WealthLedger/) · [Features](#-features) · [Quick Start](#-quick-start) · [Installation](#-installation) · [Backup & Restore](#-backup--restore) · [Documentation](#-documentation)
 
 </div>
 
