@@ -1,0 +1,42 @@
+.page-container {
+  padding: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  h1 { margin: 0; font-weight: 400; }
+}
+
+.loading-container { display: flex; justify-content: center; padding: 64px; }
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.full-width { width: 100%; }
+
+.row-fields {
+  display: flex;
+  gap: 16px;
+}
+
+.half-width { flex: 1; }
+
+.toggle-field {
+  margin: 8px 0 16px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}

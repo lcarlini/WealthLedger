@@ -1,0 +1,110 @@
+<div class="page-container">
+  <h1>Import OFX</h1>
+  <p class="subtitle">Upload card or checking account statements (OFX 1.x SGML / 2.x XML)</p>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Upload file</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="upload-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Source</mat-label>
+          <mat-select [ngModel]="source()" (ngModelChange)="source.set($event)">
+            <mat-option value="Checking">Checking account</mat-option>
+            <mat-option value="Card">Card</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <input type="file" accept=".ofx,.qfx,.xml" (change)="onFileSelected($event)" #fileInput hidden>
+        <button mat-stroked-button (click)="fileInput.click()">
+          <mat-icon>upload_file</mat-icon>
+          {{ selectedFile()?.name ?? 'Choose file' }}
+        </button>
+        <button mat-raised-button color="primary" (click)="upload()" [disabled]="!selectedFile() || uploading()">
+          @if (uploading()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            Import
+          }
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="list-card">
+    <mat-card-header>
+      <mat-card-title>Imports</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (loading()) {
+        <mat-spinner diameter="32"></mat-spinner>
+      } @else if (imports().length === 0) {
+        <p class="empty">No imports yet.</p>
+      } @else {
+        <div class="imports-list">
+          @for (imp of imports(); track imp.id) {
+            <mat-expansion-panel (expandedChange)="onPanelToggle(imp.id, $event)">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  {{ imp.fileName }}
+                </mat-panel-title>
+                <mat-panel-description class="panel-desc">
+                  <span>{{ sourceLabel(imp.source) }} &middot; {{ imp.transactionCount }} transactions &middot; {{ imp.createdDate | date:'short' }}</span>
+                  <button mat-icon-button (click)="deleteImport(imp, $event)" matTooltip="Delete import">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              @if (expandedImportId() === imp.id) {
+                <!-- Summary -->
+                @if (summary(); as s) {
+                  <div class="import-summary">
+                    <span class="positive">Credits: {{ s.credits | currency:'BRL':'symbol':'1.2-2' }}</span>
+                    <span class="negative">Debits: {{ s.debits | currency:'BRL':'symbol':'1.2-2' }}</span>
+                    <span [class.positive]="s.balance >= 0" [class.negative]="s.balance < 0">
+                      Balance: {{ s.balance | currency:'BRL':'symbol':'1.2-2' }}
+                    </span>
+                    <span class="count">{{ s.count }} transactions</span>
+                  </div>
+                }
+
+                @if (transactions().length > 0) {
+                  <table mat-table [dataSource]="transactions()" class="full-width">
+                    <ng-container matColumnDef="date">
+                      <th mat-header-cell *matHeaderCellDef>Date</th>
+                      <td mat-cell *matCellDef="let row">{{ row.date | date:'shortDate' }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="type">
+                      <th mat-header-cell *matHeaderCellDef>Type</th>
+                      <td mat-cell *matCellDef="let row">{{ row.transactionType }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="amount">
+                      <th mat-header-cell *matHeaderCellDef>Amount</th>
+                      <td mat-cell *matCellDef="let row" [class.negative]="row.amount < 0" [class.positive]="row.amount > 0">
+                        {{ row.amount | currency:'BRL':'symbol':'1.2-2' }}
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="description">
+                      <th mat-header-cell *matHeaderCellDef>Description</th>
+                      <td mat-cell *matCellDef="let row">
+                        {{ row.description }}
+                        @if (row.installmentNumber && row.installmentTotal) {
+                          <span class="installment-badge">{{ row.installmentNumber }}/{{ row.installmentTotal }}</span>
+                        }
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="['date', 'type', 'amount', 'description']"></tr>
+                    <tr mat-row *matRowDef="let row; columns: ['date', 'type', 'amount', 'description']"></tr>
+                  </table>
+                } @else {
+                  <p class="empty">No transactions in this import.</p>
+                }
+              }
+            </mat-expansion-panel>
+          }
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

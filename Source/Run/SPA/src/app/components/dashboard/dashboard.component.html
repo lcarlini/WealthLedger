@@ -1,0 +1,235 @@
+<div class="page-container">
+  <h1>Dashboard</h1>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (data(); as d) {
+    <div class="summary-cards">
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <mat-icon class="card-icon institutions">account_balance</mat-icon>
+          <div class="card-value">{{ d.institutionCount }}</div>
+          <div class="card-label">Institutions</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <mat-icon class="card-icon investments">savings</mat-icon>
+          <div class="card-value">{{ d.investmentCount }}</div>
+          <div class="card-label">Investments</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <mat-icon class="card-icon amount">attach_money</mat-icon>
+          <div class="card-value">{{ d.totalAmount | currency:'BRL':'symbol':'1.2-2' }}</div>
+          <div class="card-label">Total Amount</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <mat-icon class="card-icon debt">credit_card</mat-icon>
+          <div class="card-value">{{ d.plannedDebitsNext12Months | currency:'BRL':'symbol':'1.2-2' }}</div>
+          <div class="card-label">Planned Debits (next 12 months)</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <mat-icon class="card-icon month-debit">calendar_month</mat-icon>
+          <div class="card-value">{{ d.debitsNextMonth | currency:'BRL':'symbol':'1.2-2' }}</div>
+          <div class="card-label">Debits (next month)</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <mat-icon class="card-icon card-future">payments</mat-icon>
+          <div class="card-value">{{ d.futureCardDebits | currency:'BRL':'symbol':'1.2-2' }}</div>
+          <div class="card-label">Future Card Debits</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <mat-icon class="card-icon tasks">task_alt</mat-icon>
+          <div class="card-value">{{ d.pendingTaskCount }}</div>
+          <div class="card-label">Pending Tasks</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    @if (marketData(); as md) {
+      <div class="rates-cards">
+        <mat-card class="rate-card">
+          <mat-card-content>
+            <mat-icon class="rate-icon usd">attach_money</mat-icon>
+            <div class="rate-value">R$ {{ formatNum(md.usdBrl) }}</div>
+            <div class="rate-label">USD/BRL</div>
+            @if (md.fxFromCache) { <span class="cache-badge">cached</span> }
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="rate-card">
+          <mat-card-content>
+            <mat-icon class="rate-icon eur">euro</mat-icon>
+            <div class="rate-value">R$ {{ formatNum(md.eurBrl) }}</div>
+            <div class="rate-label">EUR/BRL</div>
+          </mat-card-content>
+        </mat-card>
+        @if (md.btcUsd != null) {
+          <mat-card class="rate-card">
+            <mat-card-content>
+              <mat-icon class="rate-icon btc">currency_bitcoin</mat-icon>
+              <div class="rate-value">$ {{ formatNum(md.btcUsd) }}</div>
+              <div class="rate-label">BTC/USD</div>
+            </mat-card-content>
+          </mat-card>
+        }
+        @if (md.fedFundsRate != null) {
+          <mat-card class="rate-card">
+            <mat-card-content>
+              <mat-icon class="rate-icon fed">flag</mat-icon>
+              <div class="rate-value">{{ formatNum(md.fedFundsRate) }}%</div>
+              <div class="rate-label">Fed Funds Rate</div>
+            </mat-card-content>
+          </mat-card>
+        }
+        @if (md.selicPercentPerYear != null) {
+          <mat-card class="rate-card">
+            <mat-card-content>
+              <mat-icon class="rate-icon selic">trending_up</mat-icon>
+              <div class="rate-value">{{ formatNum(md.selicPercentPerYear) }}%</div>
+              <div class="rate-label">Selic (a.a.)</div>
+              @if (md.indicesFromCache) { <span class="cache-badge">cached</span> }
+            </mat-card-content>
+          </mat-card>
+        }
+        @if (md.ipcaPercentPerYear != null) {
+          <mat-card class="rate-card">
+            <mat-card-content>
+              <mat-icon class="rate-icon ipca">show_chart</mat-icon>
+              <div class="rate-value">{{ formatNum(md.ipcaPercentPerYear) }}%</div>
+              <div class="rate-label">IPCA (a.a.)</div>
+            </mat-card-content>
+          </mat-card>
+        }
+        @if (md.poupancaPercentPerYear != null) {
+          <mat-card class="rate-card">
+            <mat-card-content>
+              <mat-icon class="rate-icon poupanca">account_balance</mat-icon>
+              <div class="rate-value">{{ formatNum(md.poupancaPercentPerYear) }}%</div>
+              <div class="rate-label">Poupanca (a.a.)</div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    }
+
+    @if (investmentGainRows().length > 0) {
+      <mat-card class="gain-table-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="gain-header-icon">trending_up</mat-icon>
+            Monthly Investment Gains (12 months)
+          </mat-card-title>
+          <mat-card-subtitle>Projected monthly gain for each investment, separated by item</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="table-scroll">
+            <table class="gain-table">
+              <thead>
+                <tr>
+                  <th class="col-name">Investment</th>
+                  <th class="col-rate">Rate</th>
+                  @for (label of gainMonthLabels(); track label) {
+                    <th class="col-month">{{ label }}</th>
+                  }
+                  <th class="col-total">Total 12m</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of investmentGainRows(); track row.name) {
+                  <tr>
+                    <td class="col-name">
+                      <div class="inv-name">{{ row.name }}</div>
+                      @if (row.institution) {
+                        <div class="inv-inst">{{ row.institution }}</div>
+                      }
+                    </td>
+                    <td class="col-rate">{{ formatNum(row.annualRate) }}%</td>
+                    @for (g of row.monthlyGains; track $index) {
+                      <td class="col-month gain-cell">+{{ formatNum(g) }}</td>
+                    }
+                    <td class="col-total gain-cell"><strong>+{{ formatNum(row.totalGain) }}</strong></td>
+                  </tr>
+                }
+                <tr class="total-row">
+                  <td class="col-name"><strong>Total</strong></td>
+                  <td class="col-rate"></td>
+                  @for (t of gainTotalsPerMonth(); track $index) {
+                    <td class="col-month gain-cell"><strong>+{{ formatNum(t) }}</strong></td>
+                  }
+                  <td class="col-total gain-cell">
+                    <strong>+{{ formatNum(totalGainAll()) }}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    @if (d.investmentsByType.length > 0) {
+      <div class="charts-grid">
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Investments by Type</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-container">
+            <canvas baseChart type="doughnut" [data]="chartData()" [options]="chartOptions"></canvas>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Patrimony Growth (12m)</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-container">
+            <canvas baseChart type="line" [data]="patrimonyChartData()" [options]="lineChartOptions"></canvas>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Monthly Debt / Expenses</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-container">
+            <canvas baseChart type="bar" [data]="debtChartData()" [options]="barChartOptions"></canvas>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Income vs Expenses</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-container">
+            <canvas baseChart type="bar" [data]="incomeExpenseChartData()" [options]="barChartOptions"></canvas>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    } @else {
+      <mat-card class="empty-card">
+        <mat-card-content>
+          <mat-icon>info_outline</mat-icon>
+          <p>No investments yet. Create your first investment to see charts here.</p>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+</div>

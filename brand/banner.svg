@@ -1,0 +1,52 @@
+<svg width="1280" height="360" viewBox="0 0 1280 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="WealthLedger banner">
+  <defs>
+    <linearGradient id="bn-bg" x1="0" y1="0" x2="1280" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#052E27"/>
+      <stop offset="0.55" stop-color="#065F52"/>
+      <stop offset="1" stop-color="#0E7C71"/>
+    </linearGradient>
+    <linearGradient id="bn-icon" x1="980" y1="70" x2="1150" y2="240" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0EA5A4"/>
+      <stop offset="1" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="bn-bar" x1="0" y1="1" x2="1" y2="0" gradientUnits="objectBoundingBox">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#CFFAE7"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="360" fill="url(#bn-bg)"/>
+
+  <!-- subtle grid -->
+  <g stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="1">
+    <path d="M0 90 H1280 M0 180 H1280 M0 270 H1280"/>
+    <path d="M160 0 V360 M320 0 V360 M480 0 V360 M640 0 V360 M800 0 V360"/>
+  </g>
+
+  <!-- decorative trend line -->
+  <path d="M80 250 L220 210 L360 230 L500 150 L640 175 L780 110" stroke="#FBBF24" stroke-opacity="0.28" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- icon -->
+  <g transform="translate(980,84)">
+    <rect width="192" height="192" rx="48" fill="url(#bn-icon)"/>
+    <rect x="40" y="104" width="26" height="52" rx="8" fill="url(#bn-bar)" fill-opacity="0.92"/>
+    <rect x="83" y="80" width="26" height="76" rx="8" fill="url(#bn-bar)" fill-opacity="0.96"/>
+    <rect x="126" y="56" width="26" height="100" rx="8" fill="url(#bn-bar)"/>
+    <path d="M50 92 L96 68 L139 44" stroke="#FBBF24" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="139" cy="44" r="9" fill="#FBBF24"/>
+    <rect x="40" y="166" width="112" height="7" rx="3.5" fill="#FFFFFF" fill-opacity="0.5"/>
+  </g>
+
+  <text x="80" y="150" font-family="'DM Sans','Segoe UI',Roboto,Helvetica,Arial,sans-serif" font-size="72" font-weight="700" letter-spacing="-2">
+    <tspan fill="#FFFFFF">Wealth</tspan><tspan fill="#5EEAD4">Ledger</tspan>
+  </text>
+  <text x="82" y="200" font-family="'DM Sans','Segoe UI',Roboto,Helvetica,Arial,sans-serif" font-size="26" font-weight="500" fill="#A7F3D0">Your personal finances, clearly tracked.</text>
+  <g font-family="'DM Sans','Segoe UI',Roboto,Helvetica,Arial,sans-serif" font-size="17" font-weight="600" fill="#052E27">
+    <rect x="82" y="232" width="150" height="40" rx="20" fill="#5EEAD4"/>
+    <text x="157" y="257" text-anchor="middle">Free to use</text>
+    <rect x="246" y="232" width="176" height="40" rx="20" fill="#FBBF24"/>
+    <text x="334" y="257" text-anchor="middle">100% local &amp; private</text>
+    <rect x="436" y="232" width="150" height="40" rx="20" fill="#FFFFFF" fill-opacity="0.14"/>
+    <text x="511" y="257" text-anchor="middle" fill="#FFFFFF">Self-hosted</text>
+  </g>
+</svg>

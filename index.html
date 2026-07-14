@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WealthLedger — Personal finance, clearly tracked</title>
+  <meta name="description" content="WealthLedger is a free, self-hosted personal finance app for tracking investments, cash flow, and bank statements. Your data stays 100% on your own machine." />
+  <meta name="theme-color" content="#047857" />
+  <link rel="icon" type="image/svg+xml" href="brand/favicon.svg" />
+  <meta property="og:title" content="WealthLedger — Personal finance, clearly tracked" />
+  <meta property="og:description" content="Free, self-hosted, private-by-default personal finance app." />
+  <meta property="og:image" content="brand/banner.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --emerald: #047857;
+      --emerald-2: #0ea5a4;
+      --teal-deep: #052e27;
+      --gold: #fbbf24;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --radius: 18px;
+      --shadow: 0 10px 30px -12px rgba(2, 44, 34, 0.25);
+      --maxw: 1120px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--emerald); text-decoration: none; }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+    .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.78rem; font-weight: 600; color: var(--emerald-2); }
+
+    /* Nav */
+    header.nav {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: saturate(180%) blur(12px);
+      background: rgba(248, 250, 252, 0.82);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em; }
+    .brand img { width: 36px; height: 36px; border-radius: 9px; }
+    .brand .lo { color: var(--emerald); } .brand .hi { color: var(--ink); }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a { color: var(--ink); font-weight: 500; font-size: 0.95rem; }
+    .nav-links a:hover { color: var(--emerald); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 20px; border-radius: 999px; font-weight: 600; font-size: 0.95rem;
+      border: 1px solid transparent; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--emerald-2), var(--emerald)); color: #fff; box-shadow: var(--shadow); }
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+    .btn-ghost:hover { border-color: var(--emerald); color: var(--emerald); }
+    @media (max-width: 760px) { .nav-links a:not(.btn) { display: none; } }
+
+    /* Hero */
+    .hero { position: relative; overflow: hidden; background: radial-gradient(1200px 500px at 80% -10%, rgba(14,165,164,0.12), transparent 60%); }
+    .hero-inner { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; padding: 84px 0 72px; }
+    .hero h1 { font-size: clamp(2.3rem, 5vw, 3.4rem); line-height: 1.06; letter-spacing: -0.03em; margin: 18px 0 18px; }
+    .hero h1 .grad { background: linear-gradient(120deg, var(--emerald-2), var(--emerald)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero p.lead { font-size: 1.18rem; color: var(--muted); max-width: 560px; margin: 0 0 28px; }
+    .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; }
+    .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
+    .chip { font-size: 0.82rem; font-weight: 600; padding: 6px 13px; border-radius: 999px; background: #fff; border: 1px solid var(--line); color: #334155; display: inline-flex; align-items: center; gap: 7px; }
+    .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+    @media (max-width: 900px) { .hero-inner { grid-template-columns: 1fr; text-align: left; } }
+
+    /* App mockup */
+    .mock {
+      background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden;
+    }
+    .mock-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: linear-gradient(135deg, var(--emerald), var(--teal-deep)); }
+    .mock-bar .d { width: 11px; height: 11px; border-radius: 50%; background: rgba(255,255,255,0.5); }
+    .mock-bar .t { margin-left: 10px; color: #d1fae5; font-size: 0.82rem; font-weight: 600; }
+    .mock-body { padding: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .stat { border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+    .stat .k { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat .v { font-size: 1.28rem; font-weight: 700; margin-top: 4px; }
+    .stat .up { color: var(--emerald); font-size: 0.8rem; font-weight: 600; }
+    .mock-chart { grid-column: 1 / -1; border: 1px solid var(--line); border-radius: 14px; padding: 16px 16px 8px; }
+    .bars { display: flex; align-items: flex-end; gap: 12px; height: 120px; }
+    .bars span { flex: 1; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, var(--emerald-2), var(--emerald)); opacity: 0.9; }
+    @media (max-width: 520px) { .mock-body { grid-template-columns: repeat(2, 1fr); } }
+
+    /* Sections */
+    section { padding: 76px 0; }
+    .section-head { text-align: center; max-width: 680px; margin: 0 auto 48px; }
+    .section-head h2 { font-size: clamp(1.7rem, 3.5vw, 2.3rem); letter-spacing: -0.02em; margin: 10px 0 12px; }
+    .section-head p { color: var(--muted); font-size: 1.08rem; margin: 0; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .feature { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; transition: transform .18s ease, box-shadow .18s ease; }
+    .feature:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .feature .ic { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font-size: 1.4rem; background: linear-gradient(135deg, rgba(14,165,164,0.16), rgba(4,120,87,0.12)); margin-bottom: 14px; }
+    .feature h3 { margin: 0 0 8px; font-size: 1.16rem; letter-spacing: -0.01em; }
+    .feature p { margin: 0; color: var(--muted); font-size: 0.98rem; }
+
+    .band { background: linear-gradient(135deg, var(--teal-deep), var(--emerald)); color: #fff; border-radius: 28px; padding: 46px; }
+    .band .grid { grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 900px) { .band .grid { grid-template-columns: repeat(2, 1fr); } }
+    .band .num { font-size: 2rem; font-weight: 700; }
+    .band .lbl { color: #a7f3d0; font-size: 0.95rem; }
+
+    /* Steps */
+    .steps { counter-reset: step; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    @media (max-width: 900px) { .steps { grid-template-columns: 1fr; } }
+    .step { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; position: relative; }
+    .step::before { counter-increment: step; content: counter(step); position: absolute; top: -16px; left: 24px; width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--emerald-2), var(--emerald)); color: #fff; font-weight: 700; display: grid; place-items: center; box-shadow: var(--shadow); }
+    .step h3 { margin: 12px 0 8px; font-size: 1.08rem; }
+    .step p { margin: 0 0 12px; color: var(--muted); font-size: 0.96rem; }
+    pre { background: #0b1220; color: #e2e8f0; border-radius: 12px; padding: 14px 16px; overflow-x: auto; font-size: 0.86rem; margin: 0; }
+    code { font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace; }
+    pre code { color: inherit; }
+    .inline-code { background: #eef2f7; border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; font-size: 0.88em; color: #0f766e; }
+
+    /* CTA */
+    .cta { text-align: center; }
+    .cta .box { background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 56px 32px; box-shadow: var(--shadow); }
+    .cta h2 { font-size: clamp(1.7rem, 4vw, 2.4rem); margin: 0 0 12px; letter-spacing: -0.02em; }
+    .cta p { color: var(--muted); font-size: 1.1rem; margin: 0 0 26px; }
+
+    footer { border-top: 1px solid var(--line); padding: 40px 0; color: var(--muted); font-size: 0.92rem; }
+    .foot-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .license-note { font-size: 0.86rem; color: var(--muted); max-width: 620px; }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <div class="brand">
+        <img src="brand/logo.svg" alt="WealthLedger logo" />
+        <span><span class="lo">Wealth</span><span class="hi">Ledger</span></span>
+      </div>
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#start">Get started</a>
+        <a href="README.md">Docs</a>
+        <a class="btn btn-primary" href="#start">Download free</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <div>
+        <span class="eyebrow">Free · Self-hosted · Private</span>
+        <h1>Your personal finances,<br /><span class="grad">clearly tracked.</span></h1>
+        <p class="lead">
+          WealthLedger is a free, self-hosted app for tracking investments, cash flow, and
+          bank statements — with live market data and optional in-browser AI insights.
+          Your data never leaves your machine.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#start">Get started — it's free</a>
+          <a class="btn btn-ghost" href="#features">Explore features</a>
+        </div>
+        <div class="badges">
+          <span class="chip"><span class="dot" style="background:#047857"></span> 100% local data</span>
+          <span class="chip"><span class="dot" style="background:#0ea5a4"></span> No account needed</span>
+          <span class="chip"><span class="dot" style="background:#fbbf24"></span> No cloud, no tracking</span>
+        </div>
+      </div>
+
+      <div class="mock" aria-hidden="true">
+        <div class="mock-bar">
+          <span class="d"></span><span class="d"></span><span class="d"></span>
+          <span class="t">WealthLedger · Dashboard</span>
+        </div>
+        <div class="mock-body">
+          <div class="stat"><div class="k">Net worth</div><div class="v">$282,220</div><div class="up">▲ 8.4% YTD</div></div>
+          <div class="stat"><div class="k">Investments</div><div class="v">14</div><div class="up">across 6 institutions</div></div>
+          <div class="stat"><div class="k">Pending tasks</div><div class="v">3</div><div class="up">2 maturities</div></div>
+          <div class="mock-chart">
+            <div class="k" style="font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Patrimony growth</div>
+            <div class="bars">
+              <span style="height:38%"></span><span style="height:52%"></span><span style="height:47%"></span>
+              <span style="height:64%"></span><span style="height:71%"></span><span style="height:60%"></span>
+              <span style="height:82%"></span><span style="height:94%"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Everything in one place</span>
+        <h2>A complete view of your money</h2>
+        <p>From day-to-day cash flow to long-term investments — track, plan, and understand your finances without spreadsheets.</p>
+      </div>
+      <div class="grid">
+        <div class="feature"><div class="ic">📊</div><h3>Dashboard</h3><p>Total net worth across currencies, live market widgets, and charts for investments, patrimony, and cash flow.</p></div>
+        <div class="feature"><div class="ic">🏦</div><h3>Institutions & investments</h3><p>Track accounts across banks with multi-currency support, fixed or index-linked rates, and maturity reminders.</p></div>
+        <div class="feature"><div class="ic">📅</div><h3>Cash flow control</h3><p>Multi-month simulations with income, expenses, debts, and card installments — see your runway at a glance.</p></div>
+        <div class="feature"><div class="ic">📥</div><h3>Import OFX statements</h3><p>Upload bank and credit-card statements with automatic transaction categorization and browsing.</p></div>
+        <div class="feature"><div class="ic">🤖</div><h3>Browser-local AI insights</h3><p>Optional AI summaries powered by WebLLM + WebGPU — running entirely in your browser, never in the cloud.</p></div>
+        <div class="feature"><div class="ic">🧮</div><h3>Calculators</h3><p>Yield, gain/loss, loan schedules, emergency-fund planning, and savings-vs-fixed-rate comparisons.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy band -->
+  <section id="privacy">
+    <div class="wrap">
+      <div class="band">
+        <div class="section-head" style="margin-bottom:32px;">
+          <h2 style="color:#fff;">Private by default</h2>
+          <p style="color:#a7f3d0;">No sign-ups. No servers you don't control. No data harvesting.</p>
+        </div>
+        <div class="grid">
+          <div><div class="num">100%</div><div class="lbl">Data stays on your machine</div></div>
+          <div><div class="num">$0</div><div class="lbl">Free for personal use</div></div>
+          <div><div class="num">0</div><div class="lbl">Cloud LLM calls — AI runs in-browser</div></div>
+          <div><div class="num">1</div><div class="lbl">Local SQLite file you can back up</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Get started -->
+  <section id="start">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Up and running in minutes</span>
+        <h2>Get started</h2>
+        <p>Requires the <a href="https://dotnet.microsoft.com/download">.NET 10 SDK</a> and <a href="https://nodejs.org/">Node.js 20+</a>.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <h3>Clone & install</h3>
+          <p>Grab the code and install the frontend dependencies.</p>
+          <pre><code>git clone &lt;your-fork-url&gt; WealthLedger
+cd WealthLedger/Source/Run/SPA
+npm ci</code></pre>
+        </div>
+        <div class="step">
+          <h3>Run the API</h3>
+          <p>Starts the backend on port 5000. The database is created automatically.</p>
+          <pre><code>cd Source/Run/WebApp
+dotnet run</code></pre>
+        </div>
+        <div class="step">
+          <h3>Run the app</h3>
+          <p>Launch the UI on port 4200, then open your browser.</p>
+          <pre><code>cd Source/Run/SPA
+npm start</code></pre>
+        </div>
+      </div>
+      <p style="text-align:center;margin-top:28px;color:var(--muted);">
+        Open <span class="inline-code">http://localhost:4200</span> — or see the
+        <a href="README.md">full installation, deployment &amp; backup guide</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="wrap">
+      <div class="box">
+        <h2>Take control of your finances — for free</h2>
+        <p>Download WealthLedger, run it locally, and keep your financial data truly yours.</p>
+        <div class="hero-cta" style="justify-content:center;">
+          <a class="btn btn-primary" href="README.md">Read the docs</a>
+          <a class="btn btn-ghost" href="docs/BACKUP_AND_RESTORE.md">Backup &amp; restore guide</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap foot-inner">
+      <div class="brand">
+        <img src="brand/logo.svg" alt="WealthLedger logo" style="width:28px;height:28px;border-radius:7px;" />
+        <span style="font-size:1rem;"><span class="lo">Wealth</span><span class="hi">Ledger</span></span>
+      </div>
+      <p class="license-note">
+        Free for <strong>personal use only</strong>. You may run, self-host, and modify it for yourself,
+        but you may not sell or commercially redistribute it. Provided "as is", without warranty.
+        See the <a href="LICENSE">license</a>.
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,91 @@
+.page-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  h1 { 
+    font-weight: 400; 
+    margin-bottom: 24px;
+    background-color: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+}
+
+.loading-container { display: flex; justify-content: center; padding: 32px; }
+.full-width { width: 100%; }
+.status-column { width: 48px; }
+.actions-column { width: 120px; text-align: center; }
+.no-data-row td { text-align: center; padding: 32px; color: #757575; }
+
+.overdue-icon { color: #d32f2f; }
+.current-icon { color: #1976d2; }
+.upcoming-icon { color: #757575; }
+.overdue-text { color: #d32f2f; font-weight: 500; }
+
+.due-soon { color: #ffb300; font-weight: 600; }
+
+// Tab badge
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: #1976d2;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 8px;
+  padding: 0 6px;
+}
+
+// Future tab
+.future-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+
+  &.maturity { color: #f57c00; }
+  &.monthlymovement { color: #1976d2; }
+}
+
+.future-title {
+  font-weight: 500;
+}
+
+.future-desc {
+  font-size: 12px;
+  color: #757575;
+  margin-top: 2px;
+}
+
+.type-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &.chip-maturity {
+    background: #fff3e0;
+    color: #e65100;
+  }
+
+  &.chip-monthlymovement {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+}
+
+// Table styling
+mat-header-cell {
+  background: var(--mat-sys-surface-container-high) !important;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}

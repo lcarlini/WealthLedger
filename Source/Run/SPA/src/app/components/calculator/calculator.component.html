@@ -1,0 +1,316 @@
+<div class="page-container">
+  <h1>Calculator</h1>
+  <p class="subtitle">Yield, comparison, gain/loss, loan simulator, emergency fund, patrimony projection</p>
+
+  <mat-tab-group>
+    <mat-tab label="Yield">
+      <mat-card class="calc-card">
+        <mat-card-header>
+          <mat-card-title>How much will X yield?</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Initial amount (R$)</mat-label>
+              <input matInput type="number" [(ngModel)]="yieldForm.initialAmount" (ngModelChange)="calcYield()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Rate (% a.a.)</mat-label>
+              <input matInput type="number" [(ngModel)]="yieldForm.ratePerYear" (ngModelChange)="calcYield()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Months</mat-label>
+              <input matInput type="number" [(ngModel)]="yieldForm.months" (ngModelChange)="calcYield()">
+            </mat-form-field>
+          </div>
+          <div class="toggles">
+            <mat-slide-toggle [(ngModel)]="yieldForm.deductIr" (ngModelChange)="calcYield()">Deduct IR</mat-slide-toggle>
+            @if (yieldForm.deductIr) {
+              <mat-form-field appearance="outline" class="inline-field">
+                <mat-label>IR %</mat-label>
+                <input matInput type="number" [(ngModel)]="yieldForm.irRate" (ngModelChange)="calcYield()">
+              </mat-form-field>
+            }
+            <mat-slide-toggle [(ngModel)]="yieldForm.deductInflation" (ngModelChange)="calcYield()">Deduct inflation</mat-slide-toggle>
+            @if (yieldForm.deductInflation) {
+              <mat-form-field appearance="outline" class="inline-field">
+                <mat-label>Inflation % a.a.</mat-label>
+                <input matInput type="number" [(ngModel)]="yieldForm.inflationPerYear" (ngModelChange)="calcYield()">
+              </mat-form-field>
+            }
+          </div>
+          @if (yieldResult(); as r) {
+            <div class="result-box">
+              <div class="result-line"><strong>Gross:</strong> {{ r.gross | currency:'BRL':'symbol':'1.2-2' }}</div>
+              @if (yieldForm.deductIr) {
+                <div class="result-line"><strong>After IR:</strong> {{ r.net | currency:'BRL':'symbol':'1.2-2' }}</div>
+              }
+              @if (yieldForm.deductInflation) {
+                <div class="result-line"><strong>Real (after inflation):</strong> {{ r.netReal | currency:'BRL':'symbol':'1.2-2' }}</div>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="Gain/Loss">
+      <mat-card class="calc-card">
+        <mat-card-header>
+          <mat-card-title>Gain/Loss Breakdown</mat-card-title>
+          <mat-card-subtitle>See the month-by-month and yearly gain from an initial investment.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Initial amount (R$)</mat-label>
+              <input matInput type="number" [(ngModel)]="gainForm.initialAmount" (ngModelChange)="calcGain()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Rate (% a.a.)</mat-label>
+              <input matInput type="number" [(ngModel)]="gainForm.ratePerYear" (ngModelChange)="calcGain()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Months</mat-label>
+              <input matInput type="number" [(ngModel)]="gainForm.months" (ngModelChange)="calcGain()">
+            </mat-form-field>
+          </div>
+
+          @if (gainRows().length > 0) {
+            <h3 class="section-title">Yearly Summary</h3>
+            <div class="result-box">
+              <div class="result-line"><strong>Initial:</strong> {{ gainForm.initialAmount | currency:'BRL':'symbol':'1.2-2' }}</div>
+              <div class="result-line"><strong>Final:</strong> {{ gainRows()[gainRows().length - 1].value | currency:'BRL':'symbol':'1.2-2' }}</div>
+              <div class="result-line"><strong>Total Gain:</strong> {{ gainRows()[gainRows().length - 1].cumulativeGain | currency:'BRL':'symbol':'1.2-2' }}</div>
+            </div>
+
+            <table class="proj-table">
+              <thead>
+                <tr><th>Year</th><th>Value at End</th><th>Year Gain</th></tr>
+              </thead>
+              <tbody>
+                @for (y of gainYearlySummary(); track y.year) {
+                  <tr>
+                    <td>{{ y.year }}</td>
+                    <td>{{ y.valueAtEnd | currency:'BRL':'symbol':'1.2-2' }}</td>
+                    <td class="gain-value">+{{ y.yearGain | currency:'BRL':'symbol':'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            <h3 class="section-title">Monthly Detail</h3>
+            <div class="table-scroll">
+              <table class="proj-table">
+                <thead>
+                  <tr><th>Month</th><th>Value</th><th>Gain</th><th>Cumulative Gain</th></tr>
+                </thead>
+                <tbody>
+                  @for (r of gainRows(); track r.month) {
+                    <tr>
+                      <td>{{ r.month }}</td>
+                      <td>{{ r.value | currency:'BRL':'symbol':'1.2-2' }}</td>
+                      <td class="gain-value">+{{ r.gain | currency:'BRL':'symbol':'1.2-2' }}</td>
+                      <td class="gain-value">+{{ r.cumulativeGain | currency:'BRL':'symbol':'1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="Loan (Price)">
+      <mat-card class="calc-card">
+        <mat-card-header>
+          <mat-card-title>Loan Simulator (Tabela Price)</mat-card-title>
+          <mat-card-subtitle>Calculate monthly payment and see the amortization schedule.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Loan amount (R$)</mat-label>
+              <input matInput type="number" [(ngModel)]="loanForm.principal" (ngModelChange)="calcLoan()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Rate (% a.a.)</mat-label>
+              <input matInput type="number" [(ngModel)]="loanForm.ratePerYear" (ngModelChange)="calcLoan()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Term (months)</mat-label>
+              <input matInput type="number" [(ngModel)]="loanForm.termMonths" (ngModelChange)="calcLoan()">
+            </mat-form-field>
+          </div>
+          @if (loanResult(); as r) {
+            <div class="result-box three-cols">
+              <div class="result-item">
+                <div class="result-label">Monthly Payment</div>
+                <div class="result-value">{{ r.monthlyPayment | currency:'BRL':'symbol':'1.2-2' }}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">Total Paid</div>
+                <div class="result-value">{{ r.totalPaid | currency:'BRL':'symbol':'1.2-2' }}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">Total Interest</div>
+                <div class="result-value negative">{{ r.totalInterest | currency:'BRL':'symbol':'1.2-2' }}</div>
+              </div>
+            </div>
+
+            <h3 class="section-title">Amortization Schedule</h3>
+            <div class="table-scroll">
+              <table class="proj-table">
+                <thead>
+                  <tr><th>Month</th><th>Payment</th><th>Interest</th><th>Amortization</th><th>Balance</th></tr>
+                </thead>
+                <tbody>
+                  @for (r of loanRows(); track r.month) {
+                    <tr>
+                      <td>{{ r.month }}</td>
+                      <td>{{ r.payment | currency:'BRL':'symbol':'1.2-2' }}</td>
+                      <td class="negative">{{ r.interest | currency:'BRL':'symbol':'1.2-2' }}</td>
+                      <td>{{ r.amortization | currency:'BRL':'symbol':'1.2-2' }}</td>
+                      <td>{{ r.balance | currency:'BRL':'symbol':'1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="Emergency Fund">
+      <mat-card class="calc-card">
+        <mat-card-header>
+          <mat-card-title>Emergency Fund Calculator</mat-card-title>
+          <mat-card-subtitle>Calculate how much you need and how many months your investments cover.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Monthly expenses (R$)</mat-label>
+              <input matInput type="number" [(ngModel)]="emergencyForm.monthlyExpenses" (ngModelChange)="calcEmergency()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Target months</mat-label>
+              <input matInput type="number" [(ngModel)]="emergencyForm.targetMonths" (ngModelChange)="calcEmergency()">
+            </mat-form-field>
+          </div>
+          @if (emergencyResult(); as r) {
+            <div class="result-box">
+              <div class="result-line"><strong>Target amount:</strong> {{ r.targetAmount | currency:'BRL':'symbol':'1.2-2' }}</div>
+              <div class="result-line"><strong>Current investments:</strong> {{ r.currentInvestments | currency:'BRL':'symbol':'1.2-2' }}</div>
+              <div class="result-line"><strong>Months covered:</strong> {{ r.monthsCovered | number:'1.1-1' }} months</div>
+              @if (r.gap > 0) {
+                <div class="result-line negative"><strong>Gap to target:</strong> {{ r.gap | currency:'BRL':'symbol':'1.2-2' }}</div>
+              } @else {
+                <div class="result-line gain-value"><strong>You're covered!</strong> Surplus: {{ -r.gap | currency:'BRL':'symbol':'1.2-2' }}</div>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="Poupanca vs CDI vs Fixed">
+      <mat-card class="calc-card">
+        <mat-card-header>
+          <mat-card-title>Compare returns</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Amount (R$)</mat-label>
+              <input matInput type="number" [(ngModel)]="comparisonForm.amount" (ngModelChange)="calcComparison()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Months</mat-label>
+              <input matInput type="number" [(ngModel)]="comparisonForm.months" (ngModelChange)="calcComparison()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Poupanca % a.a.</mat-label>
+              <input matInput type="number" [(ngModel)]="comparisonForm.poupancaRate" (ngModelChange)="calcComparison()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>CDI % a.a.</mat-label>
+              <input matInput type="number" [(ngModel)]="comparisonForm.cdiRate" (ngModelChange)="calcComparison()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Fixed rate % a.a.</mat-label>
+              <input matInput type="number" [(ngModel)]="comparisonForm.fixedRate" (ngModelChange)="calcComparison()">
+            </mat-form-field>
+          </div>
+          @if (marketData(); as md) {
+            <p class="hint">Current market: Selic {{ md.selic | number:'1.2-2' }}% a.a., Poupanca ~{{ md.poupanca | number:'1.2-2' }}% a.a.</p>
+          }
+          @if (comparisonResult(); as r) {
+            <div class="result-box three-cols">
+              <div class="result-item">
+                <div class="result-label">Poupanca</div>
+                <div class="result-value">{{ r.poupanca | currency:'BRL':'symbol':'1.2-2' }}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">CDI</div>
+                <div class="result-value">{{ r.cdi | currency:'BRL':'symbol':'1.2-2' }}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">Fixed</div>
+                <div class="result-value">{{ r.fixed | currency:'BRL':'symbol':'1.2-2' }}</div>
+              </div>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="Patrimony projection">
+      <mat-card class="calc-card">
+        <mat-card-header>
+          <mat-card-title>Future patrimony</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Initial (R$)</mat-label>
+              <input matInput type="number" [(ngModel)]="patrimonyForm.initialAmount" (ngModelChange)="calcPatrimony()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Monthly contribution (R$)</mat-label>
+              <input matInput type="number" [(ngModel)]="patrimonyForm.monthlyContribution" (ngModelChange)="calcPatrimony()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Rate % a.a.</mat-label>
+              <input matInput type="number" [(ngModel)]="patrimonyForm.ratePerYear" (ngModelChange)="calcPatrimony()">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Years</mat-label>
+              <input matInput type="number" [(ngModel)]="patrimonyForm.years" (ngModelChange)="calcPatrimony()">
+            </mat-form-field>
+          </div>
+          <div class="chart-wrap">
+            <canvas baseChart type="line" [data]="patrimonyChartData()" [options]="patrimonyChartOptions"></canvas>
+          </div>
+          <div class="table-wrap">
+            <table class="proj-table">
+              <thead>
+                <tr><th>Year</th><th>Value</th></tr>
+              </thead>
+              <tbody>
+                @for (p of patrimonyProjection(); track p.year) {
+                  <tr>
+                    <td>{{ p.year }}</td>
+                    <td>{{ p.value | currency:'BRL':'symbol':'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+  </mat-tab-group>
+</div>

@@ -1,0 +1,60 @@
+.page-container {
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+
+  h1 { font-weight: 400; margin-bottom: 8px; }
+  .subtitle { color: #757575; margin-bottom: 24px; }
+}
+
+.upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+
+  mat-form-field { width: 180px; }
+}
+
+.list-card { margin-top: 24px; }
+.empty { color: #757575; padding: 24px; }
+.imports-list { display: flex; flex-direction: column; gap: 8px; }
+.full-width { width: 100%; }
+.negative { color: #c62828; }
+.positive { color: #2e7d32; }
+
+.panel-desc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.import-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 12px 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 8px;
+
+  .count {
+    color: #757575;
+    font-weight: 400;
+  }
+}
+
+.installment-badge {
+  display: inline-block;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 12px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 8px;
+  vertical-align: middle;
+}

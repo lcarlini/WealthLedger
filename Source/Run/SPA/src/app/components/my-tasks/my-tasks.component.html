@@ -1,0 +1,229 @@
+<div class="page-container">
+  <h1>My Tasks</h1>
+
+  <mat-tab-group>
+    <mat-tab label="Pending">
+      @if (loading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      }
+
+      <mat-card>
+        <mat-card-content>
+          <table mat-table [dataSource]="tasks()" class="full-width">
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef class="status-column"></th>
+              <td mat-cell *matCellDef="let row" class="status-column">
+                @if (isMonthlyMovement(row)) {
+                  @if (isOverdue(row)) {
+                    <mat-icon class="overdue-icon" matTooltip="Overdue">warning</mat-icon>
+                  } @else {
+                    <mat-icon class="current-icon" matTooltip="Due this month">repeat</mat-icon>
+                  }
+                } @else if (!isActionable(row)) {
+                  <mat-icon class="upcoming-icon" [matTooltip]="'Due on ' + formatDueMonth(row)">event</mat-icon>
+                } @else if (isOverdue(row)) {
+                  <mat-icon class="overdue-icon" matTooltip="Overdue">warning</mat-icon>
+                } @else {
+                  <mat-icon class="current-icon" matTooltip="Due now">schedule</mat-icon>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="title">
+              <th mat-header-cell *matHeaderCellDef>Task</th>
+              <td mat-cell *matCellDef="let row" [class.overdue-text]="isOverdue(row)">
+                {{ row.title }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="institutionName">
+              <th mat-header-cell *matHeaderCellDef>Institution</th>
+              <td mat-cell *matCellDef="let row">{{ row.institutionName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="dueMonth">
+              <th mat-header-cell *matHeaderCellDef>Due</th>
+              <td mat-cell *matCellDef="let row"
+                  [class.overdue-text]="isOverdue(row)"
+                  [class.due-soon]="!isOverdue(row) && isDueSoon(row)">
+                {{ formatDueMonth(row) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="requiredAmount">
+              <th mat-header-cell *matHeaderCellDef>Required Amount</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.requiredAmount != null ? (row.requiredAmount | currency:(row.currency || 'BRL'):'symbol':'1.2-2') : '---' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let row" class="actions-column">
+                <button mat-raised-button color="primary"
+                        (click)="markAsDone(row)"
+                        [disabled]="!isActionable(row)"
+                        [matTooltip]="isActionable(row) ? 'Mark as completed' : 'Available on ' + formatDueMonth(row)">
+                  <mat-icon>check</mat-icon>
+                  Done
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="pendingColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: pendingColumns;"></tr>
+
+            @if (!loading() && tasks().length === 0) {
+              <tr class="mat-row no-data-row">
+                <td class="mat-cell" [attr.colspan]="pendingColumns.length">
+                  No pending tasks. You're all caught up!
+                </td>
+              </tr>
+            }
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Future
+        @if (futureTasks().length > 0) {
+          <span class="tab-badge">{{ futureTasks().length }}</span>
+        }
+      </ng-template>
+
+      @if (loadingFuture()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      }
+
+      <mat-card>
+        <mat-card-header>
+          <mat-card-subtitle>
+            Upcoming events the system already knows about: investment maturities, monthly movements, etc.
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <table mat-table [dataSource]="futureTasks()" class="full-width">
+
+            <ng-container matColumnDef="icon">
+              <th mat-header-cell *matHeaderCellDef class="status-column"></th>
+              <td mat-cell *matCellDef="let row" class="status-column">
+                <mat-icon [class]="'future-icon ' + row.taskType.toLowerCase()" [matTooltip]="getTaskTypeLabel(row.taskType)">
+                  {{ getTaskTypeIcon(row.taskType) }}
+                </mat-icon>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="title">
+              <th mat-header-cell *matHeaderCellDef>Task</th>
+              <td mat-cell *matCellDef="let row">
+                <div class="future-title">{{ row.title }}</div>
+                @if (row.description) {
+                  <div class="future-desc">{{ row.description }}</div>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="institutionName">
+              <th mat-header-cell *matHeaderCellDef>Institution</th>
+              <td mat-cell *matCellDef="let row">{{ row.institutionName ?? '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="dueDate">
+              <th mat-header-cell *matHeaderCellDef>Due</th>
+              <td mat-cell *matCellDef="let row">{{ formatFutureDue(row) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.amount ? (row.amount | currency:(row.currency || 'BRL'):'symbol':'1.2-2') : '—' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="taskType">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="type-chip" [class]="'chip-' + row.taskType.toLowerCase()">
+                  {{ getTaskTypeLabel(row.taskType) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="futureColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: futureColumns;"></tr>
+
+            @if (!loadingFuture() && futureTasks().length === 0) {
+              <tr class="mat-row no-data-row">
+                <td class="mat-cell" [attr.colspan]="futureColumns.length">
+                  No upcoming future events. Add investments with maturity dates or monthly movement requirements.
+                </td>
+              </tr>
+            }
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="History">
+      @if (loadingCompleted()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      }
+
+      <mat-card>
+        <mat-card-content>
+          <table mat-table [dataSource]="completedTasks()" class="full-width">
+
+            <ng-container matColumnDef="title">
+              <th mat-header-cell *matHeaderCellDef>Task</th>
+              <td mat-cell *matCellDef="let row">{{ row.title }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="institutionName">
+              <th mat-header-cell *matHeaderCellDef>Institution</th>
+              <td mat-cell *matCellDef="let row">{{ row.institutionName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="dueMonth">
+              <th mat-header-cell *matHeaderCellDef>Was Due</th>
+              <td mat-cell *matCellDef="let row">{{ formatDueMonth(row) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="requiredAmount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.requiredAmount != null ? (row.requiredAmount | currency:(row.currency || 'BRL'):'symbol':'1.2-2') : '---' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="completedDate">
+              <th mat-header-cell *matHeaderCellDef>Completed</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.completedDate ? (row.completedDate | date:'dd/MM/yyyy') : '---' }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="completedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: completedColumns;"></tr>
+
+            @if (!loadingCompleted() && completedTasks().length === 0) {
+              <tr class="mat-row no-data-row">
+                <td class="mat-cell" [attr.colspan]="completedColumns.length">
+                  No completed tasks yet.
+                </td>
+              </tr>
+            }
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+  </mat-tab-group>
+</div>

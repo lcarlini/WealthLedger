@@ -1,0 +1,218 @@
+.page-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  h1 {
+    font-weight: 400;
+    margin-bottom: 24px;
+  }
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 64px;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card mat-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.card-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 12px;
+
+  &.institutions { color: #1976d2; }
+  &.investments { color: #388e3c; }
+  &.amount { color: #f57c00; }
+  &.debt { color: #d32f2f; }
+  &.month-debit { color: #6a1b9a; }
+  &.card-future { color: #ad1457; }
+  &.tasks { color: #7b1fa2; }
+}
+
+.card-value {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.card-label {
+  font-size: 14px;
+  color: var(--mat-sys-on-surface-variant);
+  margin-top: 4px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 24px 0 12px;
+  color: var(--mat-sys-on-surface);
+}
+
+.rates-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.rate-card mat-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  text-align: center;
+  position: relative;
+}
+
+.rate-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 8px;
+  &.usd { color: #2e7d32; }
+  &.eur { color: #1565c0; }
+  &.btc { color: #f57c00; }
+  &.fed { color: #0d47a1; }
+  &.selic { color: #7b1fa2; }
+  &.ipca { color: #c62828; }
+  &.poupanca { color: #00838f; }
+}
+
+.rate-value { font-size: 18px; font-weight: 500; }
+.rate-label { font-size: 12px; color: var(--mat-sys-on-surface-variant); margin-top: 4px; }
+.cache-badge { font-size: 10px; color: var(--mat-sys-outline); margin-top: 4px; }
+
+// Gain table
+.gain-table-card {
+  margin-bottom: 24px;
+}
+
+.gain-header-icon {
+  vertical-align: middle;
+  margin-right: 8px;
+  color: #2e7d32;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.gain-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  white-space: nowrap;
+
+  th, td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  th {
+    background: var(--mat-sys-surface-container-high);
+    font-weight: 500;
+    color: var(--mat-sys-on-surface);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .col-name {
+    min-width: 160px;
+    position: sticky;
+    left: 0;
+    background: var(--mat-sys-surface);
+    z-index: 2;
+  }
+
+  thead .col-name {
+    background: var(--mat-sys-surface-container-high);
+    z-index: 3;
+  }
+
+  .col-rate {
+    text-align: center;
+    min-width: 60px;
+  }
+
+  .col-month {
+    text-align: right;
+    min-width: 90px;
+  }
+
+  .col-total {
+    text-align: right;
+    min-width: 100px;
+    font-weight: 500;
+    background: var(--mat-sys-surface-container-high);
+  }
+
+  .gain-cell {
+    color: #2e7d32;
+  }
+
+  .inv-name {
+    font-weight: 500;
+  }
+
+  .inv-inst {
+    font-size: 11px;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .total-row {
+    background: var(--mat-sys-surface-container-low);
+    border-top: 2px solid var(--mat-sys-outline-variant);
+
+    td {
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .col-name {
+      background: var(--mat-sys-surface-container-low);
+    }
+  }
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  min-height: 300px;
+}
+
+.chart-container {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.empty-card mat-card-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--mat-sys-on-surface-variant);
+}

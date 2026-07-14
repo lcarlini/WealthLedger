@@ -1,0 +1,168 @@
+.page-container {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+
+  h1 { font-weight: 400; margin-bottom: 8px; }
+  .subtitle { color: #757575; margin-bottom: 24px; }
+}
+
+.loading-wrap { display: flex; justify-content: center; padding: 48px; }
+
+// AI Insights (WebLLM local)
+.ai-insights-card {
+  margin-bottom: 24px;
+
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      mat-icon { color: #7c4dff; }
+    }
+  }
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    button {
+      align-self: flex-start;
+      .btn-content {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+  }
+  .ai-init-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ai-init-status {
+    margin: 0;
+    font-size: 13px;
+    color: #757575;
+  }
+  .ai-insight-message {
+    margin: 0;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    &.ai-insight-error {
+      background: #ffebee;
+      color: #c62828;
+    }
+  }
+  .ai-insight-result {
+    margin-top: 8px;
+    padding: 16px;
+    background: var(--mat-sys-surface-container);
+    color: var(--mat-sys-on-surface);
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 8px;
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}
+
+.summary-card {
+  margin-bottom: 24px;
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    .summary-label { font-size: 14px; color: #757575; }
+    .summary-value { font-size: 28px; font-weight: 500; }
+  }
+}
+
+.projections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.projection-card {
+  &.below-inflation { border-left: 4px solid #f44336; }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    .name { font-weight: 500; font-size: 16px; }
+    .warn-icon { color: #f44336; font-size: 20px; width: 20px; height: 20px; }
+  }
+  .institution { font-size: 12px; color: #757575; margin-bottom: 8px; }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    margin: 4px 0;
+    .label { color: #616161; }
+    .value { font-weight: 500; }
+    &.highlight .value { font-size: 16px; }
+    .gain { color: #2e7d32; }
+  }
+  .hint {
+    margin-top: 12px;
+    padding: 8px;
+    background: #fff8e1;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #f57f17;
+  }
+}
+
+// Spending tabs
+.spending-tab {
+  padding-top: 16px;
+}
+
+.spending-actions {
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 24px 0 12px;
+}
+
+.chart-card {
+  margin-bottom: 24px;
+}
+
+.chart-container {
+  padding: 16px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.spending-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  th {
+    background: #f5f5f5;
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  tr:nth-child(even) td {
+    background: #fafafa;
+  }
+  .text-right { text-align: right; }
+  .total-cell { font-weight: 500; }
+}

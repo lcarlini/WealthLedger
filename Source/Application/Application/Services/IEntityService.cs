@@ -1,0 +1,15 @@
+using WealthLedger.Contracts.Api.Queries;
+using WealthLedger.Contracts.Domain.Interfaces;
+using WealthLedger.Contracts.Domain.Pagination;
+
+namespace WealthLedger.Application.Services;
+
+public interface IEntityService<T> where T : class, IEntity
+{
+    Task<IEnumerable<T>> GetAllAsync();
+    Task<PagedResponse<T>> GetPagedAsync(QueryOptions query);
+    Task<T?> GetAsync(Guid id);
+    Task<T> UpsertAsync(T entity);
+    Task DeleteAsync(Guid id);
+    Task<bool> CheckDuplicateAsync(string fieldName, string fieldValue, Guid? excludeEntityId = null);
+}

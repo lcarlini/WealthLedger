@@ -1,0 +1,220 @@
+.page-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  h1 {
+    font-weight: 400;
+    margin-bottom: 8px;
+    background-color: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .subtitle { color: #757575; margin-bottom: 24px; }
+}
+
+.period-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  mat-form-field { width: 120px; }
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.sim-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th, td {
+    padding: 8px 12px;
+    text-align: right;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  th {
+    background: var(--mat-sys-surface-container-high);
+    font-weight: 500;
+    color: var(--mat-sys-on-surface);
+  }
+  tr:nth-child(even) td { background: var(--mat-sys-surface); }
+  .col-name { text-align: left; min-width: 160px; }
+  .col-month { min-width: 72px; }
+  .col-actions { width: 48px; text-align: center; }
+  .negative { color: #c62828; }
+  .total-row td { border-top: 2px solid rgba(255,255,255,0.12); }
+  .acc-row td { font-weight: 500; }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.sim-table {
+  .income-row td.col-name { font-style: italic; }
+  .positive { color: #2e7d32; }
+}
+
+// ── Income tab ──
+
+.income-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  mat-form-field { width: 140px; }
+  mat-form-field.wide { width: 200px; }
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 24px 0 8px 0;
+}
+
+.section-subtitle {
+  color: #757575;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.income-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+
+  th, td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  th {
+    background: var(--mat-sys-surface-container-high);
+    font-weight: 500;
+    text-align: left;
+    color: var(--mat-sys-on-surface);
+  }
+  tr:nth-child(even) td { background: var(--mat-sys-surface); }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .negative { color: #c62828; }
+
+  .bday-cell {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .bday-input {
+    width: 48px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 4px 2px;
+    font-size: 13px;
+    background: #fff;
+    transition: border-color 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: #1976d2;
+    }
+
+    &.overridden {
+      border-color: #ff9800;
+      background: #fff8e1;
+      font-weight: 600;
+    }
+
+    /* Hide spin buttons */
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    -moz-appearance: textfield;
+  }
+
+  .reset-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    color: #ff9800;
+    display: flex;
+    align-items: center;
+
+    &:hover { color: #e65100; }
+  }
+
+  .reset-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.extra-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.extra-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+    background: var(--mat-sys-surface);
+    border-radius: 8px;
+
+    .extra-desc { flex: 1; font-weight: 500; }
+    .extra-period { color: #757575; font-size: 13px; }
+    .extra-amt { font-weight: 500; white-space: nowrap; }
+  }
+
+  .empty { color: #757575; padding: 24px; }
+
+  .proposed-actions {
+    margin-bottom: 16px;
+    padding-top: 8px;
+  }
+
+  .proposed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .proposed-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    background: var(--mat-sys-surface);
+    border-radius: 8px;
+
+    .desc { flex: 1; font-weight: 500; }
+    .installment-info {
+      font-size: 12px;
+      color: #9e9e9e;
+      white-space: nowrap;
+    }
+    .amt { color: #616161; white-space: nowrap; }
+  }

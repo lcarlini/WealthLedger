@@ -1,0 +1,6 @@
+@WealthLedger.WebApp_HostAddress = http://localhost:5029
+
+GET {{WealthLedger.WebApp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

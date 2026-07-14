@@ -1,0 +1,107 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Financial Institutions</h1>
+    <div class="header-actions">
+      <a mat-stroked-button [href]="exportCsvUrl" download="financial-institutions.csv" target="_blank" rel="noopener">
+        <mat-icon>download</mat-icon>
+        Export CSV
+      </a>
+      <a mat-stroked-button [href]="importCsvTemplateUrl" download="financial-institutions-template.csv" target="_blank" rel="noopener"
+         matTooltip="Download a header-only CSV to fill and re-import">
+        <mat-icon>description</mat-icon>
+        CSV template
+      </a>
+      <input type="file" #fiCsvInput accept=".csv,text/csv" hidden (change)="onCsvSelected($event)">
+      <button mat-stroked-button type="button" (click)="fiCsvInput.click()">
+        <mat-icon>upload</mat-icon>
+        Import CSV
+      </button>
+      <button mat-raised-button color="primary" (click)="navigateToCreate()">
+        <mat-icon>add</mat-icon>
+        New Institution
+      </button>
+    </div>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput
+               [ngModel]="searchValue"
+               (ngModelChange)="onSearch($event)"
+               placeholder="Search by name...">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      @if (loading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      }
+
+      <table mat-table [dataSource]="dataSource()" class="full-width">
+
+        <ng-container matColumnDef="imageUrl">
+          <th mat-header-cell *matHeaderCellDef class="image-column"></th>
+          <td mat-cell *matCellDef="let row" class="image-column">
+            @if (row.imageUrl) {
+              <img [src]="row.imageUrl" [alt]="row.name" class="institution-image">
+            } @else {
+              <div class="institution-image-placeholder">
+                <mat-icon>account_balance</mat-icon>
+              </div>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Description</th>
+          <td mat-cell *matCellDef="let row">{{ row.description }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="createdDate">
+          <th mat-header-cell *matHeaderCellDef>Created</th>
+          <td mat-cell *matCellDef="let row">{{ row.createdDate | date:'mediumDate' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-column">Actions</th>
+          <td mat-cell *matCellDef="let row" class="actions-column">
+            <button mat-icon-button matTooltip="Edit" (click)="navigateToEdit(row.id)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button matTooltip="Delete" color="warn" (click)="confirmDelete(row)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        @if (!loading() && dataSource().length === 0) {
+          <tr class="mat-row no-data-row">
+            <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+              No financial institutions found.
+            </td>
+          </tr>
+        }
+      </table>
+
+      <mat-paginator
+        [length]="totalCount()"
+        [pageSize]="pageSize()"
+        [pageIndex]="pageIndex()"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

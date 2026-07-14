@@ -1,0 +1,249 @@
+<div class="page-container">
+  <h1>Analytics</h1>
+  <p class="subtitle">Investments projections and spending analysis</p>
+
+  <mat-card class="ai-insights-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>psychology</mat-icon>
+        AI Insights (local WebLLM)
+      </mat-card-title>
+      <mat-card-subtitle>
+        Summary and suggestions run in your browser via WebGPU — no Ollama or cloud.
+        Chrome or Edge recommended.
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="loadAiInsights()"
+        [disabled]="aiInsightLoading() || aiModelInitializing()">
+        <span class="btn-content">
+          @if (aiInsightLoading() || aiModelInitializing()) {
+            <mat-spinner diameter="20"></mat-spinner>
+            <span class="btn-label">
+              @if (aiModelInitializing() && !aiModelReady()) {
+                Loading model…
+              } @else {
+                Generating…
+              }
+            </span>
+          } @else {
+            <mat-icon>auto_awesome</mat-icon>
+            <span class="btn-label">Generate insights</span>
+          }
+        </span>
+      </button>
+
+      @if (aiModelInitializing() || (aiInitProgress() > 0 && aiInitProgress() < 100 && !aiModelReady())) {
+        <div class="ai-init-progress">
+          <mat-progress-bar mode="determinate" [value]="aiInitProgress()"></mat-progress-bar>
+          <p class="ai-init-status">{{ aiInitStatus() }} ({{ aiInitProgress() }}%)</p>
+        </div>
+      }
+
+      @if (aiInsightError()) {
+        <p class="ai-insight-message ai-insight-error">{{ aiInsightError() }}</p>
+      }
+      @if (aiInsight(); as text) {
+        <div class="ai-insight-result">{{ text }}</div>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-tab-group>
+    <mat-tab label="Investments">
+      @if (loading()) {
+        <div class="loading-wrap">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else {
+        @if (projections().length === 0) {
+          <mat-card>
+            <mat-card-content>
+              <mat-icon>savings</mat-icon>
+              <p>No investments yet. Add investments to see projections and hints.</p>
+            </mat-card-content>
+          </mat-card>
+        } @else {
+          <mat-card class="summary-card">
+            <mat-card-content>
+              <span class="summary-label">Total projected gain in 12 months (BRL investments)</span>
+              <span class="summary-value">{{ totalProjectedGainBrl() | currency:'BRL':'symbol':'1.2-2' }}</span>
+            </mat-card-content>
+          </mat-card>
+
+          <div class="projections-list">
+            @for (p of projections(); track p.name + p.institutionName) {
+              <mat-card class="projection-card" [class.below-inflation]="p.belowInflation">
+                <mat-card-content>
+                  <div class="card-header">
+                    <span class="name">{{ p.name }}</span>
+                    @if (p.belowInflation) {
+                      <mat-icon matTooltip="Below inflation" class="warn-icon">warning</mat-icon>
+                    }
+                  </div>
+                  @if (p.institutionName) {
+                    <div class="institution">{{ p.institutionName }}</div>
+                  }
+                  <div class="row">
+                    <span class="label">Amount:</span>
+                    <span class="value">{{ p.amount | currency:(p.currency === 'BRL' ? 'BRL' : 'USD'):'symbol':'1.2-2' }}</span>
+                  </div>
+                  <div class="row">
+                    <span class="label">Rate:</span>
+                    <span class="value">{{ p.rateLabel }}</span>
+                  </div>
+                  <div class="row highlight">
+                    <span class="label">Projected in 12 months:</span>
+                    <span class="value">{{ p.projectedIn12m | currency:(p.currency === 'BRL' ? 'BRL' : 'USD'):'symbol':'1.2-2' }}</span>
+                  </div>
+                  <div class="row">
+                    <span class="label">Gain:</span>
+                    <span class="value gain">+{{ p.gainIn12m | currency:(p.currency === 'BRL' ? 'BRL' : 'USD'):'symbol':'1.2-2' }}</span>
+                  </div>
+                  @if (p.optimizationHint) {
+                    <div class="hint">{{ p.optimizationHint }}</div>
+                  }
+                </mat-card-content>
+              </mat-card>
+            }
+          </div>
+        }
+      }
+    </mat-tab>
+
+    <mat-tab label="Card Spending">
+      @if (loadingCard()) {
+        <div class="loading-wrap">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else if (cardSpending(); as sp) {
+        <div class="spending-tab">
+          <div class="spending-actions">
+            <button mat-stroked-button (click)="recategorize()">
+              <mat-icon>autorenew</mat-icon>
+              Re-categorize all
+            </button>
+          </div>
+
+          @if (sp.byCategory.length === 0) {
+            <mat-card>
+              <mat-card-content>
+                <p>No card transactions found. Import a Card OFX first.</p>
+              </mat-card-content>
+            </mat-card>
+          } @else {
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title>Spending by Category</mat-card-title>
+              </mat-card-header>
+              <mat-card-content class="chart-container">
+                <canvas baseChart type="bar" [data]="cardCategoryChartData()" [options]="barChartOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+
+            <h3 class="section-title">Monthly Breakdown</h3>
+            <div class="table-scroll">
+              <table class="spending-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    @for (cat of getAllCategoriesForSpending(sp); track cat) {
+                      <th>{{ cat }}</th>
+                    }
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (mb of sp.monthlyBreakdown; track mb.year * 100 + mb.month) {
+                    <tr>
+                      <td>{{ formatMonth(mb.year, mb.month) }}</td>
+                      @for (cat of getAllCategoriesForSpending(sp); track cat) {
+                        <td class="text-right">
+                          @if (getCategoryAmount(mb, cat) > 0) {
+                            {{ getCategoryAmount(mb, cat) | currency:'BRL':'symbol':'1.2-2' }}
+                          } @else { — }
+                        </td>
+                      }
+                      <td class="text-right total-cell">
+                        {{ getMonthTotal(mb) | currency:'BRL':'symbol':'1.2-2' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </mat-tab>
+
+    <mat-tab label="Checking Spending">
+      @if (loadingChecking()) {
+        <div class="loading-wrap">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else if (checkingSpending(); as sp) {
+        <div class="spending-tab">
+          <div class="spending-actions">
+            <button mat-stroked-button (click)="recategorize()">
+              <mat-icon>autorenew</mat-icon>
+              Re-categorize all
+            </button>
+          </div>
+
+          @if (sp.byCategory.length === 0) {
+            <mat-card>
+              <mat-card-content>
+                <p>No checking transactions found. Import a Checking OFX first.</p>
+              </mat-card-content>
+            </mat-card>
+          } @else {
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title>Spending by Category</mat-card-title>
+              </mat-card-header>
+              <mat-card-content class="chart-container">
+                <canvas baseChart type="bar" [data]="checkingCategoryChartData()" [options]="barChartOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+
+            <h3 class="section-title">Monthly Breakdown</h3>
+            <div class="table-scroll">
+              <table class="spending-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    @for (cat of getAllCategoriesForSpending(sp); track cat) {
+                      <th>{{ cat }}</th>
+                    }
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (mb of sp.monthlyBreakdown; track mb.year * 100 + mb.month) {
+                    <tr>
+                      <td>{{ formatMonth(mb.year, mb.month) }}</td>
+                      @for (cat of getAllCategoriesForSpending(sp); track cat) {
+                        <td class="text-right">
+                          @if (getCategoryAmount(mb, cat) > 0) {
+                            {{ getCategoryAmount(mb, cat) | currency:'BRL':'symbol':'1.2-2' }}
+                          } @else { — }
+                        </td>
+                      }
+                      <td class="text-right total-cell">
+                        {{ getMonthTotal(mb) | currency:'BRL':'symbol':'1.2-2' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </mat-tab>
+  </mat-tab-group>
+</div>

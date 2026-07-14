@@ -1,0 +1,315 @@
+<div class="page-container">
+  <h1>Control / Simulation</h1>
+  <p class="subtitle">Cash flow schedule by month. Add debts, expenses, income; include future card installments from OFX.</p>
+
+  <mat-tab-group>
+    <mat-tab label="Simulation">
+      <mat-card>
+        <mat-card-content>
+          <div class="period-bar">
+            <mat-form-field appearance="outline">
+              <mat-label>From year</mat-label>
+              <mat-select [ngModel]="fromYear()" (ngModelChange)="fromYear.set($event)">
+                @for (y of yearOptions(); track y) {
+                  <mat-option [value]="y">{{ y }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>From month</mat-label>
+              <mat-select [ngModel]="fromMonth()" (ngModelChange)="fromMonth.set($event)">
+                @for (m of months; track m) {
+                  <mat-option [value]="m">{{ monthNames[m-1] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Months</mat-label>
+              <mat-select [ngModel]="monthCount()" (ngModelChange)="monthCount.set($event)">
+                <mat-option [value]="6">6</mat-option>
+                <mat-option [value]="12">12</mat-option>
+                <mat-option [value]="24">24</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Starting balance (R$)</mat-label>
+              <input matInput type="number" [ngModel]="startingBalance()" (ngModelChange)="startingBalance.set($event)">
+            </mat-form-field>
+            <button mat-raised-button (click)="applyPeriod()">Apply</button>
+            <a mat-stroked-button [href]="exportCsvUrl()" download="Control.csv" target="_blank" rel="noopener">
+              <mat-icon>download</mat-icon>
+              Export CSV
+            </a>
+          </div>
+
+          @if (loading()) {
+            <mat-spinner diameter="36"></mat-spinner>
+          } @else if (simulation(); as sim) {
+            <div class="table-wrap">
+              <table class="sim-table">
+                <thead>
+                  <tr>
+                    <th class="col-name">Item</th>
+                    @for (col of sim.monthColumns; track col.label) {
+                      <th class="col-month">{{ col.label }}</th>
+                    }
+                    <th class="col-actions"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of sim.rows; track row.id + row.name) {
+                    <tr [class.income-row]="isIncomeRow(row.itemType)">
+                      <td class="col-name">{{ row.name }}</td>
+                      @for (amt of row.amountsByMonth; track $index) {
+                        <td class="col-month" [class.negative]="amt != null && amt < 0" [class.positive]="amt != null && amt > 0 && isIncomeRow(row.itemType)">
+                          {{ formatAmount(amt) }}
+                        </td>
+                      }
+                      <td class="col-actions">
+                        @if (!isIncomeRow(row.itemType)) {
+                          <button mat-icon-button (click)="deleteRow(row)" matTooltip="Remove">
+                            <mat-icon>delete_outline</mat-icon>
+                          </button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                  <tr class="total-row">
+                    <td class="col-name"><strong>Total</strong></td>
+                    @for (t of sim.totalsPerMonth; track $index) {
+                      <td class="col-month"><strong>{{ formatAmount(t) }}</strong></td>
+                    }
+                    <td></td>
+                  </tr>
+                  <tr class="acc-row">
+                    <td class="col-name"><strong>Accumulated</strong></td>
+                    @for (a of sim.accumulatedPerMonth; track $index) {
+                      <td class="col-month"><strong>{{ formatAmount(a) }}</strong></td>
+                    }
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="Add item">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Add debt / expense / income</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Name</mat-label>
+              <input matInput [(ngModel)]="form.name" placeholder="e.g. Dentist, Rent">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Type</mat-label>
+              <mat-select [(ngModel)]="form.itemType">
+                @for (t of itemTypes; track t.value) {
+                  <mat-option [value]="t.value">{{ t.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Amount per month</mat-label>
+              <input matInput type="number" [(ngModel)]="form.amountPerMonth" min="0">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Start year</mat-label>
+              <mat-select [(ngModel)]="form.startYear">
+                @for (y of [fromYear()-1, fromYear(), fromYear()+1]; track y) {
+                  <mat-option [value]="y">{{ y }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Start month</mat-label>
+              <mat-select [(ngModel)]="form.startMonth">
+                @for (m of months; track m) {
+                  <mat-option [value]="m">{{ monthNames[m-1] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Number of months</mat-label>
+              <input matInput type="number" [(ngModel)]="form.numberOfMonths" min="1">
+            </mat-form-field>
+          </div>
+          <button mat-raised-button color="primary" (click)="addItem()">
+            <mat-icon>add</mat-icon>
+            Add to schedule
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="Income">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Income Configuration</mat-card-title>
+          <mat-card-subtitle>Income = business days × {{ incomeForm.hoursPerDay }}h/day × hourly rate (USD) × USD/BRL. Taxes are deducted to get net income.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="income-form">
+            <mat-form-field appearance="outline">
+              <mat-label>Rate/hour (USD)</mat-label>
+              <input matInput type="number" [(ngModel)]="incomeForm.hourlyRateUsd" min="0" step="0.01">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Hours/day</mat-label>
+              <input matInput type="number" [(ngModel)]="incomeForm.hoursPerDay" min="1" max="24" step="1">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>USD/BRL</mat-label>
+              <input matInput type="number" [(ngModel)]="incomeForm.usdBrlRate" min="0" step="0.01">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Tax %</mat-label>
+              <input matInput type="number" [(ngModel)]="incomeForm.taxPercent" min="0" max="100" step="0.5">
+            </mat-form-field>
+            <button mat-raised-button color="primary" (click)="saveIncomeProfile()" [disabled]="incomeSaving()">
+              <mat-icon>save</mat-icon>
+              Save
+            </button>
+          </div>
+
+          @if (incomePreview().length > 0) {
+            <h3 class="section-title">Monthly Breakdown</h3>
+            <div class="table-wrap">
+              <table class="income-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Business Days</th>
+                    <th>Gross (BRL)</th>
+                    <th>Tax (BRL)</th>
+                    <th>Net (BRL)</th>
+                    <th>Extra (BRL)</th>
+                    <th>Total (BRL)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of incomePreview(); track m.year * 100 + m.month) {
+                    <tr>
+                      <td>{{ monthNames[m.month-1] }} {{ m.year }}</td>
+                      <td class="bday-cell">
+                        <input
+                          type="number"
+                          class="bday-input"
+                          [class.overridden]="m.isBusinessDaysOverridden"
+                          [value]="m.businessDays"
+                          min="0"
+                          max="31"
+                          (change)="onBusinessDaysChange(m, $any($event.target).valueAsNumber)"
+                          [matTooltip]="m.isBusinessDaysOverridden ? 'Override: ' + m.businessDays + ' (default: ' + m.defaultBusinessDays + ')' : 'Default: ' + m.defaultBusinessDays"
+                        >
+                        @if (m.isBusinessDaysOverridden) {
+                          <button class="reset-btn" (click)="resetBusinessDays(m)" matTooltip="Reset to default ({{ m.defaultBusinessDays }})">
+                            <mat-icon class="reset-icon">undo</mat-icon>
+                          </button>
+                        }
+                      </td>
+                      <td class="text-right">{{ m.grossBrl | number:'1.2-2' }}</td>
+                      <td class="text-right negative">{{ m.taxBrl | number:'1.2-2' }}</td>
+                      <td class="text-right">{{ m.netBrl | number:'1.2-2' }}</td>
+                      <td class="text-right">{{ m.extraBrl > 0 ? (m.extraBrl | number:'1.2-2') : '—' }}</td>
+                      <td class="text-right"><strong>{{ m.totalBrl | number:'1.2-2' }}</strong></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <h3 class="section-title">Extra Income</h3>
+          <p class="section-subtitle">Add bonus, freelance, or other ad-hoc income for a specific month.</p>
+          <div class="income-form">
+            <mat-form-field appearance="outline">
+              <mat-label>Year</mat-label>
+              <mat-select [(ngModel)]="extraForm.year">
+                @for (y of yearOptions(); track y) {
+                  <mat-option [value]="y">{{ y }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Month</mat-label>
+              <mat-select [(ngModel)]="extraForm.month">
+                @for (m of months; track m) {
+                  <mat-option [value]="m">{{ monthNames[m-1] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Amount (R$)</mat-label>
+              <input matInput type="number" [(ngModel)]="extraForm.amount" min="0">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="wide">
+              <mat-label>Description</mat-label>
+              <input matInput [(ngModel)]="extraForm.description" placeholder="e.g. Bonus, Freelance">
+            </mat-form-field>
+            <button mat-stroked-button (click)="addExtraIncome()">
+              <mat-icon>add</mat-icon>
+              Add
+            </button>
+          </div>
+
+          @if (extraIncomeList().length > 0) {
+            <div class="extra-list">
+              @for (e of extraIncomeList(); track e.id) {
+                <div class="extra-item">
+                  <span class="extra-desc">{{ e.description }}</span>
+                  <span class="extra-period">{{ monthNames[e.month-1] }} {{ e.year }}</span>
+                  <span class="extra-amt">{{ e.amount | currency:'BRL':'symbol':'1.2-2' }}</span>
+                  <button mat-icon-button (click)="deleteExtraIncome(e)" matTooltip="Remove">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="From card (OFX)">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Future installments from imported card</mat-card-title>
+          <mat-card-subtitle>Import OFX first; then add which installments to include in the simulation.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (proposedInstallments().length === 0) {
+            <p class="empty">No future card installments found. Import an OFX with card statements that have installment info.</p>
+          } @else {
+            <div class="proposed-actions">
+              <button mat-raised-button color="primary" (click)="addAllFromCard()" [disabled]="addingAll()">
+                <mat-icon>playlist_add</mat-icon>
+                Add all ({{ proposedInstallments().length }})
+              </button>
+              <button mat-raised-button color="accent" (click)="addAllFromCardConsolidated()" [disabled]="addingConsolidated()">
+                <mat-icon>compress</mat-icon>
+                Add all (single row)
+              </button>
+            </div>
+            <div class="proposed-list">
+              @for (p of proposedInstallments(); track p.bankTransactionId) {
+                <div class="proposed-item">
+                  <span class="desc">{{ p.description }}</span>
+                  <span class="installment-info">Parcela {{ p.installmentNumber }}/{{ p.installmentTotal }}</span>
+                  <span class="amt">{{ p.amountPerMonth | currency:'BRL':'symbol':'1.2-2' }} × {{ p.remainingInstallments }} remaining (from {{ monthNames[p.startMonth-1] }} {{ p.startYear }})</span>
+                  <button mat-stroked-button (click)="addFromCard(p)">Add</button>
+                </div>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+  </mat-tab-group>
+</div>
