@@ -244,34 +244,31 @@
   <section id="start">
     <div class="wrap">
       <div class="section-head">
-        <span class="eyebrow">Up and running in minutes</span>
+        <span class="eyebrow">Two scripts. That's it.</span>
         <h2>Get started</h2>
-        <p>Requires the <a href="https://dotnet.microsoft.com/download">.NET 10 SDK</a> and <a href="https://nodejs.org/">Node.js 20+</a>.</p>
+        <p>Install <a href="https://dotnet.microsoft.com/download">.NET 10</a> and <a href="https://nodejs.org/">Node.js 20+</a> once, then run two PowerShell scripts. Everything stays inside the project folder — nothing is installed elsewhere on your machine.</p>
       </div>
       <div class="steps">
         <div class="step">
-          <h3>Clone & install</h3>
-          <p>Grab the code and install the frontend dependencies.</p>
+          <h3>Get the code</h3>
+          <p>Download or clone the project, then open a terminal in its folder.</p>
           <pre><code>git clone &lt;your-fork-url&gt; WealthLedger
-cd WealthLedger/Source/Run/SPA
-npm ci</code></pre>
+cd WealthLedger</code></pre>
         </div>
         <div class="step">
-          <h3>Run the API</h3>
-          <p>Starts the backend on port 5000. The database is created automatically.</p>
-          <pre><code>cd Source/Run/WebApp
-dotnet run</code></pre>
+          <h3>Set it up</h3>
+          <p>Checks your tools, downloads the local AI model, and builds the app.</p>
+          <pre><code>./deploy/1-setup.ps1</code></pre>
         </div>
         <div class="step">
-          <h3>Run the app</h3>
-          <p>Launch the UI on port 4200, then open your browser.</p>
-          <pre><code>cd Source/Run/SPA
-npm start</code></pre>
+          <h3>Run it</h3>
+          <p>Starts the app and opens it in your browser automatically.</p>
+          <pre><code>./deploy/2-run.ps1</code></pre>
         </div>
       </div>
       <p style="text-align:center;margin-top:28px;color:var(--muted);">
-        Open <span class="inline-code">http://localhost:4200</span> — or see the
-        <a href="https://github.com/lcarlini/WealthLedger">full installation, deployment &amp; backup guide</a>.
+        The app opens at <span class="inline-code">http://localhost:5000</span> — one local server for both the app and the API.
+        On Windows you can also just right-click a script and choose <strong>“Run with PowerShell”</strong>.
       </p>
     </div>
   </section>

@@ -187,37 +187,30 @@ The [Quick Start](#-quick-start) above runs the app in development mode with liv
 - **SPA**: `npm start` in `Source/Run/SPA` → serves `http://localhost:4200`, proxying `/api` to the API
 - In Development, OpenAPI + Scalar API docs are served alongside the API.
 
-### Production (single process) — Windows
+### Production — Windows (two scripts)
 
-A one-command deploy script publishes the API and builds the SPA into a single self-contained folder that **preserves your existing database**:
+For a real install, use the two deploy scripts. **Everything stays inside the project folder** — the build output and the AI model are written to the project root, nothing is installed on `C:\` or elsewhere.
 
-```powershell
-./deploy/publish.ps1
-```
-
-This will:
-
-1. Ensure the install folder exists (`C:\LocalApps\WealthLedger`)
-2. **Back up** the live database before deploying
-3. Publish the .NET WebApp (Release) and build the Angular SPA (production)
-4. Copy the SPA into `wwwroot`
-5. **Restore** your database — your data is never overwritten by a deploy
-
-Then run it:
+**Step 1 — set up** (checks your tools, downloads the local AI model, builds & publishes the app into `./publish`, and preserves any existing database):
 
 ```powershell
-cd C:\LocalApps\WealthLedger
-dotnet .\WealthLedger.WebApp.dll --urls http://localhost:5000
+./deploy/1-setup.ps1
 ```
 
-Open **http://localhost:5000** — the API and SPA are served from one process.
+> Options: `-SkipModel` skips the large (~2 GB) AI model download; `-Force` re-downloads the model.
 
-> **Helper launchers** (Windows): `deploy/run.vbs` starts the published app with no console window; `deploy/run-all.bat` starts the published API plus the Angular dev server; `deploy/run.bat` starts only the SPA dev server.
+**Step 2 — run** (starts the app and opens your browser automatically):
+
+```powershell
+./deploy/2-run.ps1
+```
+
+Open **http://localhost:5000** — a single local server hosts both the SPA and the API. On Windows you can also right-click either script and choose **“Run with PowerShell”**. To stop the app, close the window or press `Ctrl+C`. Use `-Port <n>` on `2-run.ps1` to pick a different port.
 
 ### Production (manual, cross-platform)
 
 ```bash
-# Publish the API
+# Publish the API into ./publish
 dotnet publish Source/Run/WebApp/WealthLedger.WebApp.csproj -c Release -o ./publish
 
 # Build the SPA and copy dist/**/browser into ./publish/wwwroot
@@ -229,13 +222,9 @@ cd ../../../publish
 dotnet ./WealthLedger.WebApp.dll --urls http://localhost:5000
 ```
 
-### (Optional) Enable browser-local AI insights
+### Browser-local AI insights
 
-AI insights on the **Analytics** page run in your browser via WebLLM + WebGPU. The model files are large and are **not** included in the repository. Download them once:
-
-```powershell
-./deploy/download-webllm-model.ps1
-```
+AI insights on the **Analytics** page run in your browser via WebLLM + WebGPU. The model files are large and are **not** included in the repository — `deploy/1-setup.ps1` downloads them for you (into the project folder). To skip the download, run setup with `-SkipModel`.
 
 Then open **Analytics** and generate insights (best in Chrome/Edge with WebGPU). Only a compact, aggregated payload is passed to the local model — raw statements and full transaction lists are never sent anywhere.
 
@@ -265,21 +254,24 @@ The SQLite path is logged on startup. The Angular dev proxy (`Source/Run/SPA/pro
 
 ## 💾 Backup & Restore
 
-Your entire financial history lives in a single SQLite database. See the full guide in **[docs/BACKUP_AND_RESTORE.md](docs/BACKUP_AND_RESTORE.md)**.
+Your entire financial history lives in a single SQLite database at `./publish/wealthledger.db` (inside the project folder). See the full guide in **[docs/BACKUP_AND_RESTORE.md](docs/BACKUP_AND_RESTORE.md)**.
 
 **Back up (app stopped — recommended):**
 
 ```powershell
-Copy-Item C:\LocalApps\WealthLedger\wealthledger.db C:\Backups\wealthledger-2026-07-14.db
+Copy-Item ./publish/wealthledger.db "$HOME\Backups\wealthledger-2026-07-14.db"
 ```
 
 If the app is running, copy all three files together (`wealthledger.db`, `wealthledger.db-shm`, `wealthledger.db-wal`).
 
-**Restore (stop the app first):**
+**Restore (stop the app first):** copy your backup back over `./publish/wealthledger.db`, and delete the `-shm`/`-wal` sidecar files if present.
 
 ```powershell
-./deploy/restore-db.ps1 -Source "C:\Backups\wealthledger-2026-07-14.db"
+Copy-Item "$HOME\Backups\wealthledger-2026-07-14.db" ./publish/wealthledger.db -Force
+Remove-Item ./publish/wealthledger.db-wal, ./publish/wealthledger.db-shm -ErrorAction SilentlyContinue
 ```
+
+> Re-running `deploy/1-setup.ps1` never overwrites `wealthledger.db` — it backs the database up and restores it around each rebuild.
 
 ---
 
@@ -313,7 +305,8 @@ WealthLedger/
 ├── WealthLedger.slnx              # .NET solution (4 projects)
 ├── index.html                     # Product landing page
 ├── brand/                         # Logo, wordmark, favicon, banner (SVG)
-├── deploy/                        # Publish, run & DB restore scripts
+├── deploy/                        # 1-setup.ps1 (build) & 2-run.ps1 (run)
+├── publish/                       # Built app (created by setup; git-ignored)
 ├── docs/                          # Feature docs, backup guide, sample OFX files
 ├── scripts/
 │   └── create_tables.sql          # Optional manual SQLite schema
@@ -373,12 +366,8 @@ In Development, full interactive docs are available via OpenAPI + Scalar on the 
 
 | Script | Purpose |
 |--------|---------|
-| `deploy/publish.ps1` | Build & deploy API + SPA to `C:\LocalApps\WealthLedger` (preserves DB) |
-| `deploy/restore-db.ps1` | Restore the database from a backup |
-| `deploy/download-webllm-model.ps1` | Download local AI model assets for Analytics insights |
-| `deploy/run-all.bat` | Start published API + Angular dev server |
-| `deploy/run.vbs` | Start published API only (no console window) |
-| `deploy/run.bat` | Start Angular dev server only |
+| `deploy/1-setup.ps1` | Check prerequisites, download the local AI model, and build & publish the app into `./publish` (preserves your database). Options: `-SkipModel`, `-Force`. |
+| `deploy/2-run.ps1` | Start the published app and open it in your browser. Option: `-Port <n>`. |
 
 ---
 

@@ -39,7 +39,7 @@ nunit-*.xml
 *.userosscache
 *.sln.docstates
 
-# Publish / deploy output (local install lives in C:\LocalApps\WealthLedger)
+# Publish / deploy output (created by deploy/1-setup.ps1, lives in the project root)
 publish/
 
 # SQLite database (runtime data, never versioned)
@@ -73,7 +73,7 @@ Source/Run/SPA/pnpm-debug.log*
 Source/Run/SPA/src/environments/environment*.ts
 !Source/Run/SPA/src/environments/environment.example.ts
 
-# Local WebLLM model assets (restore with deploy/download-webllm-model.ps1)
+# Local WebLLM model assets (downloaded by deploy/1-setup.ps1)
 Source/Run/SPA/src/assets/ai/models/
 Source/Run/SPA/src/assets/ai/*.json
 

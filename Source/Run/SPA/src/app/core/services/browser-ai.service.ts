@@ -24,7 +24,7 @@ export interface AiInsightPayload {
   selic?: number | null;
 }
 
-/** Local WebLLM model id — must match webllm-model-config.json and download-webllm-model.ps1. */
+/** Local WebLLM model id — must match webllm-model-config.json and deploy/1-setup.ps1. */
 export const WEBLLM_MODEL_ID = 'Qwen3-4B-q4f32_1-MLC';
 
 /** Served from Angular assets (src/assets/ai → /assets/ai). */
@@ -133,7 +133,7 @@ export class BrowserAiService {
     if (!configResponse.ok) {
       throw new Error(
         `Model config not found at ${configUrl} (${configResponse.status}). ` +
-          'Re-run deploy/download-webllm-model.ps1 and publish again.'
+          'Re-run deploy/1-setup.ps1.'
       );
     }
 
@@ -142,7 +142,7 @@ export class BrowserAiService {
     if (!tensorCacheResponse.ok) {
       throw new Error(
         `Model weight index not found at ${tensorCacheUrl} (${tensorCacheResponse.status}). ` +
-          'Re-run deploy/download-webllm-model.ps1 and publish again.'
+          'Re-run deploy/1-setup.ps1.'
       );
     }
 
@@ -151,7 +151,7 @@ export class BrowserAiService {
     if (!wasmResponse.ok) {
       throw new Error(
         `WebGPU library not found at ${wasmUrl} (${wasmResponse.status}). ` +
-          'Re-run deploy/download-webllm-model.ps1 and publish again.'
+          'Re-run deploy/1-setup.ps1.'
       );
     }
   }
@@ -180,7 +180,7 @@ export class BrowserAiService {
       if (!response.ok) {
         throw new Error(
           `Local model config not found at ${MODEL_CONFIG_URL}. ` +
-            'Run deploy/download-webllm-model.ps1, rebuild, and publish again.'
+            'Run deploy/1-setup.ps1 again.'
         );
       }
 
@@ -193,7 +193,7 @@ export class BrowserAiService {
       if (!modelRecord.model_lib?.includes(EXPECTED_MODEL_LIB)) {
         throw new Error(
           `Outdated WebGPU library in config (${modelRecord.model_lib}). ` +
-            `Re-run deploy/download-webllm-model.ps1 to download ${EXPECTED_MODEL_LIB}.`
+            `Re-run deploy/1-setup.ps1 to download ${EXPECTED_MODEL_LIB}.`
         );
       }
 
@@ -315,7 +315,7 @@ export function extractAiErrorMessage(err: unknown): string {
   if (/ArtifactIndexedDBCache failed to fetch/i.test(raw)) {
     return (
       `${raw} — Check DevTools → Network for 404s under /assets/ai/, then re-run ` +
-      'deploy/download-webllm-model.ps1 and publish.'
+      'deploy/1-setup.ps1.'
     );
   }
   return raw;

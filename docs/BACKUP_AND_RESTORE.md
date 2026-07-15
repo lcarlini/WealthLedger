@@ -11,7 +11,7 @@ WealthLedger stores **all** of your data in a single local SQLite database. Ther
 | Environment | Database location |
 |-------------|-------------------|
 | **Development** (`dotnet run` in `Source/Run/WebApp`) | `Source/Run/WebApp/wealthledger.db` |
-| **Production deploy** (`deploy/publish.ps1`) | `C:\LocalApps\WealthLedger\wealthledger.db` |
+| **Production** (`deploy/1-setup.ps1` + `deploy/2-run.ps1`) | `publish/wealthledger.db` (inside the project folder) |
 
 The database path is **logged on startup**:
 
@@ -43,7 +43,8 @@ SQLite uses **Write-Ahead Logging (WAL)**, so at any moment your data may be spr
 2. Copy the main database file to a safe location:
 
 ```powershell
-Copy-Item "C:\LocalApps\WealthLedger\wealthledger.db" "C:\Backups\wealthledger-$(Get-Date -Format 'yyyy-MM-dd').db"
+# Run from the project folder
+Copy-Item ".\publish\wealthledger.db" "$HOME\Backups\wealthledger-$(Get-Date -Format 'yyyy-MM-dd').db"
 ```
 
 When the app is stopped cleanly, SQLite merges the WAL back into the main file, so a single `.db` copy is complete.
@@ -54,8 +55,8 @@ Copy **all three** files together so the WAL is preserved:
 
 ```powershell
 $stamp = Get-Date -Format 'yyyy-MM-dd_HHmm'
-$src = "C:\LocalApps\WealthLedger"
-$dst = "C:\Backups\wealthledger-$stamp"
+$src = ".\publish"
+$dst = "$HOME\Backups\wealthledger-$stamp"
 New-Item -ItemType Directory -Force -Path $dst | Out-Null
 Copy-Item "$src\wealthledger.db"     "$dst\" -ErrorAction SilentlyContinue
 Copy-Item "$src\wealthledger.db-wal" "$dst\" -ErrorAction SilentlyContinue
@@ -67,7 +68,7 @@ Copy-Item "$src\wealthledger.db-shm" "$dst\" -ErrorAction SilentlyContinue
 If you have the [`sqlite3`](https://www.sqlite.org/download.html) CLI, the `.backup` command produces a single, consistent file even while the app runs:
 
 ```powershell
-sqlite3 "C:\LocalApps\WealthLedger\wealthledger.db" ".backup 'C:\Backups\wealthledger-clean.db'"
+sqlite3 ".\publish\wealthledger.db" ".backup '$HOME\Backups\wealthledger-clean.db'"
 ```
 
 ---
@@ -76,27 +77,14 @@ sqlite3 "C:\LocalApps\WealthLedger\wealthledger.db" ".backup 'C:\Backups\wealthl
 
 > **Always stop the app before restoring.** Restoring over a live database will corrupt it.
 
-### Using the helper script (Windows)
-
-```powershell
-./deploy/restore-db.ps1 -Source "C:\Backups\wealthledger-2026-07-14.db"
-```
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `-Source` | largest `wealthledger.db` found in the repo | Path to the backup file to restore |
-| `-TargetDir` | `C:\LocalApps\WealthLedger` | Install/deploy folder to restore into |
-
-The script copies your backup into place and removes any stale `-wal` / `-shm` sidecar files so the restored database is used cleanly.
-
 ### Manual restore
 
 ```powershell
 # 1. Stop the app first.
-# 2. Replace the database and clear stale sidecars:
-Copy-Item "C:\Backups\wealthledger-2026-07-14.db" "C:\LocalApps\WealthLedger\wealthledger.db" -Force
-Remove-Item "C:\LocalApps\WealthLedger\wealthledger.db-wal","C:\LocalApps\WealthLedger\wealthledger.db-shm" -ErrorAction SilentlyContinue
-# 3. Start the app again.
+# 2. Replace the database and clear stale sidecars (run from the project folder):
+Copy-Item "$HOME\Backups\wealthledger-2026-07-14.db" ".\publish\wealthledger.db" -Force
+Remove-Item ".\publish\wealthledger.db-wal", ".\publish\wealthledger.db-shm" -ErrorAction SilentlyContinue
+# 3. Start the app again with ./deploy/2-run.ps1
 ```
 
 If you backed up all three files (Option B), restore all three together and then start the app.
@@ -105,10 +93,10 @@ If you backed up all three files (Option B), restore all three together and then
 
 ## Deploys never destroy your data
 
-`deploy/publish.ps1` is designed to be safe to re-run:
+`deploy/1-setup.ps1` is designed to be safe to re-run:
 
 1. It **backs up** the live database files in memory before publishing.
-2. It publishes the new API build and SPA into the install folder.
+2. It publishes the new API build and SPA into the `publish` folder.
 3. It **restores** your database afterward — so an upgrade never overwrites your data.
 
 Even so, keep independent backups (Options A–C) before major upgrades.
@@ -121,8 +109,8 @@ On Windows you can schedule a daily copy with Task Scheduler. Save this as `back
 
 ```powershell
 $stamp = Get-Date -Format 'yyyy-MM-dd'
-$src   = "C:\LocalApps\WealthLedger\wealthledger.db"
-$dstDir = "C:\Backups\WealthLedger"
+$src   = "C:\path\to\WealthLedger\publish\wealthledger.db"
+$dstDir = "$HOME\Backups\WealthLedger"
 New-Item -ItemType Directory -Force -Path $dstDir | Out-Null
 Copy-Item $src "$dstDir\wealthledger-$stamp.db" -Force
 
@@ -141,7 +129,7 @@ $trigger = New-ScheduledTaskTrigger -Daily -At 2am
 Register-ScheduledTask -TaskName "WealthLedger Backup" -Action $action -Trigger $trigger
 ```
 
-> For extra safety, sync `C:\Backups\WealthLedger` to an external drive or your own private, encrypted storage.
+> For extra safety, sync your backups folder to an external drive or your own private, encrypted storage.
 
 ---
 
@@ -150,6 +138,6 @@ Register-ScheduledTask -TaskName "WealthLedger Backup" -Action $action -Trigger 
 1. Back up the database on the old machine (Option A).
 2. Install prerequisites and deploy WealthLedger on the new machine (see the [README](../README.md)).
 3. Copy your backup file across.
-4. Restore it with `deploy/restore-db.ps1` (or manually), then start the app.
+4. Restore it by copying your backup over `publish/wealthledger.db` (see [Restoring](#restoring)), then start the app.
 
 Your entire financial history moves with that one `.db` file.
