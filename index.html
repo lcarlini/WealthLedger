@@ -7,9 +7,14 @@
   <meta name="description" content="WealthLedger is a free, self-hosted personal finance app for tracking investments, cash flow, and bank statements. Your data stays 100% on your own machine." />
   <meta name="theme-color" content="#047857" />
   <link rel="icon" type="image/svg+xml" href="brand/favicon.svg" />
+  <meta property="og:type" content="website" />
   <meta property="og:title" content="WealthLedger — Personal finance, clearly tracked" />
   <meta property="og:description" content="Free, self-hosted, private-by-default personal finance app." />
-  <meta property="og:image" content="brand/banner.svg" />
+  <meta property="og:image" content="brand/dashboard-preview.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="WealthLedger — Personal finance, clearly tracked" />
+  <meta name="twitter:description" content="Free, self-hosted, private-by-default personal finance app." />
+  <meta name="twitter:image" content="brand/dashboard-preview.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
@@ -97,6 +102,27 @@
     .bars { display: flex; align-items: flex-end; gap: 12px; height: 120px; }
     .bars span { flex: 1; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, var(--emerald-2), var(--emerald)); opacity: 0.9; }
     @media (max-width: 520px) { .mock-body { grid-template-columns: repeat(2, 1fr); } }
+
+    /* Product preview (real screenshot in a browser frame) */
+    .preview { padding-top: 8px; }
+    .preview .section-head { margin-bottom: 34px; }
+    .browser {
+      max-width: 1000px; margin: 0 auto;
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .browser:hover { transform: translateY(-4px); box-shadow: 0 26px 60px -22px rgba(2, 44, 34, 0.4); }
+    .browser-bar { display: flex; align-items: center; gap: 8px; padding: 11px 14px; background: #f1f5f9; border-bottom: 1px solid var(--line); }
+    .browser-bar .d { width: 12px; height: 12px; border-radius: 50%; }
+    .browser-url {
+      flex: 1; margin-left: 10px; background: #fff; border: 1px solid var(--line);
+      border-radius: 999px; padding: 6px 14px; font-size: 0.82rem; color: var(--muted);
+      display: inline-flex; align-items: center; gap: 8px; min-width: 0;
+    }
+    .browser-url span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .browser-img { display: block; width: 100%; height: auto; }
+    .preview .cap { text-align: center; color: var(--muted); font-size: 0.92rem; margin: 18px 0 0; }
 
     /* Sections */
     section { padding: 76px 0; }
@@ -200,6 +226,30 @@
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Product preview -->
+  <section class="preview">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">See it in action</span>
+        <h2>Your whole financial picture, at a glance</h2>
+        <p>Net worth, planned debits, live market rates, and pending tasks — all on one clean dashboard that runs entirely on your machine.</p>
+      </div>
+      <div class="browser">
+        <div class="browser-bar">
+          <span class="d" style="background:#ff5f57"></span>
+          <span class="d" style="background:#febc2e"></span>
+          <span class="d" style="background:#28c840"></span>
+          <span class="browser-url">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>localhost:5000 — WealthLedger</span>
+          </span>
+        </div>
+        <img class="browser-img" src="brand/dashboard-preview.png" alt="WealthLedger dashboard showing net worth, market rates, and pending tasks" loading="lazy" />
+      </div>
+      <p class="cap">Actual dashboard — no cloud, no account, your data never leaves your computer.</p>
     </div>
   </section>
 
