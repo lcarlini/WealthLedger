@@ -4,17 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WealthLedger — Personal finance, clearly tracked</title>
-  <meta name="description" content="WealthLedger is a free, self-hosted personal finance app for tracking investments, cash flow, and bank statements. Your data stays 100% on your own machine." />
+  <meta name="description" content="WealthLedger is a free, self-hosted personal finance app for investments, portfolio analytics, cash flow, and bank statements — with live market data, variable-income tracking, and optional in-browser AI. Your data stays 100% on your own machine." />
   <meta name="theme-color" content="#047857" />
   <link rel="icon" type="image/svg+xml" href="brand/favicon.svg" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="WealthLedger — Personal finance, clearly tracked" />
-  <meta property="og:description" content="Free, self-hosted, private-by-default personal finance app." />
-  <meta property="og:image" content="brand/dashboard-preview.png" />
+  <meta property="og:description" content="Track investments, portfolio P&amp;L, cash flow, and bank statements — free, self-hosted, private by default." />
+  <meta property="og:image" content="brand/dashboard-preview.png?v=20260716" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="WealthLedger — Personal finance, clearly tracked" />
-  <meta name="twitter:description" content="Free, self-hosted, private-by-default personal finance app." />
-  <meta name="twitter:image" content="brand/dashboard-preview.png" />
+  <meta name="twitter:description" content="Track investments, portfolio P&amp;L, cash flow, and bank statements — free, self-hosted, private by default." />
+  <meta name="twitter:image" content="brand/dashboard-preview.png?v=20260716" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
@@ -249,9 +249,9 @@
         <span class="eyebrow">Free · Self-hosted · Private</span>
         <h1>Your personal finances,<br /><span class="grad">clearly tracked.</span></h1>
         <p class="lead">
-          WealthLedger is a free, self-hosted app for tracking investments, cash flow, and
-          bank statements — with live market data and optional in-browser AI insights.
-          Your data never leaves your machine.
+          WealthLedger is a free, self-hosted app for tracking investments, portfolio performance,
+          cash flow, and bank statements — with live FX and economic rates, stock/crypto quotes,
+          and optional in-browser AI insights. Your data never leaves your machine.
         </p>
         <p class="creator">
           Implemented by Computer Engineer
@@ -264,7 +264,7 @@
         </div>
         <div class="badges">
           <span class="chip"><span class="dot" style="background:#047857"></span> 100% local data</span>
-          <span class="chip"><span class="dot" style="background:#0ea5a4"></span> No account needed</span>
+          <span class="chip"><span class="dot" style="background:#0ea5a4"></span> Portfolio &amp; P&amp;L</span>
           <span class="chip"><span class="dot" style="background:#fbbf24"></span> No cloud, no tracking</span>
         </div>
       </div>
@@ -275,11 +275,14 @@
           <span class="t">WealthLedger · Dashboard</span>
         </div>
         <div class="mock-body">
-          <div class="stat"><div class="k">Net worth</div><div class="v">$282,220</div><div class="up">▲ 8.4% YTD</div></div>
-          <div class="stat"><div class="k">Investments</div><div class="v">14</div><div class="up">across 6 institutions</div></div>
-          <div class="stat"><div class="k">Pending tasks</div><div class="v">3</div><div class="up">2 maturities</div></div>
+          <div class="stat"><div class="k">Institutions</div><div class="v">6</div><div class="up">banks &amp; brokers</div></div>
+          <div class="stat"><div class="k">Investments</div><div class="v">14</div><div class="up">cash · fixed · variable</div></div>
+          <div class="stat"><div class="k">Total amount</div><div class="v">R$ 282k</div><div class="up">multi-currency</div></div>
+          <div class="stat"><div class="k">Projection</div><div class="v">3 years</div><div class="up">from today</div></div>
+          <div class="stat"><div class="k">Selic (a.a.)</div><div class="v">14.25%</div><div class="up">live rate</div></div>
+          <div class="stat"><div class="k">Portfolio score</div><div class="v">B+</div><div class="up">health &amp; allocation</div></div>
           <div class="mock-chart">
-            <div class="k" style="font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Patrimony growth</div>
+            <div class="k" style="font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Patrimony growth (3 years)</div>
             <div class="bars">
               <span style="height:38%"></span><span style="height:52%"></span><span style="height:47%"></span>
               <span style="height:64%"></span><span style="height:71%"></span><span style="height:60%"></span>
@@ -297,7 +300,7 @@
       <div class="section-head">
         <span class="eyebrow">See it in action</span>
         <h2>Your whole financial picture, at a glance</h2>
-        <p>Net worth, planned debits, live market rates, and pending tasks — all on one clean dashboard that runs entirely on your machine.</p>
+        <p>Custom projection horizons, planned debits, live market rates (USD, EUR, BTC, Selic, IPCA, Poupança), and pending tasks — all on one dashboard that runs entirely on your machine.</p>
       </div>
       <div class="browser">
         <div class="browser-bar">
@@ -309,9 +312,9 @@
             <span>localhost:5000 — WealthLedger</span>
           </span>
         </div>
-        <img class="browser-img" src="brand/dashboard-preview.png" alt="WealthLedger dashboard showing net worth, market rates, and pending tasks" loading="lazy" />
+        <img class="browser-img" src="brand/dashboard-preview.png?v=20260716" alt="WealthLedger dashboard with projection years, summary cards, live market rates, and sidebar navigation including Portfolio" loading="lazy" />
       </div>
-      <p class="cap">Actual dashboard — no cloud, no account, your data never leaves your computer.</p>
+      <p class="cap">Actual dashboard — dark theme, custom projection years, live market widgets. No cloud, no account.</p>
     </div>
   </section>
 
@@ -321,16 +324,18 @@
       <div class="section-head">
         <span class="eyebrow">Everything in one place</span>
         <h2>A complete view of your money</h2>
-        <p>From day-to-day cash flow to long-term investments — track, plan, and understand your finances without spreadsheets.</p>
+        <p>From day-to-day cash flow to portfolio analytics and long-term goals — track, plan, and understand your finances without spreadsheets.</p>
       </div>
       <div class="grid">
-        <div class="feature"><div class="ic">📊</div><h3>Dashboard</h3><p>Total net worth across currencies, live market widgets, and charts for investments, patrimony, and cash flow.</p></div>
-        <div class="feature"><div class="ic">📈</div><h3>Portfolio hub</h3><p>Unrealized P&amp;L, allocation, benchmarks vs CDI/IPCA, health &amp; portfolio scores, goals, calendar, passive income, watchlist, and JSON backup.</p></div>
-        <div class="feature"><div class="ic">🏦</div><h3>Institutions & investments</h3><p>Track cash, fixed-income, and variable-income holdings (stocks, FIIs, ETFs, funds, BDRs, crypto) across banks and brokers — with multi-currency support and maturity reminders.</p></div>
-        <div class="feature"><div class="ic">📅</div><h3>Cash flow control</h3><p>Multi-month simulations with income, expenses, debts, and card installments — see your runway at a glance.</p></div>
-        <div class="feature"><div class="ic">📥</div><h3>Import OFX statements</h3><p>Upload bank and credit-card statements with automatic transaction categorization and browsing.</p></div>
-        <div class="feature"><div class="ic">🤖</div><h3>Browser-local AI insights</h3><p>Optional AI summaries powered by WebLLM + WebGPU — running entirely in your browser, never in the cloud.</p></div>
-        <div class="feature"><div class="ic">🧮</div><h3>Calculators</h3><p>Yield, gain/loss, loan schedules, emergency-fund planning, multi-scenario investment comparison, and savings-vs-fixed-rate comparisons.</p></div>
+        <div class="feature"><div class="ic">📊</div><h3>Dashboard</h3><p>Net worth summary, custom-year projections from today, planned debits, and patrimony charts with live FX and economic rate widgets.</p></div>
+        <div class="feature"><div class="ic">📈</div><h3>Portfolio hub</h3><p>Unrealized P&amp;L, allocation charts, CDI/IPCA/Poupança benchmarks, health &amp; portfolio scores, goals, calendar, passive income, watchlist, and JSON backup.</p></div>
+        <div class="feature"><div class="ic">🏦</div><h3>Institutions &amp; investments</h3><p>Cash, fixed-income, and variable-income (stocks, FIIs, ETFs, funds, BDRs, crypto) with ticker/quantity tracking, multi-currency support, and CSV import/export.</p></div>
+        <div class="feature"><div class="ic">💹</div><h3>Live quotes</h3><p>Refresh stock and crypto prices from brapi.dev (B3) and CoinGecko — mark-to-market amounts with optional brapi token for full ticker coverage.</p></div>
+        <div class="feature"><div class="ic">📅</div><h3>Cash flow control</h3><p>Multi-year simulations from the current month with income, expenses, debts, and card installments — see your runway at a glance.</p></div>
+        <div class="feature"><div class="ic">✅</div><h3>My Tasks</h3><p>Auto-generated reminders for maturities, monthly movements, and investment rules — with a configurable future horizon from today.</p></div>
+        <div class="feature"><div class="ic">📥</div><h3>Import OFX</h3><p>Upload bank and credit-card statements with automatic transaction categorization and browsing.</p></div>
+        <div class="feature"><div class="ic">📉</div><h3>Analytics &amp; AI</h3><p>Spending breakdowns, inflation warnings, optimization hints, and optional browser-local AI summaries via WebLLM + WebGPU.</p></div>
+        <div class="feature"><div class="ic">🧮</div><h3>Calculators</h3><p>Yield, gain/loss, loan schedules, emergency-fund planning, savings vs. fixed-rate comparisons, and multi-scenario investment comparison with taxes &amp; inflation.</p></div>
       </div>
     </div>
   </section>
@@ -425,7 +430,7 @@ cd WealthLedger</code></pre>
     <div class="wrap">
       <div class="box">
         <h2>Take control of your finances — for free</h2>
-        <p>Download WealthLedger, run it locally, and keep your financial data truly yours.</p>
+        <p>Download WealthLedger, run it locally, and track everything from cash flow to portfolio performance — with your data truly yours.</p>
         <div class="hero-cta" style="justify-content:center;">
           <a class="btn btn-primary" href="https://github.com/lcarlini/WealthLedger">Read the docs</a>
           <a class="btn btn-ghost" href="https://github.com/lcarlini/WealthLedger/blob/main/docs/BACKUP_AND_RESTORE.md">Backup &amp; restore guide</a>
