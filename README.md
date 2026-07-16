@@ -16,6 +16,8 @@ A free, self-hosted personal finance app for tracking investments, institutions,
 
 [🌐 Visit the Website](https://lcarlini.github.io/WealthLedger/) · [Features](#-features) · [Quick Start](#-quick-start) · [Installation](#-installation) · [Backup & Restore](#-backup--restore) · [Documentation](#-documentation)
 
+**Implemented by Computer Engineer [Leandro Carlini Mingorance](https://lcarlini.github.io/lcarlini/)** · Reach out: [lcarlini.github.io/lcarlini](https://lcarlini.github.io/lcarlini/)
+
 </div>
 
 ---
@@ -389,5 +391,9 @@ See the full terms in **[LICENSE](LICENSE)**.
 Made for people who want a clear, private view of their money.
 
 <sub><strong>WealthLedger</strong> · Personal finance, clearly tracked · Free for personal use</sub>
+
+<br /><br />
+
+<sub>Implemented by Computer Engineer <strong><a href="https://lcarlini.github.io/lcarlini/">Leandro Carlini Mingorance</a></strong> · <a href="https://lcarlini.github.io/lcarlini/">Reach out</a></sub>
 
 </div>
