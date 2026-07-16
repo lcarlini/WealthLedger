@@ -90,6 +90,10 @@ import { ThemeService, ThemePreference } from './shared/services/theme.service';
             <mat-icon matListItemIcon>calculate</mat-icon>
             <span matListItemTitle>Calculator</span>
           </a>
+          <a mat-list-item routerLink="/about" routerLinkActive="active-link">
+            <mat-icon matListItemIcon>info</mat-icon>
+            <span matListItemTitle>About</span>
+          </a>
         </mat-nav-list>
         <footer class="app-credit">
           <a class="app-credit-site" href="https://lcarlini.github.io/WealthLedger/" target="_blank" rel="noopener noreferrer">
