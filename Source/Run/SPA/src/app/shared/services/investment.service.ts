@@ -5,6 +5,7 @@ import { ApiResponse } from '../../models/api-response';
 import { PagedResponse } from '../../models/paged-response';
 import { Investment, InvestmentRequest } from '../../models/investment';
 import { CsvImportResult } from '../../models/csv-import-result';
+import { RefreshPricesResult } from '../../models/refresh-prices-result';
 
 @Injectable({ providedIn: 'root' })
 export class InvestmentService {
@@ -91,5 +92,12 @@ export class InvestmentService {
 
   async delete(id: string): Promise<void> {
     await firstValueFrom(this.http.delete(`${this.baseUrl}/${id}`));
+  }
+
+  async refreshPrices(): Promise<RefreshPricesResult> {
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<RefreshPricesResult>>(`${this.baseUrl}/refresh-prices`, {})
+    );
+    return response.data ?? { updated: 0, skipped: 0, failed: 0, items: [] };
   }
 }

@@ -46,4 +46,28 @@
     background: color-mix(in srgb, var(--mat-sys-tertiary) 20%, transparent);
     color: var(--mat-sys-tertiary);
   }
+  &.type-stock {
+    background: color-mix(in srgb, #1565c0 16%, transparent);
+    color: #1565c0;
+  }
+  &.type-fii {
+    background: color-mix(in srgb, #2e7d32 16%, transparent);
+    color: #2e7d32;
+  }
+  &.type-etf {
+    background: color-mix(in srgb, #6a1b9a 16%, transparent);
+    color: #6a1b9a;
+  }
+  &.type-fund {
+    background: color-mix(in srgb, #00838f 16%, transparent);
+    color: #00838f;
+  }
+  &.type-bdr {
+    background: color-mix(in srgb, #ef6c00 16%, transparent);
+    color: #ef6c00;
+  }
+  &.type-crypto {
+    background: color-mix(in srgb, #5d4037 16%, transparent);
+    color: #5d4037;
+  }
 }

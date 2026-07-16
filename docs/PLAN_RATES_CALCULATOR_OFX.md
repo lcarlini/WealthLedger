@@ -28,6 +28,32 @@
 ## Implemented (this session)
 - **Market data**: Backend `MarketDataService` (BCB PTAX + Expectativas), cache 30min FX / 24h indices, dashboard widgets (USD, EUR, Selic, IPCA, Poupanca).
 - **Investments**: Currency (BRL/USD/EUR) + optional AnnualRatePercent for USD/EUR; list and form updated.
-- **Calculator**: Tab Yield (amount, rate, months, deduct IR/inflation), tab Poupança vs CDI vs Fixed, tab Patrimony projection with chart.
-- **Analytics**: Projected gains in 12 months per investment, below-inflation warning, optimization hints.
+- **Calculator**: Tab Yield (amount, rate, custom years, deduct IR/inflation), tab Poupança vs CDI vs Fixed, tab Patrimony projection with chart.
+- **Analytics**: Projected gains over a user-selected horizon from today (3 years by default), below-inflation warning, optimization hints.
 - **OFX**: Entities `StatementImport`, `BankTransaction`; OFX 2.x XML parser; POST/GET imports, GET transactions; frontend upload + list + expand to see transactions.
+
+## Later: Variable-income investments
+- **AccountType** extended with Stock, FII, ETF, InvestmentFund, BDR, Crypto.
+- Optional fields: Ticker, Quantity, AveragePrice; Amount remains current market value.
+- Yield projections (dashboard / analytics) treat variable-income as mark-to-market (no CDI/annual-rate compounding).
+- Existing cash / fixed-income types and CSV columns remain fully compatible.
+- **Live quotes**: `POST /api/investments/refresh-prices` uses brapi.dev (B3 equities/FIIs/ETFs/BDRs) and CoinGecko (crypto). Sets `Amount = Quantity × price` (FX via existing market data when needed). Optional `StockQuotes:BrapiToken` in appsettings for non-sandbox tickers.
+
+## Portfolio hub (competitor-inspired)
+Inspired by Kinvo / Status Invest / Empower / Sharesight-style workflows, adapted to WealthLedger’s local-first model:
+- Unrealized P&L from quantity × average price vs mark-to-market amount
+- Asset allocation (type / currency / institution) with rebalancing suggestions
+- Benchmark comparison (live CDI/IPCA/Poupança + illustrative Ibov/S&P)
+- Financial health score + portfolio score (diversification, risk, long-term fit)
+- Goals (net worth, emergency, retirement) with progress & projected amount
+- Investment calendar (maturities, monthly movements, passive income)
+- Passive income ledger (dividends, interest, JCP, FII yields)
+- Watchlist with optional price alerts (brapi/CoinGecko)
+- Net-worth snapshots + timeline chart
+- Full JSON export/import (`/api/portfolio/export-json`, `import-json`)
+
+## Investment comparison calculator (Calculator tab)
+- Side-by-side scenarios for Poupança, CDB, LCI, LCA, Tesouro, fixed term, stocks, FIIs, ETFs, mutual funds, BDRs, crypto.
+- Brazilian IR rules: regressive table for CDB/Tesouro; exemptions for LCI/LCA/Poupança; flat capital-gains rates for variable income.
+- Gross/net/real returns with optional fees, monthly contributions, and IPCA adjustment.
+- Any custom projection horizon in years (3 years by default), dynamically anchored to the current date, plus ranking, charts, and personalized tips.

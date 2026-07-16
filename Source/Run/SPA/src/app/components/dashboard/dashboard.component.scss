@@ -9,6 +9,18 @@
   }
 }
 
+.projection-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  mat-form-field {
+    width: 180px;
+  }
+}
+
 .loading-container {
   display: flex;
   justify-content: center;

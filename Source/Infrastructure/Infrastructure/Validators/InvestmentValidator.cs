@@ -30,6 +30,9 @@ public class InvestmentValidator : IPayloadValidator<InvestmentRequestBody>
         if (string.IsNullOrWhiteSpace(payload.Name))
             result.AddError(nameof(payload.Name), "Name is required.");
 
+        if (!Enum.IsDefined(payload.AccountType))
+            result.AddError(nameof(payload.AccountType), "Invalid account type.");
+
         if (payload.FinancialInstitutionId == Guid.Empty)
         {
             result.AddError(nameof(payload.FinancialInstitutionId), "Financial institution is required.");
@@ -41,6 +44,59 @@ public class InvestmentValidator : IPayloadValidator<InvestmentRequestBody>
                 result.AddError(nameof(payload.FinancialInstitutionId), "Financial institution not found.");
         }
 
+        if (payload.Amount < 0)
+            result.AddError(nameof(payload.Amount), "Amount must be zero or greater.");
+
+        var isVariableIncome = AccountTypeRules.IsVariableIncome(payload.AccountType);
+
+        if (isVariableIncome)
+        {
+            ValidateVariableIncome(payload, result);
+        }
+        else
+        {
+            ValidateFixedIncomeRates(payload, result);
+            ValidateFixedIncomeAccountRules(payload, existingInvestment, result);
+        }
+
+        if (payload.RequiresMonthlyMovement)
+        {
+            if (!AccountTypeRules.AllowsMonthlyMovement(payload.AccountType))
+                result.AddError(nameof(payload.RequiresMonthlyMovement), "Monthly movement is not allowed for this account type.");
+            else if (payload.MonthlyMovementAmount is null or <= 0)
+                result.AddError(nameof(payload.MonthlyMovementAmount), "Monthly movement amount is required and must be greater than 0.");
+        }
+
+        if (payload.Ticker is { Length: > 30 })
+            result.AddError(nameof(payload.Ticker), "Ticker cannot exceed 30 characters.");
+
+        if (payload.Quantity is < 0)
+            result.AddError(nameof(payload.Quantity), "Quantity cannot be negative.");
+
+        if (payload.AveragePrice is < 0)
+            result.AddError(nameof(payload.AveragePrice), "Average price cannot be negative.");
+
+        return result;
+    }
+
+    private static void ValidateVariableIncome(InvestmentRequestBody payload, ValidationResult result)
+    {
+        if (payload.MaturityDate != null)
+            result.AddError(nameof(payload.MaturityDate), "Maturity date is not allowed for variable-income investments.");
+
+        if (payload.RequiresMonthlyMovement)
+            result.AddError(nameof(payload.RequiresMonthlyMovement), "Monthly movement is not allowed for variable-income investments.");
+
+        // Mark-to-market: rates are unused; keep non-negative if supplied.
+        if (payload.CdiPercentage < 0)
+            result.AddError(nameof(payload.CdiPercentage), "CDI percentage cannot be negative.");
+
+        if (payload.AnnualRatePercent is < 0)
+            result.AddError(nameof(payload.AnnualRatePercent), "Annual rate cannot be negative.");
+    }
+
+    private static void ValidateFixedIncomeRates(InvestmentRequestBody payload, ValidationResult result)
+    {
         if (payload.Currency == Currency.BRL)
         {
             if (payload.CdiPercentage < 0)
@@ -53,10 +109,13 @@ public class InvestmentValidator : IPayloadValidator<InvestmentRequestBody>
             else if (payload.AnnualRatePercent < 0)
                 result.AddError(nameof(payload.AnnualRatePercent), "Annual rate cannot be negative.");
         }
+    }
 
-        if (payload.Amount < 0)
-            result.AddError(nameof(payload.Amount), "Amount must be zero or greater.");
-
+    private static void ValidateFixedIncomeAccountRules(
+        InvestmentRequestBody payload,
+        Investment? existingInvestment,
+        ValidationResult result)
+    {
         switch (payload.AccountType)
         {
             case AccountType.FixedTerm:
@@ -72,13 +131,5 @@ public class InvestmentValidator : IPayloadValidator<InvestmentRequestBody>
                     result.AddError(nameof(payload.MaturityDate), "Maturity date is not allowed for this account type.");
                 break;
         }
-
-        if (payload.RequiresMonthlyMovement)
-        {
-            if (payload.MonthlyMovementAmount is null or <= 0)
-                result.AddError(nameof(payload.MonthlyMovementAmount), "Monthly movement amount is required and must be greater than 0.");
-        }
-
-        return result;
     }
 }

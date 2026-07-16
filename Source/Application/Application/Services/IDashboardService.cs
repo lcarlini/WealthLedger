@@ -4,5 +4,5 @@ namespace WealthLedger.Application.Services;
 
 public interface IDashboardService
 {
-    Task<DashboardResponse> GetDashboardAsync();
+    Task<DashboardResponse> GetDashboardAsync(int projectionYears = 3);
 }

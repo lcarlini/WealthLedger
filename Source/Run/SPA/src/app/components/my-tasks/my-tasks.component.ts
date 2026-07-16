@@ -1,5 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +12,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 import { TaskItem, FutureTask } from '../../models/task-item';
 import { TaskService } from '../../shared/services/task.service';
@@ -21,9 +24,10 @@ import { TaskService } from '../../shared/services/task.service';
   imports: [
     CurrencyPipe,
     DatePipe,
+    FormsModule,
     MatTableModule, MatButtonModule, MatIconModule, MatCardModule,
     MatSnackBarModule, MatProgressSpinnerModule, MatChipsModule,
-    MatTooltipModule, MatTabsModule, MatBadgeModule,
+    MatTooltipModule, MatTabsModule, MatBadgeModule, MatFormFieldModule, MatInputModule,
   ],
   templateUrl: './my-tasks.component.html',
   styleUrl: './my-tasks.component.scss',
@@ -42,6 +46,7 @@ export class MyTasksComponent implements OnInit {
   loading = signal(false);
   loadingCompleted = signal(false);
   loadingFuture = signal(false);
+  futureProjectionYears = signal(3);
 
   private readonly monthNames = [
     'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
@@ -79,7 +84,9 @@ export class MyTasksComponent implements OnInit {
   async loadFuture(): Promise<void> {
     this.loadingFuture.set(true);
     try {
-      this.futureTasks.set(await this.taskService.getFuture(12));
+      const years = Math.max(1, Math.floor(this.futureProjectionYears() || 1));
+      this.futureProjectionYears.set(years);
+      this.futureTasks.set(await this.taskService.getFuture(years * 12));
     } catch {
       this.snackBar.open('Failed to load future tasks.', 'Close', { duration: 3000 });
     } finally {

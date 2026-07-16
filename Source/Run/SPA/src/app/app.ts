@@ -67,6 +67,10 @@ import { ThemeService, ThemePreference } from './shared/services/theme.service';
             <mat-icon matListItemIcon>savings</mat-icon>
             <span matListItemTitle>Investments</span>
           </a>
+          <a mat-list-item routerLink="/portfolio" routerLinkActive="active-link">
+            <mat-icon matListItemIcon>pie_chart</mat-icon>
+            <span matListItemTitle>Portfolio</span>
+          </a>
           <a mat-list-item routerLink="/my-tasks" routerLinkActive="active-link">
             <mat-icon matListItemIcon
                       [matBadge]="pendingTaskCount() > 0 ? pendingTaskCount() : null"

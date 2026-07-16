@@ -1,5 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { DecimalPipe, CurrencyPipe } from '@angular/common';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { DecimalPipe, CurrencyPipe, PercentPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
@@ -10,11 +10,25 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 
 import { MarketDataService } from '../../shared/services/market-data.service';
 import { DashboardService } from '../../shared/services/dashboard.service';
+import {
+  ComparisonGlobalSettings,
+  ComparisonProductLabels,
+  ComparisonProductType,
+  ComparisonRunResult,
+  ComparisonScenarioInput,
+  createDefaultScenario,
+  createStarterScenarios,
+} from '../../shared/calculators/investment-comparison.models';
+import { runComparison } from '../../shared/calculators/investment-comparison.engine';
 
 interface GainRow {
   month: number;
@@ -38,6 +52,8 @@ interface LoanRow {
     FormsModule,
     DecimalPipe,
     CurrencyPipe,
+    PercentPipe,
+    DatePipe,
     MatCardModule,
     MatIconModule,
     MatInputModule,
@@ -46,6 +62,10 @@ interface LoanRow {
     MatSlideToggleModule,
     MatTabsModule,
     MatProgressSpinnerModule,
+    MatSelectModule,
+    MatChipsModule,
+    MatTableModule,
+    MatTooltipModule,
     BaseChartDirective,
   ],
   templateUrl: './calculator.component.html',
@@ -61,7 +81,7 @@ export class CalculatorComponent implements OnInit {
   yieldForm = {
     initialAmount: 10000,
     ratePerYear: 12,
-    months: 12,
+    years: 3,
     deductIr: false,
     irRate: 22.5,
     deductInflation: false,
@@ -72,7 +92,7 @@ export class CalculatorComponent implements OnInit {
   // ── Comparison ──
   comparisonForm = {
     amount: 10000,
-    months: 12,
+    years: 3,
     poupancaRate: 8,
     cdiRate: 12,
     fixedRate: 11,
@@ -84,16 +104,16 @@ export class CalculatorComponent implements OnInit {
     initialAmount: 100000,
     monthlyContribution: 2000,
     ratePerYear: 11,
-    years: 10,
+    years: 3,
   };
-  patrimonyProjection = signal<{ year: number; value: number }[]>([]);
+  patrimonyProjection = signal<{ date: Date; label: string; value: number }[]>([]);
   patrimonyChartData = signal<ChartConfiguration<'line'>['data']>({ labels: [], datasets: [] });
 
   // ── Gain/Loss ──
   gainForm = {
     initialAmount: 10000,
     ratePerYear: 12,
-    months: 24,
+    years: 3,
   };
   gainRows = signal<GainRow[]>([]);
   gainYearlySummary = signal<{ year: number; valueAtEnd: number; yearGain: number }[]>([]);
@@ -114,6 +134,37 @@ export class CalculatorComponent implements OnInit {
   };
   emergencyResult = signal<{ targetAmount: number; currentInvestments: number; monthsCovered: number; gap: number } | null>(null);
 
+  // ── Investment comparison ──
+  readonly productTypes = Object.values(ComparisonProductType);
+  readonly productLabels = ComparisonProductLabels;
+  comparisonScenarios = signal<ComparisonScenarioInput[]>(createStarterScenarios());
+  comparisonSettings = signal<ComparisonGlobalSettings>({
+    years: 3,
+    cdiBasePercent: 12,
+    poupancaPercent: 8,
+    inflationPercent: 4.5,
+    deductTaxes: true,
+    deductFees: true,
+    adjustForInflation: true,
+  });
+  newScenarioProductType = ComparisonProductType.Cdb;
+  readonly ComparisonProductType = ComparisonProductType;
+  investmentComparisonResult = signal<ComparisonRunResult | null>(null);
+  comparisonRankBy = signal<'net' | 'real'>('real');
+  comparisonLineChart = signal<ChartConfiguration<'line'>['data']>({ labels: [], datasets: [] });
+  comparisonBarChart = signal<ChartConfiguration<'bar'>['data']>({ labels: [], datasets: [] });
+
+  rankedComparison = computed(() => {
+    const r = this.investmentComparisonResult();
+    if (!r) return [];
+    return this.comparisonRankBy() === 'real' ? r.rankedByRealGain : r.rankedByNetGain;
+  });
+  comparisonEndDate = computed(() => {
+    const today = new Date();
+    const years = Math.max(1, Math.floor(this.comparisonSettings().years || 1));
+    return new Date(today.getFullYear() + years, today.getMonth(), today.getDate());
+  });
+
   ngOnInit(): void {
     this.marketDataService.getMarketData().then((md) => {
       this.marketData.set({
@@ -123,7 +174,17 @@ export class CalculatorComponent implements OnInit {
       });
       if (md.selicPercentPerYear != null) this.comparisonForm.poupancaRate = md.poupancaPercentPerYear ?? 8;
       if (md.ipcaPercentPerYear != null) this.yieldForm.inflationPerYear = md.ipcaPercentPerYear;
-    }).catch(() => {});
+
+      this.comparisonSettings.update((s) => ({
+        ...s,
+        cdiBasePercent: md.selicPercentPerYear ?? s.cdiBasePercent,
+        poupancaPercent: md.poupancaPercentPerYear ?? s.poupancaPercent,
+        inflationPercent: md.ipcaPercentPerYear ?? s.inflationPercent,
+      }));
+      this.runInvestmentComparison();
+    }).catch(() => {
+      this.runInvestmentComparison();
+    });
 
     this.dashboardService.getDashboard().then((d) => {
       this.emergencyResult.update((r) => r ? { ...r, currentInvestments: d.totalAmount ?? 0 } : null);
@@ -138,20 +199,146 @@ export class CalculatorComponent implements OnInit {
     this.calcEmergency(0);
   }
 
+  // ── Investment comparison ──
+  addComparisonScenario(productType: ComparisonProductType = ComparisonProductType.Cdb): void {
+    const index = this.comparisonScenarios().length + 1;
+    this.comparisonScenarios.update((list) => [...list, createDefaultScenario(productType, index)]);
+    this.runInvestmentComparison();
+  }
+
+  removeComparisonScenario(id: string): void {
+    this.comparisonScenarios.update((list) => list.filter((s) => s.id !== id));
+    this.runInvestmentComparison();
+  }
+
+  updateComparisonScenario(id: string, patch: Partial<ComparisonScenarioInput>): void {
+    this.comparisonScenarios.update((list) =>
+      list.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    );
+    this.runInvestmentComparison();
+  }
+
+  onComparisonSettingsChange(): void {
+    this.runInvestmentComparison();
+  }
+
+  patchComparisonSettings(patch: Partial<ComparisonGlobalSettings>): void {
+    this.comparisonSettings.update((s) => ({ ...s, ...patch }));
+    this.runInvestmentComparison();
+  }
+
+  runInvestmentComparison(): void {
+    const scenarios = this.comparisonScenarios();
+    if (scenarios.length === 0) {
+      this.investmentComparisonResult.set(null);
+      this.comparisonLineChart.set({ labels: [], datasets: [] });
+      this.comparisonBarChart.set({ labels: [], datasets: [] });
+      return;
+    }
+
+    const result = runComparison(scenarios, this.comparisonSettings());
+    this.investmentComparisonResult.set(result);
+    this.buildComparisonCharts(result);
+  }
+
+  private buildComparisonCharts(result: ComparisonRunResult): void {
+    const palette = ['#1976d2', '#2e7d32', '#f57c00', '#7b1fa2', '#00838f', '#c62828', '#5d4037', '#455a64'];
+    const today = new Date();
+    const yearLabels = Array.from({ length: Math.ceil(result.months / 12) }, (_, i) => {
+      const date = new Date(today.getFullYear() + i + 1, today.getMonth(), today.getDate());
+      return date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+    });
+
+    this.comparisonLineChart.set({
+      labels: yearLabels,
+      datasets: result.scenarios.map((s, i) => ({
+        label: s.name,
+        data: yearLabels.map((_, yi) => {
+          const monthIndex = Math.min((yi + 1) * 12, result.months) - 1;
+          const pt = s.monthlyPoints[monthIndex];
+          return pt?.balance ?? 0;
+        }),
+        borderColor: palette[i % palette.length],
+        backgroundColor: palette[i % palette.length] + '33',
+        tension: 0.25,
+        fill: false,
+      })),
+    });
+
+    const ranked = this.comparisonRankBy() === 'real' ? result.rankedByRealGain : result.rankedByNetGain;
+    this.comparisonBarChart.set({
+      labels: ranked.map((s) => s.name),
+      datasets: [
+        {
+          label: 'Net final value',
+          data: ranked.map((s) => s.netFinal),
+          backgroundColor: ranked.map((_, i) => palette[i % palette.length] + 'cc'),
+        },
+        {
+          label: 'Real net final',
+          data: ranked.map((s) => s.realNetFinal),
+          backgroundColor: ranked.map((_, i) => palette[i % palette.length] + '66'),
+        },
+      ],
+    });
+  }
+
+  get comparisonLineOptions(): ChartConfiguration<'line'>['options'] {
+    return {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: { y: { beginAtZero: false } },
+      plugins: { legend: { position: 'bottom' } },
+    };
+  }
+
+  get comparisonBarOptions(): ChartConfiguration<'bar'>['options'] {
+    return {
+      responsive: true,
+      scales: { y: { beginAtZero: true } },
+      plugins: { legend: { position: 'bottom' } },
+    };
+  }
+
+  isCdiRateMode(scenario: ComparisonScenarioInput): boolean {
+    return scenario.rateMode === 'cdi';
+  }
+
+  isFixedRateMode(scenario: ComparisonScenarioInput): boolean {
+    return scenario.rateMode === 'fixed';
+  }
+
+  isPoupancaRateMode(scenario: ComparisonScenarioInput): boolean {
+    return scenario.rateMode === 'poupanca';
+  }
+
+  onProductTypeChange(scenario: ComparisonScenarioInput, productType: ComparisonProductType): void {
+    const defaults = createDefaultScenario(productType, 1);
+    this.updateComparisonScenario(scenario.id, {
+      productType,
+      name: defaults.name,
+      rateMode: defaults.rateMode,
+      annualRatePercent: defaults.annualRatePercent,
+      cdiPercent: defaults.cdiPercent,
+      adminFeePercentPerYear: defaults.adminFeePercentPerYear,
+      custodyFeePercentPerYear: defaults.custodyFeePercentPerYear,
+    });
+  }
+
   // ── Yield calculator ──
   calcYield(): void {
-    const { initialAmount, ratePerYear, months, deductIr, irRate, deductInflation, inflationPerYear } = this.yieldForm;
+    const { initialAmount, ratePerYear, years, deductIr, irRate, deductInflation, inflationPerYear } = this.yieldForm;
     const rateDecimal = ratePerYear / 100;
-    const monthsFraction = months / 12;
-    const gross = initialAmount * Math.pow(1 + rateDecimal, monthsFraction);
+    const durationYears = Math.max(0, years);
+    const gross = initialAmount * Math.pow(1 + rateDecimal, durationYears);
     let net = gross;
-    if (deductIr && months > 0) {
+    if (deductIr && durationYears > 0) {
       const gain = gross - initialAmount;
       net = initialAmount + gain * (1 - irRate / 100);
     }
     let netReal = net;
     if (deductInflation && inflationPerYear > 0) {
-      const inflationFactor = Math.pow(1 + inflationPerYear / 100, monthsFraction);
+      const inflationFactor = Math.pow(1 + inflationPerYear / 100, durationYears);
       netReal = net / inflationFactor;
     }
     this.yieldResult.set({ gross, net, netReal });
@@ -159,11 +346,11 @@ export class CalculatorComponent implements OnInit {
 
   // ── Comparison calculator ──
   calcComparison(): void {
-    const { amount, months, poupancaRate, cdiRate, fixedRate } = this.comparisonForm;
-    const n = months / 12;
-    const poupanca = amount * Math.pow(1 + poupancaRate / 100, n);
-    const cdi = amount * Math.pow(1 + cdiRate / 100, n);
-    const fixed = amount * Math.pow(1 + fixedRate / 100, n);
+    const { amount, years, poupancaRate, cdiRate, fixedRate } = this.comparisonForm;
+    const durationYears = Math.max(0, years);
+    const poupanca = amount * Math.pow(1 + poupancaRate / 100, durationYears);
+    const cdi = amount * Math.pow(1 + cdiRate / 100, durationYears);
+    const fixed = amount * Math.pow(1 + fixedRate / 100, durationYears);
     this.comparisonResult.set({ poupanca, cdi, fixed });
   }
 
@@ -171,18 +358,21 @@ export class CalculatorComponent implements OnInit {
   calcPatrimony(): void {
     const { initialAmount, monthlyContribution, ratePerYear, years } = this.patrimonyForm;
     const monthlyRate = ratePerYear / 100 / 12;
-    const points: { year: number; value: number }[] = [];
+    const today = new Date();
+    const durationYears = Math.max(1, Math.floor(years));
+    const points: { date: Date; label: string; value: number }[] = [];
     let v = initialAmount;
-    points.push({ year: 0, value: v });
-    for (let y = 1; y <= years; y++) {
+    points.push({ date: today, label: today.toLocaleDateString(undefined, { month: 'short', year: 'numeric' }), value: v });
+    for (let y = 1; y <= durationYears; y++) {
       for (let m = 0; m < 12; m++) {
         v = v * (1 + monthlyRate) + monthlyContribution;
       }
-      points.push({ year: y, value: v });
+      const date = new Date(today.getFullYear() + y, today.getMonth(), today.getDate());
+      points.push({ date, label: date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' }), value: v });
     }
     this.patrimonyProjection.set(points);
     this.patrimonyChartData.set({
-      labels: points.map((p) => p.year.toString()),
+      labels: points.map((p) => p.label),
       datasets: [{
         label: 'Projected patrimony',
         data: points.map((p) => p.value),
@@ -205,7 +395,8 @@ export class CalculatorComponent implements OnInit {
 
   // ── Gain/Loss calculator ──
   calcGain(): void {
-    const { initialAmount, ratePerYear, months } = this.gainForm;
+    const { initialAmount, ratePerYear, years } = this.gainForm;
+    const months = Math.max(1, Math.round(years * 12));
     const monthlyRate = Math.pow(1 + ratePerYear / 100, 1 / 12) - 1;
     const rows: GainRow[] = [];
     let value = initialAmount;

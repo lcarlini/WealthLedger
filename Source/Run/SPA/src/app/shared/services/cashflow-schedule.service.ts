@@ -46,7 +46,7 @@ export class CashFlowScheduleService {
     await firstValueFrom(this.http.delete(`${this.base}/${id}`));
   }
 
-  async getSimulation(fromYear: number, fromMonth: number, monthCount = 12, startingBalance = 0): Promise<SimulationMatrixResponse> {
+  async getSimulation(fromYear: number, fromMonth: number, monthCount = 36, startingBalance = 0): Promise<SimulationMatrixResponse> {
     const params = new HttpParams()
       .set('fromYear', fromYear)
       .set('fromMonth', fromMonth)
@@ -86,7 +86,7 @@ export class CashFlowScheduleService {
     return res.data;
   }
 
-  getExportCsvUrl(fromYear: number, fromMonth: number, monthCount = 12, startingBalance = 0): string {
+  getExportCsvUrl(fromYear: number, fromMonth: number, monthCount = 36, startingBalance = 0): string {
     const params = new HttpParams()
       .set('fromYear', fromYear)
       .set('fromMonth', fromMonth)

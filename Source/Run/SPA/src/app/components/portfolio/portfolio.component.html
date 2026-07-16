@@ -1,0 +1,429 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1>Portfolio</h1>
+      <p class="subtitle">
+        P&amp;L, allocation, benchmarks, goals, calendar, passive income, health scores — from today through
+        {{ projectionEndDate() | date:'mediumDate' }}
+      </p>
+    </div>
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="years-field">
+        <mat-label>Projection years</mat-label>
+        <input matInput type="number" min="1" [ngModel]="projectionYears()"
+               (ngModelChange)="setProjectionYears($event)">
+      </mat-form-field>
+      <button mat-stroked-button type="button" (click)="captureSnapshot()">
+        <mat-icon>photo_camera</mat-icon>
+        Snapshot
+      </button>
+      <a mat-stroked-button [href]="exportJsonUrl" download target="_blank" rel="noopener">
+        <mat-icon>download</mat-icon>
+        Export JSON
+      </a>
+      <input type="file" #jsonInput accept=".json,application/json" hidden (change)="onImportJson($event)">
+      <button mat-stroked-button type="button" (click)="jsonInput.click()">
+        <mat-icon>upload</mat-icon>
+        Import JSON
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-wrap"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else if (overview(); as o) {
+    <div class="score-row">
+      <mat-card class="score-card">
+        <mat-card-content>
+          <div class="score-value">{{ o.health.score }}</div>
+          <div class="score-label">Financial health · {{ o.health.grade }}</div>
+          <mat-progress-bar mode="determinate" [value]="o.health.score"></mat-progress-bar>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="score-card">
+        <mat-card-content>
+          <div class="score-value">{{ o.portfolioScore.score }}</div>
+          <div class="score-label">Portfolio score · {{ o.portfolioScore.grade }}</div>
+          <mat-progress-bar mode="determinate" [value]="o.portfolioScore.score" color="accent"></mat-progress-bar>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="summary-mini">
+        <mat-card-content>
+          <div class="mini-label">Net worth</div>
+          <div class="mini-value">{{ o.totalNetWorthBrl | currency:'BRL':'symbol':'1.0-0' }}</div>
+          <div class="mini-sub"
+               [class.gain]="o.unrealizedGainBrl >= 0"
+               [class.loss]="o.unrealizedGainBrl < 0">
+            Unrealized {{ o.unrealizedGainBrl | currency:'BRL':'symbol':'1.0-0' }}
+            ({{ o.unrealizedGainPercent / 100 | percent:'1.1-1' }})
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="summary-mini">
+        <mat-card-content>
+          <div class="mini-label">Passive income YTD</div>
+          <div class="mini-value">{{ o.realizedPassiveIncomeYtdBrl | currency:'BRL':'symbol':'1.0-0' }}</div>
+          <div class="mini-sub">All-time {{ o.realizedPassiveIncomeBrl | currency:'BRL':'symbol':'1.0-0' }}</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <mat-tab-group>
+      <mat-tab label="Overview">
+        <div class="tab-body">
+          <div class="charts-grid">
+            <mat-card>
+              <mat-card-header><mat-card-title>Allocation by type</mat-card-title></mat-card-header>
+              <mat-card-content class="chart-box">
+                <canvas baseChart type="doughnut" [data]="allocationChart()" [options]="doughnutOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+            <mat-card>
+              <mat-card-header><mat-card-title>Net worth timeline</mat-card-title></mat-card-header>
+              <mat-card-content class="chart-box">
+                @if (o.timeline.length === 0) {
+                  <p class="hint">Capture snapshots to build your historical net-worth chart.</p>
+                } @else {
+                  <canvas baseChart type="line" [data]="timelineChart()" [options]="lineOptions"></canvas>
+                }
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <mat-card class="section-card">
+            <mat-card-header><mat-card-title>Holdings P&amp;L</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th><th>Type</th><th>Market value</th><th>Cost basis</th><th>Unrealized</th><th>%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (h of o.holdings; track h.investmentId) {
+                      <tr>
+                        <td>
+                          <div>{{ h.name }}</div>
+                          @if (h.ticker) { <div class="muted">{{ h.ticker }}</div> }
+                        </td>
+                        <td>{{ h.accountType }}</td>
+                        <td>{{ h.marketValueBrl | currency:'BRL':'symbol':'1.0-0' }}</td>
+                        <td>{{ h.costBasisBrl != null ? (h.costBasisBrl | currency:'BRL':'symbol':'1.0-0') : '—' }}</td>
+                        <td [class.gain]="(h.unrealizedGainBrl ?? 0) >= 0"
+                            [class.loss]="(h.unrealizedGainBrl ?? 0) < 0">
+                          {{ h.unrealizedGainBrl != null ? (h.unrealizedGainBrl | currency:'BRL':'symbol':'1.0-0') : '—' }}
+                        </td>
+                        <td [class.gain]="(h.unrealizedGainPercent ?? 0) >= 0"
+                            [class.loss]="(h.unrealizedGainPercent ?? 0) < 0">
+                          {{ h.unrealizedGainPercent != null ? (h.unrealizedGainPercent / 100 | percent:'1.1-1') : '—' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="section-card">
+            <mat-card-header><mat-card-title>Insights &amp; rebalancing</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <ul class="tips">
+                @for (tip of o.insights; track tip) { <li>{{ tip }}</li> }
+              </ul>
+              @if (o.rebalanceSuggestions.length) {
+                <div class="chips">
+                  @for (r of o.rebalanceSuggestions; track r.category) {
+                    <mat-chip>{{ r.action }} {{ r.category }} ({{ r.currentPercent }}% → {{ r.targetPercent }}%)</mat-chip>
+                  }
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Benchmarks">
+        <div class="tab-body">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Portfolio vs benchmarks</mat-card-title>
+              <mat-card-subtitle>
+                Estimated deterministic yield vs CDI/IPCA/Poupança (live) and illustrative equity benchmarks.
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="chart-box wide">
+                <canvas baseChart type="bar" [data]="benchmarkChart()" [options]="barOptions"></canvas>
+              </div>
+              <table class="data-table">
+                <thead>
+                  <tr><th>Benchmark</th><th>Rate</th><th>Portfolio</th><th>Diff</th><th>Result</th></tr>
+                </thead>
+                <tbody>
+                  @for (b of o.benchmarks; track b.code) {
+                    <tr>
+                      <td>{{ b.name }}</td>
+                      <td>{{ b.annualRatePercent | number:'1.2-2' }}%</td>
+                      <td>{{ b.portfolioEstimatedAnnualPercent | number:'1.2-2' }}%</td>
+                      <td [class.gain]="b.differencePercent >= 0" [class.loss]="b.differencePercent < 0">
+                        {{ b.differencePercent | number:'1.2-2' }}pp
+                      </td>
+                      <td>{{ b.portfolioBeats ? 'Beats' : 'Trails' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Goals">
+        <div class="tab-body">
+          <mat-card>
+            <mat-card-header><mat-card-title>Add goal</mat-card-title></mat-card-header>
+            <mat-card-content class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput [(ngModel)]="goalForm.name">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Type</mat-label>
+                <mat-select [(ngModel)]="goalForm.goalType">
+                  @for (t of goalTypes; track t) {
+                    <mat-option [value]="t">{{ goalLabels[t] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Target (R$)</mat-label>
+                <input matInput type="number" [(ngModel)]="goalForm.targetAmount">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Current (R$)</mat-label>
+                <input matInput type="number" [(ngModel)]="goalForm.currentAmount">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Target date</mat-label>
+                <input matInput type="date" [(ngModel)]="goalForm.targetDate">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Monthly contribution</mat-label>
+                <input matInput type="number" [(ngModel)]="goalForm.monthlyContribution">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Expected return % a.a.</mat-label>
+                <input matInput type="number" [(ngModel)]="goalForm.expectedAnnualReturnPercent">
+              </mat-form-field>
+              <button mat-raised-button color="primary" type="button" (click)="addGoal()">Add goal</button>
+            </mat-card-content>
+          </mat-card>
+
+          @for (g of goals(); track g.id) {
+            <mat-card class="section-card">
+              <mat-card-content>
+                <div class="goal-row">
+                  <div>
+                    <strong>{{ g.name }}</strong>
+                    <div class="muted">{{ goalLabels[g.goalType] }}</div>
+                  </div>
+                  <button mat-icon-button color="warn" type="button" (click)="deleteGoal(g.id)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+                <mat-progress-bar mode="determinate" [value]="g.progressPercent"></mat-progress-bar>
+                <div class="goal-meta">
+                  {{ g.currentAmount | currency:'BRL':'symbol':'1.0-0' }}
+                  / {{ g.targetAmount | currency:'BRL':'symbol':'1.0-0' }}
+                  ({{ g.progressPercent / 100 | percent:'1.0-0' }})
+                  @if (g.onTrack != null) {
+                    · {{ g.onTrack ? 'On track' : 'Behind' }}
+                  }
+                  @if (g.projectedAmountAtTarget != null) {
+                    · Projected {{ g.projectedAmountAtTarget | currency:'BRL':'symbol':'1.0-0' }}
+                  }
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Calendar">
+        <div class="tab-body">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Investment calendar</mat-card-title>
+              <mat-card-subtitle>Maturities, monthly movements, and recorded passive income</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <table class="data-table">
+                <thead>
+                  <tr><th>Date</th><th>Event</th><th>Type</th><th>Amount</th></tr>
+                </thead>
+                <tbody>
+                  @for (e of o.calendar; track e.date + e.title) {
+                    <tr>
+                      <td>{{ e.date | date:'mediumDate' }}</td>
+                      <td>{{ e.title }}</td>
+                      <td>{{ e.eventType }}</td>
+                      <td>{{ e.amount != null ? (e.amount | currency:(e.currency || 'BRL'):'symbol':'1.2-2') : '—' }}</td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="4">No upcoming events in this horizon.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Passive income">
+        <div class="tab-body">
+          <mat-card>
+            <mat-card-header><mat-card-title>Record dividend / interest</mat-card-title></mat-card-header>
+            <mat-card-content class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput [(ngModel)]="passiveForm.name" placeholder="e.g. PETR4 dividend">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Type</mat-label>
+                <mat-select [(ngModel)]="passiveForm.incomeType">
+                  @for (t of passiveTypes; track t) {
+                    <mat-option [value]="t">{{ passiveLabels[t] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Amount</mat-label>
+                <input matInput type="number" [(ngModel)]="passiveForm.amount">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Payment date</mat-label>
+                <input matInput type="date" [(ngModel)]="passiveForm.paymentDate">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Linked investment</mat-label>
+                <mat-select [(ngModel)]="passiveForm.investmentId">
+                  <mat-option value="">None</mat-option>
+                  @for (i of investments(); track i.id) {
+                    <mat-option [value]="i.id">{{ i.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button mat-raised-button color="primary" type="button" (click)="addPassive()">Save</button>
+            </mat-card-content>
+          </mat-card>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Date</th><th>Name</th><th>Type</th><th>Amount</th><th></th></tr>
+            </thead>
+            <tbody>
+              @for (p of passiveIncomes(); track p.id) {
+                <tr>
+                  <td>{{ p.paymentDate | date:'mediumDate' }}</td>
+                  <td>{{ p.name }}</td>
+                  <td>{{ passiveLabels[p.incomeType] }}</td>
+                  <td>{{ p.amount | currency:'BRL':'symbol':'1.2-2' }}</td>
+                  <td>
+                    <button mat-icon-button color="warn" type="button" (click)="deletePassive(p.id)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Watchlist">
+        <div class="tab-body">
+          <mat-card>
+            <mat-card-header><mat-card-title>Add ticker</mat-card-title></mat-card-header>
+            <mat-card-content class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Ticker</mat-label>
+                <input matInput [(ngModel)]="watchForm.ticker">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput [(ngModel)]="watchForm.name">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Type</mat-label>
+                <mat-select [(ngModel)]="watchForm.accountType">
+                  @for (t of accountTypes; track t) {
+                    <mat-option [value]="t">{{ accountTypeLabels[t] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Alert above</mat-label>
+                <input matInput type="number" [(ngModel)]="watchForm.alertAbove">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Alert below</mat-label>
+                <input matInput type="number" [(ngModel)]="watchForm.alertBelow">
+              </mat-form-field>
+              <button mat-raised-button color="primary" type="button" (click)="addWatch()">Add</button>
+            </mat-card-content>
+          </mat-card>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Ticker</th><th>Name</th><th>Last</th><th>Alert</th><th></th></tr>
+            </thead>
+            <tbody>
+              @for (w of watchlist(); track w.id) {
+                <tr [class.alert-row]="w.alertTriggered">
+                  <td>{{ w.ticker }}</td>
+                  <td>{{ w.name }}</td>
+                  <td>{{ w.lastPrice != null ? (w.lastPrice | number:'1.2-2') : '—' }} {{ w.lastPriceCurrency || '' }}</td>
+                  <td>{{ w.alertMessage || '—' }}</td>
+                  <td>
+                    <button mat-icon-button color="warn" type="button" (click)="deleteWatch(w.id)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Scores">
+        <div class="tab-body two-col">
+          <mat-card>
+            <mat-card-header><mat-card-title>Financial health breakdown</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <div class="metric"><span>Liquidity</span><strong>{{ o.health.liquidityScore }}</strong></div>
+              <div class="metric"><span>Diversification</span><strong>{{ o.health.diversificationScore }}</strong></div>
+              <div class="metric"><span>Inflation hedge</span><strong>{{ o.health.inflationHedgeScore }}</strong></div>
+              <div class="metric"><span>Emergency coverage</span><strong>{{ o.health.emergencyCoverageScore }}</strong></div>
+              <div class="metric"><span>Goal progress</span><strong>{{ o.health.goalProgressScore }}</strong></div>
+              <ul class="tips">@for (n of o.health.notes; track n) { <li>{{ n }}</li> }</ul>
+            </mat-card-content>
+          </mat-card>
+          <mat-card>
+            <mat-card-header><mat-card-title>Portfolio score breakdown</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <div class="metric"><span>Diversification</span><strong>{{ o.portfolioScore.diversificationScore }}</strong></div>
+              <div class="metric"><span>Risk balance</span><strong>{{ o.portfolioScore.riskScore }}</strong></div>
+              <div class="metric"><span>Long-term fit</span><strong>{{ o.portfolioScore.longTermFitScore }}</strong></div>
+              <div class="metric"><span>Top holding</span><strong>{{ o.portfolioScore.concentrationTopHoldingPercent }}%</strong></div>
+              <div class="metric"><span>Asset classes</span><strong>{{ o.portfolioScore.distinctAssetClasses }}</strong></div>
+              <ul class="tips">@for (n of o.portfolioScore.notes; track n) { <li>{{ n }}</li> }</ul>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

@@ -49,7 +49,7 @@ public class TaskService : ITaskService
             .OrderByDescending(t => t.CompletedDate);
     }
 
-    public async Task<IEnumerable<FutureTaskResponse>> GetFutureTasksAsync(int monthsAhead = 12)
+    public async Task<IEnumerable<FutureTaskResponse>> GetFutureTasksAsync(int monthsAhead = 36)
     {
         await EnsureScheduledTasksAsync();
         var now = DateTime.UtcNow;

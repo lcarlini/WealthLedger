@@ -19,5 +19,16 @@ public class MappingProfile : Profile
 
         CreateMap<CashFlowScheduleItemRequestBody, CashFlowScheduleItem>();
         CreateMap<CashFlowScheduleItem, CashFlowScheduleItemResponse>();
+
+        CreateMap<PassiveIncomeRequestBody, PassiveIncome>();
+        CreateMap<PassiveIncome, PassiveIncomeResponse>();
+
+        CreateMap<InvestmentGoalRequestBody, InvestmentGoal>();
+        CreateMap<InvestmentGoal, InvestmentGoalResponse>();
+
+        CreateMap<WatchlistItemRequestBody, WatchlistItem>();
+        CreateMap<WatchlistItem, WatchlistItemResponse>();
+
+        CreateMap<PortfolioSnapshot, PortfolioSnapshotResponse>();
     }
 }

@@ -18,8 +18,9 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<Response<DashboardResponse>> GetAsync()
+    public async Task<Response<DashboardResponse>> GetAsync([FromQuery] int projectionYears = 3)
     {
-        return await _dashboardService.GetDashboardAsync();
+        projectionYears = Math.Clamp(projectionYears, 1, 100);
+        return await _dashboardService.GetDashboardAsync(projectionYears);
     }
 }

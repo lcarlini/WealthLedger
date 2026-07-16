@@ -40,6 +40,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<WealthLedgerDbContext>();
     db.Database.EnsureCreated();
+    await SqliteSchemaMigrator.ApplyAsync(db, logger);
 }
 
 if (app.Environment.IsDevelopment())

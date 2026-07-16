@@ -1,8 +1,11 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 
@@ -13,7 +16,7 @@ import { InvestmentService } from '../../shared/services/investment.service';
 import { DashboardResponse } from '../../models/dashboard';
 import { MarketDataResponse } from '../../models/market-data';
 import { SimulationMatrixResponse } from '../../models/cashflow-schedule';
-import { Investment, Currency } from '../../models/investment';
+import { Investment, Currency, hasDeterministicYield } from '../../models/investment';
 
 interface InvestmentGainRow {
   name: string;
@@ -30,9 +33,13 @@ interface InvestmentGainRow {
   standalone: true,
   imports: [
     CurrencyPipe,
+    DatePipe,
+    FormsModule,
     MatCardModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatFormFieldModule,
+    MatInputModule,
     BaseChartDirective,
   ],
   templateUrl: './dashboard.component.html',
@@ -47,6 +54,13 @@ export class DashboardComponent implements OnInit {
   loading = signal(true);
   data = signal<DashboardResponse | null>(null);
   marketData = signal<MarketDataResponse | null>(null);
+  projectionYears = signal(3);
+  projectionEndDate = computed(() => {
+    const today = new Date();
+    return new Date(today.getFullYear() + this.projectionYears(), today.getMonth(), today.getDate());
+  });
+  private latestInvestments: Investment[] = [];
+  private latestRates: MarketDataResponse | null = null;
 
   // Doughnut chart (investments by type)
   chartData = signal<ChartConfiguration<'doughnut'>['data']>({
@@ -97,19 +111,24 @@ export class DashboardComponent implements OnInit {
     this.loading.set(true);
     try {
       const [result, rates, investments] = await Promise.all([
-        this.dashboardService.getDashboard(),
+        this.dashboardService.getDashboard(this.projectionYears()),
         this.marketDataService.getMarketData().catch(() => null),
         this.investmentService.getAll().catch(() => [] as Investment[]),
       ]);
       this.data.set(result);
       this.marketData.set(rates ?? null);
+      this.latestInvestments = investments;
+      this.latestRates = rates ?? null;
 
       if (result.investmentsByType.length > 0) {
         this.chartData.set({
           labels: result.investmentsByType.map(i => i.accountType),
           datasets: [{
             data: result.investmentsByType.map(i => i.totalAmount),
-            backgroundColor: ['#42A5F5', '#66BB6A', '#FFA726', '#AB47BC', '#EF5350'],
+            backgroundColor: [
+              '#42A5F5', '#66BB6A', '#FFA726', '#AB47BC', '#EF5350',
+              '#26A69A', '#7E57C2', '#8D6E63', '#5C6BC0',
+            ],
           }],
         });
       }
@@ -124,9 +143,25 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  setProjectionYears(value: number): void {
+    const years = Math.max(1, Math.floor(Number(value) || 1));
+    this.projectionYears.set(years);
+    this.buildInvestmentGainTable(this.latestInvestments, this.latestRates);
+    const totalAmount = this.data()?.totalAmount ?? 0;
+    void this.loadProjectionData(totalAmount);
+  }
+
+  private async loadProjectionData(startingBalance: number): Promise<void> {
+    const [dashboard] = await Promise.all([
+      this.dashboardService.getDashboard(this.projectionYears()),
+      this.loadSimulationCharts(startingBalance),
+    ]);
+    this.data.set(dashboard);
+  }
+
   private buildInvestmentGainTable(investments: Investment[], marketData?: MarketDataResponse | null): void {
     const now = new Date();
-    const months = 12;
+    const months = this.projectionYears() * 12;
     const labels: string[] = [];
     for (let i = 0; i < months; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
@@ -143,9 +178,11 @@ export class DashboardComponent implements OnInit {
       const isBRL = inv.currency === Currency.BRL;
       const isUSD = inv.currency === Currency.USD;
       const isEUR = inv.currency === Currency.EUR;
-      const annualRatePercent = isBRL
-        ? (selicPercentPerYear * (inv.cdiPercentage / 100))
-        : (inv.annualRatePercent ?? 0);
+      const annualRatePercent = !hasDeterministicYield(inv.accountType)
+        ? 0
+        : isBRL
+          ? (selicPercentPerYear * (inv.cdiPercentage / 100))
+          : (inv.annualRatePercent ?? 0);
       const monthlyRate = annualRatePercent === 0 ? 0 : Math.pow(1 + annualRatePercent / 100, 1 / 12) - 1;
       const monthlyGains: number[] = [];
       let balance = inv.amount;
@@ -193,7 +230,7 @@ export class DashboardComponent implements OnInit {
     try {
       const now = new Date();
       const sim = await this.cashFlowService.getSimulation(
-        now.getFullYear(), now.getMonth() + 1, 12, startingBalance
+        now.getFullYear(), now.getMonth() + 1, this.projectionYears() * 12, startingBalance
       );
       this.buildCharts(sim);
     } catch {

@@ -28,8 +28,10 @@ public class DashboardService : IDashboardService
         _marketDataService = marketDataService;
     }
 
-    public async Task<DashboardResponse> GetDashboardAsync()
+    public async Task<DashboardResponse> GetDashboardAsync(int projectionYears = 3)
     {
+        projectionYears = Math.Clamp(projectionYears, 1, 100);
+        var projectionMonths = projectionYears * 12;
         var institutions = (await _institutionRepository.GetAllAsync()).ToList();
         var investments = (await _investmentRepository.GetAllAsync()).ToList();
         var pendingCount = await _taskService.GetPendingCountAsync();
@@ -71,11 +73,11 @@ public class DashboardService : IDashboardService
         var nextMonthYear = nextMonthDate.Year;
         var nextMonth = nextMonthDate.Month;
 
-        decimal plannedDebitsNext12Months = 0;
-        for (var i = 0; i < 12; i++)
+        decimal plannedDebitsProjection = 0;
+        for (var i = 0; i < projectionMonths; i++)
         {
             var date = nextMonthDate.AddMonths(i);
-            plannedDebitsNext12Months += scheduleItems
+            plannedDebitsProjection += scheduleItems
                 .Where(item => debitTypes.Contains(item.ItemType) && IsItemActiveInMonth(item, date.Year, date.Month))
                 .Sum(item => Math.Abs(item.AmountPerMonth));
         }
@@ -93,7 +95,8 @@ public class DashboardService : IDashboardService
             InstitutionCount = institutions.Count,
             InvestmentCount = investments.Count,
             TotalAmount = investments.Sum(ToBrl),
-            PlannedDebitsNext12Months = plannedDebitsNext12Months,
+            PlannedDebitsProjection = plannedDebitsProjection,
+            ProjectionYears = projectionYears,
             DebitsNextMonth = debitsNextMonth,
             FutureCardDebits = futureCardDebits,
             InvestmentsByType = byType,

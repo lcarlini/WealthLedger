@@ -11,7 +11,8 @@
 
 -- Enum reference (stored as INTEGER in SQLite):
 --
--- AccountType:     1 = CheckingAccount, 2 = SavingsBox, 3 = FixedTerm
+-- AccountType:     1 = CheckingAccount, 2 = SavingsBox, 3 = FixedTerm,
+--                  4 = Stock, 5 = FII, 6 = ETF, 7 = InvestmentFund, 8 = BDR, 9 = Crypto
 -- Currency:        1 = BRL, 2 = USD, 3 = EUR
 -- StatementSource: 1 = Card, 2 = Checking
 -- CashFlowItemType: 1 = Income, 2 = Expense, 3 = Debt, 4 = CardInstallment
@@ -30,7 +31,7 @@ CREATE TABLE IF NOT EXISTS Investments (
     Id                      TEXT PRIMARY KEY NOT NULL,
     FinancialInstitutionId  TEXT NOT NULL,
     Name                    TEXT NOT NULL,
-    AccountType             INTEGER NOT NULL,  -- 1=CheckingAccount, 2=SavingsBox, 3=FixedTerm
+    AccountType             INTEGER NOT NULL,  -- 1-3 cash/fixed income; 4-9 variable income
     Currency                INTEGER NOT NULL DEFAULT 1,  -- 1=BRL, 2=USD, 3=EUR
     Amount                  REAL NOT NULL DEFAULT 0,
     CdiPercentage           REAL NOT NULL DEFAULT 0,
@@ -38,6 +39,9 @@ CREATE TABLE IF NOT EXISTS Investments (
     MaturityDate            TEXT,
     RequiresMonthlyMovement INTEGER NOT NULL DEFAULT 0,  -- 0=false, 1=true
     MonthlyMovementAmount   REAL,
+    Ticker                  TEXT,   -- optional; variable-income symbol (e.g. PETR4)
+    Quantity                REAL,   -- optional; shares / quotas / units
+    AveragePrice            REAL,   -- optional; average acquisition price per unit
     CreatedDate             TEXT NOT NULL,
     UpdatedDate             TEXT NOT NULL,
     FOREIGN KEY (FinancialInstitutionId) REFERENCES FinancialInstitutions(Id)
@@ -97,6 +101,65 @@ CREATE TABLE IF NOT EXISTS CashFlowScheduleItems (
     FOREIGN KEY (BankTransactionId) REFERENCES BankTransactions(Id)
 );
 
+-- PassiveIncomeType: 1=Dividend, 2=Interest, 3=Jcp, 4=FiiYield, 5=Other
+-- GoalType: 1=NetWorth, 2=EmergencyFund, 3=Retirement, 4=Custom
+
+CREATE TABLE IF NOT EXISTS PassiveIncomes (
+    Id              TEXT PRIMARY KEY NOT NULL,
+    InvestmentId    TEXT,
+    Name            TEXT NOT NULL,
+    IncomeType      INTEGER NOT NULL,
+    Currency        INTEGER NOT NULL DEFAULT 1,
+    Amount          REAL NOT NULL DEFAULT 0,
+    PaymentDate     TEXT NOT NULL,
+    Notes           TEXT,
+    CreatedDate     TEXT NOT NULL,
+    UpdatedDate     TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS InvestmentGoals (
+    Id                              TEXT PRIMARY KEY NOT NULL,
+    Name                            TEXT NOT NULL,
+    GoalType                        INTEGER NOT NULL,
+    Currency                        INTEGER NOT NULL DEFAULT 1,
+    TargetAmount                    REAL NOT NULL DEFAULT 0,
+    CurrentAmount                   REAL NOT NULL DEFAULT 0,
+    TargetDate                      TEXT,
+    MonthlyContribution             REAL,
+    ExpectedAnnualReturnPercent     REAL,
+    Notes                           TEXT,
+    IsCompleted                     INTEGER NOT NULL DEFAULT 0,
+    CreatedDate                     TEXT NOT NULL,
+    UpdatedDate                     TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS PortfolioSnapshots (
+    Id                      TEXT PRIMARY KEY NOT NULL,
+    SnapshotDate            TEXT NOT NULL,
+    TotalAmountBrl          REAL NOT NULL DEFAULT 0,
+    CashAmountBrl           REAL NOT NULL DEFAULT 0,
+    FixedIncomeAmountBrl    REAL NOT NULL DEFAULT 0,
+    VariableIncomeAmountBrl REAL NOT NULL DEFAULT 0,
+    UnrealizedGainBrl       REAL NOT NULL DEFAULT 0,
+    InvestmentCount         INTEGER NOT NULL DEFAULT 0,
+    Notes                   TEXT,
+    CreatedDate             TEXT NOT NULL,
+    UpdatedDate             TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS WatchlistItems (
+    Id              TEXT PRIMARY KEY NOT NULL,
+    Ticker          TEXT NOT NULL,
+    Name            TEXT NOT NULL,
+    AccountType     INTEGER NOT NULL,
+    TargetPrice     REAL,
+    AlertAbove      REAL,
+    AlertBelow      REAL,
+    Notes           TEXT,
+    CreatedDate     TEXT NOT NULL,
+    UpdatedDate     TEXT NOT NULL
+);
+
 -- Useful indexes for common queries
 CREATE INDEX IF NOT EXISTS IX_Investments_FinancialInstitutionId ON Investments(FinancialInstitutionId);
 CREATE INDEX IF NOT EXISTS IX_TaskItems_InvestmentId ON TaskItems(InvestmentId);
@@ -104,3 +167,5 @@ CREATE INDEX IF NOT EXISTS IX_TaskItems_DueYearMonth ON TaskItems(DueYear, DueMo
 CREATE INDEX IF NOT EXISTS IX_BankTransactions_StatementImportId ON BankTransactions(StatementImportId);
 CREATE INDEX IF NOT EXISTS IX_BankTransactions_Date ON BankTransactions(Date);
 CREATE INDEX IF NOT EXISTS IX_CashFlowScheduleItems_StartYearMonth ON CashFlowScheduleItems(StartYear, StartMonth);
+CREATE INDEX IF NOT EXISTS IX_PassiveIncomes_PaymentDate ON PassiveIncomes(PaymentDate);
+CREATE INDEX IF NOT EXISTS IX_PortfolioSnapshots_SnapshotDate ON PortfolioSnapshots(SnapshotDate);

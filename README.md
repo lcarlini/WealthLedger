@@ -66,14 +66,15 @@ WealthLedger is designed to be **private by default**:
 
 | Area | Highlights |
 |------|-----------|
-| **Dashboard** | Total net worth, live market widgets (USD, EUR, BTC, Selic, IPCA…), investment & patrimony charts, 12-month gains |
+| **Dashboard** | Total net worth, live market widgets (USD, EUR, BTC, Selic, IPCA…), investment & patrimony charts with custom projections from today (3 years by default) |
 | **Institutions** | Full CRUD with pagination, search, CSV import/export |
-| **Investments** | Multi-currency accounts, CDI-linked or fixed rates, maturity tracking, CSV import/export |
-| **My Tasks** | Auto-generated tasks from investment rules (maturities, monthly movements) with a pending-count badge |
-| **Control (Cash Flow)** | Multi-month simulation matrix, manual income/expense/debt items, card installment planning |
+| **Investments** | Cash & fixed-income (CDI / fixed rates, maturity) plus variable-income (stocks, FIIs, ETFs, funds, BDRs, crypto) with ticker/quantity tracking; live **Refresh prices** via brapi.dev (B3) and CoinGecko (crypto); CSV import/export |
+| **Portfolio** | Unrealized P&L, allocation charts, CDI/IPCA/Poupança (+ illustrative) benchmarks, rebalancing hints, financial health & portfolio scores, goals, investment calendar, passive income, watchlist alerts, net-worth snapshots, JSON export/import |
+| **My Tasks** | Auto-generated tasks from investment rules with a custom future horizon from today (3 years by default) |
+| **Control (Cash Flow)** | Custom-year simulation from the current month (3 years by default), manual income/expense/debt items, card installment planning |
 | **Import OFX** | Upload bank & credit-card statements (OFX 2.x), auto-categorization, transaction browsing |
 | **Analytics** | Spending by category, below-inflation warnings, optimization hints, and **browser-local AI insights** |
-| **Calculator** | Yield, gain/loss, loan (Price table), emergency-fund planner, savings vs. fixed-rate comparisons |
+| **Calculator** | Yield, gain/loss, loan (Price table), emergency-fund planner, savings vs. fixed-rate comparisons, **multi-investment comparison** (taxes, fees, inflation, charts) |
 
 ---
 
@@ -240,6 +241,9 @@ The backend reads a single connection string from `Source/Run/WebApp/appsettings
 {
   "ConnectionStrings": {
     "Default": "Data Source=wealthledger.db"
+  },
+  "StockQuotes": {
+    "BrapiToken": ""
   }
 }
 ```
@@ -247,6 +251,7 @@ The backend reads a single connection string from `Source/Run/WebApp/appsettings
 | Key | Description |
 |-----|-------------|
 | `ConnectionStrings:Default` | SQLite file name or path. Relative paths resolve next to `WealthLedger.WebApp.dll`. |
+| `StockQuotes:BrapiToken` | Optional [brapi.dev](https://brapi.dev) API token for B3 quotes beyond the public sandbox tickers. Leave empty to use the free sandbox (PETR4, VALE3, MGLU3, ITUB4 work without a token). |
 
 The SQLite path is logged on startup. The Angular dev proxy (`Source/Run/SPA/proxy.conf.json`) forwards `/api` to `http://localhost:5000`.
 
@@ -282,8 +287,8 @@ Remove-Item ./publish/wealthledger.db-wal, ./publish/wealthledger.db-shm -ErrorA
 | Item | Value |
 |------|-------|
 | Engine | SQLite (via EF Core) |
-| Schema | Created automatically on startup (`EnsureCreated()`) |
-| Tables | `FinancialInstitutions`, `Investments`, `TaskItems`, `StatementImports`, `BankTransactions`, `CashFlowScheduleItems`, `IncomeProfiles`, `ExtraIncomes`, `BusinessDayOverrides` |
+| Schema | Created automatically on startup (`EnsureCreated()` + lightweight column upgrades) |
+| Tables | `FinancialInstitutions`, `Investments`, `TaskItems`, `StatementImports`, `BankTransactions`, `CashFlowScheduleItems`, `IncomeProfiles`, `ExtraIncomes`, `BusinessDayOverrides`, `PassiveIncomes`, `InvestmentGoals`, `PortfolioSnapshots`, `WatchlistItems` |
 | Manual schema | `scripts/create_tables.sql` (optional) |
 
 Database files (`*.db`, `*.db-shm`, `*.db-wal`) are git-ignored and never committed.
@@ -339,7 +344,7 @@ All JSON endpoints return a wrapped `Response<T>` with `data` and `errors`. Base
 | Dashboard | `/api/dashboard` | `GET /` |
 | Market data | `/api/market-data` | `GET /` |
 | Institutions | `/api/financial-institutions` | CRUD, `/export-csv`, `/import-csv`, `/import-csv-template` |
-| Investments | `/api/investments` | CRUD, `/by-institution/{id}` |
+| Investments | `/api/investments` | CRUD, `/by-institution/{id}`, `POST /refresh-prices` |
 | Tasks | `/api/tasks` | `/pending`, `/completed`, `/future`, `/{id}/complete`, `/pending-count` |
 | OFX Import | `/api/import` | `POST /ofx?source=`, `GET /ofx`, `GET /ofx/{id}/transactions`, `DELETE /ofx/{id}` |
 | Cash Flow | `/api/cashflow-schedule` | CRUD, `/simulation`, `/proposed-card-installments`, `/from-card/*`, `/export-csv` |

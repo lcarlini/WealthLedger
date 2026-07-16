@@ -16,6 +16,15 @@
 
 .loading-container { display: flex; justify-content: center; padding: 32px; }
 .full-width { width: 100%; }
+.future-period {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  mat-form-field { width: 180px; }
+}
 .status-column { width: 48px; }
 .actions-column { width: 120px; text-align: center; }
 .no-data-row td { text-align: center; padding: 32px; color: #757575; }

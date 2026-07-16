@@ -14,12 +14,13 @@ export interface AiInsightPayload {
     amount: number;
     currency: string;
     rateLabel: string;
-    gainIn12m?: number;
+    projectedGain?: number;
     belowInflation?: boolean;
   }>;
   cardCategories: Array<{ category: string; totalAmount: number }>;
   checkingCategories: Array<{ category: string; totalAmount: number }>;
   projectedGainBrl?: number;
+  projectionYears?: number;
   ipca?: number | null;
   selic?: number | null;
 }
@@ -233,7 +234,9 @@ export class BrowserAiService {
             .slice(0, 20)
             .map((i) => {
               const gain =
-                i.gainIn12m != null ? `; 12m gain: ${i.gainIn12m.toFixed(2)}` : '';
+                i.projectedGain != null
+                  ? `; ${payload.projectionYears ?? 3}y projected gain: ${i.projectedGain.toFixed(2)}`
+                  : '';
               const warn = i.belowInflation ? '; below inflation' : '';
               return `- ${i.name}: ${i.amount.toFixed(2)} ${i.currency} (${i.rateLabel}${gain}${warn})`;
             })
@@ -265,7 +268,7 @@ export class BrowserAiService {
 
     const projected =
       payload.projectedGainBrl != null
-        ? `Projected 12-month gain (BRL investments): R$ ${payload.projectedGainBrl.toFixed(2)}`
+        ? `Projected ${payload.projectionYears ?? 3}-year gain (BRL investments): R$ ${payload.projectedGainBrl.toFixed(2)}`
         : '';
 
     const rates = [

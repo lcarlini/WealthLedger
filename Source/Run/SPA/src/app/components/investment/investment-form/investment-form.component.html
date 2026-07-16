@@ -29,7 +29,8 @@
 
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Name</mat-label>
-            <input matInput formControlName="name" placeholder="e.g. Nu Turbo, Conta Corrente">
+            <input matInput formControlName="name"
+                   [placeholder]="isVariableIncomeType() ? 'e.g. Petrobras ON, IVVB11' : 'e.g. Nu Turbo, Conta Corrente'">
             @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
               <mat-error>Name is required.</mat-error>
             }
@@ -38,9 +39,20 @@
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Account Type</mat-label>
             <mat-select formControlName="accountType">
-              @for (type of accountTypes; track type.value) {
-                <mat-option [value]="type.value">{{ type.label }}</mat-option>
-              }
+              <mat-optgroup label="Cash / Fixed income">
+                @for (type of accountTypes; track type.value) {
+                  @if (type.group === 'Cash / Fixed income') {
+                    <mat-option [value]="type.value">{{ type.label }}</mat-option>
+                  }
+                }
+              </mat-optgroup>
+              <mat-optgroup label="Variable income">
+                @for (type of accountTypes; track type.value) {
+                  @if (type.group === 'Variable income') {
+                    <mat-option [value]="type.value">{{ type.label }}</mat-option>
+                  }
+                }
+              </mat-optgroup>
             </mat-select>
           </mat-form-field>
 
@@ -53,37 +65,73 @@
             </mat-select>
           </mat-form-field>
 
-          <div class="row-fields">
-            <mat-form-field appearance="outline" class="half-width">
-              <mat-label>Amount</mat-label>
-              <input matInput type="number" formControlName="amount"
-                     [readonly]="isEdit() && isFixedTerm()"
-                     [placeholder]="isForeignCurrency() ? 'In local currency' : 'R$'">
-              @if (form.get('amount')?.hasError('min')) {
-                <mat-error>Amount must be zero or greater.</mat-error>
+          @if (isVariableIncomeType()) {
+            <div class="row-fields">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Ticker</mat-label>
+                <input matInput formControlName="ticker" placeholder="e.g. PETR4, HGLG11, BTC">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Quantity</mat-label>
+                <input matInput type="number" formControlName="quantity" placeholder="Shares / quotas / units">
+                @if (form.get('quantity')?.hasError('min')) {
+                  <mat-error>Quantity cannot be negative.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="row-fields">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Average price</mat-label>
+                <input matInput type="number" formControlName="averagePrice" placeholder="Cost basis per unit">
+                @if (form.get('averagePrice')?.hasError('min')) {
+                  <mat-error>Average price cannot be negative.</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Current market value</mat-label>
+                <input matInput type="number" formControlName="amount"
+                       [placeholder]="isForeignCurrency() ? 'In local currency' : 'R$'">
+                @if (form.get('amount')?.hasError('min')) {
+                  <mat-error>Amount must be zero or greater.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+          } @else {
+            <div class="row-fields">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Amount</mat-label>
+                <input matInput type="number" formControlName="amount"
+                       [readonly]="isEdit() && isFixedTermType()"
+                       [placeholder]="isForeignCurrency() ? 'In local currency' : 'R$'">
+                @if (form.get('amount')?.hasError('min')) {
+                  <mat-error>Amount must be zero or greater.</mat-error>
+                }
+              </mat-form-field>
+
+              @if (isForeignCurrency()) {
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Annual Rate (%)</mat-label>
+                  <input matInput type="number" formControlName="annualRatePercent" placeholder="e.g. 4 or 0 for no yield">
+                  @if (form.get('annualRatePercent')?.hasError('min')) {
+                    <mat-error>Annual rate cannot be negative.</mat-error>
+                  }
+                </mat-form-field>
+              } @else {
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>CDI % (0 = no yield)</mat-label>
+                  <input matInput type="number" formControlName="cdiPercentage" placeholder="e.g. 100 or 0">
+                  @if (form.get('cdiPercentage')?.hasError('min')) {
+                    <mat-error>CDI % cannot be negative.</mat-error>
+                  }
+                </mat-form-field>
               }
-            </mat-form-field>
+            </div>
+          }
 
-            @if (isForeignCurrency()) {
-              <mat-form-field appearance="outline" class="half-width">
-                <mat-label>Annual Rate (%)</mat-label>
-                <input matInput type="number" formControlName="annualRatePercent" placeholder="e.g. 4 or 0 for no yield">
-                @if (form.get('annualRatePercent')?.hasError('min')) {
-                  <mat-error>Annual rate cannot be negative.</mat-error>
-                }
-              </mat-form-field>
-            } @else {
-              <mat-form-field appearance="outline" class="half-width">
-                <mat-label>CDI % (0 = no yield)</mat-label>
-                <input matInput type="number" formControlName="cdiPercentage" placeholder="e.g. 100 or 0">
-                @if (form.get('cdiPercentage')?.hasError('min')) {
-                  <mat-error>CDI % cannot be negative.</mat-error>
-                }
-              </mat-form-field>
-            }
-          </div>
-
-          @if (isFixedTerm()) {
+          @if (isFixedTermType()) {
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Maturity Date</mat-label>
               <input matInput [matDatepicker]="picker" formControlName="maturityDate">
@@ -92,7 +140,7 @@
             </mat-form-field>
           }
 
-          @if (!isFixedTerm()) {
+          @if (!isFixedTermType() && !isVariableIncomeType()) {
             <mat-slide-toggle formControlName="requiresMonthlyMovement" class="toggle-field">
               Requires monthly movement
             </mat-slide-toggle>

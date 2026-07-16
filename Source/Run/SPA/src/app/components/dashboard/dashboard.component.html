@@ -1,5 +1,14 @@
 <div class="page-container">
   <h1>Dashboard</h1>
+  <div class="projection-controls">
+    <mat-form-field appearance="outline">
+      <mat-label>Projection years</mat-label>
+      <input matInput type="number" min="1" step="1"
+             [ngModel]="projectionYears()"
+             (ngModelChange)="setProjectionYears($event)">
+    </mat-form-field>
+    <span>From today through {{ projectionEndDate() | date:'mediumDate' }}</span>
+  </div>
 
   @if (loading()) {
     <div class="loading-container">
@@ -34,8 +43,8 @@
       <mat-card class="summary-card">
         <mat-card-content>
           <mat-icon class="card-icon debt">credit_card</mat-icon>
-          <div class="card-value">{{ d.plannedDebitsNext12Months | currency:'BRL':'symbol':'1.2-2' }}</div>
-          <div class="card-label">Planned Debits (next 12 months)</div>
+          <div class="card-value">{{ d.plannedDebitsProjection | currency:'BRL':'symbol':'1.2-2' }}</div>
+          <div class="card-label">Planned Debits (next {{ d.projectionYears }} years)</div>
         </mat-card-content>
       </mat-card>
 
@@ -135,7 +144,7 @@
         <mat-card-header>
           <mat-card-title>
             <mat-icon class="gain-header-icon">trending_up</mat-icon>
-            Monthly Investment Gains (12 months)
+            Monthly Investment Gains ({{ projectionYears() }} years)
           </mat-card-title>
           <mat-card-subtitle>Projected monthly gain for each investment, separated by item</mat-card-subtitle>
         </mat-card-header>
@@ -149,7 +158,7 @@
                   @for (label of gainMonthLabels(); track label) {
                     <th class="col-month">{{ label }}</th>
                   }
-                  <th class="col-total">Total 12m</th>
+                  <th class="col-total">Total {{ projectionYears() }}y</th>
                 </tr>
               </thead>
               <tbody>
@@ -198,7 +207,7 @@
 
         <mat-card class="chart-card">
           <mat-card-header>
-            <mat-card-title>Patrimony Growth (12m)</mat-card-title>
+            <mat-card-title>Patrimony Growth ({{ projectionYears() }} years)</mat-card-title>
           </mat-card-header>
           <mat-card-content class="chart-container">
             <canvas baseChart type="line" [data]="patrimonyChartData()" [options]="lineChartOptions"></canvas>

@@ -7,7 +7,7 @@ public interface ITaskService
 {
     Task<IEnumerable<TaskItem>> GetPendingTasksAsync();
     Task<IEnumerable<TaskItem>> GetCompletedTasksAsync();
-    Task<IEnumerable<FutureTaskResponse>> GetFutureTasksAsync(int monthsAhead = 12);
+    Task<IEnumerable<FutureTaskResponse>> GetFutureTasksAsync(int monthsAhead = 36);
     Task<TaskItem?> CompleteTaskAsync(Guid taskId);
     Task EnsureMonthlyTasksAsync();
     Task EnsureMaturityTasksAsync();

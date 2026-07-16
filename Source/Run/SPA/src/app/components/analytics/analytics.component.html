@@ -54,6 +54,19 @@
 
   <mat-tab-group>
     <mat-tab label="Investments">
+      <mat-card class="projection-settings-card">
+        <mat-card-content>
+          <mat-form-field appearance="outline">
+            <mat-label>Projection years</mat-label>
+            <input matInput type="number" min="1" step="1"
+                   [ngModel]="projectionYears()"
+                   (ngModelChange)="setProjectionYears($event)">
+          </mat-form-field>
+          <span>
+            From today through {{ projectionEndDate() | date:'mediumDate' }}
+          </span>
+        </mat-card-content>
+      </mat-card>
       @if (loading()) {
         <div class="loading-wrap">
           <mat-spinner diameter="40"></mat-spinner>
@@ -69,7 +82,9 @@
         } @else {
           <mat-card class="summary-card">
             <mat-card-content>
-              <span class="summary-label">Total projected gain in 12 months (BRL investments)</span>
+              <span class="summary-label">
+                Total projected gain over {{ projectionYears() }} years (BRL investments)
+              </span>
               <span class="summary-value">{{ totalProjectedGainBrl() | currency:'BRL':'symbol':'1.2-2' }}</span>
             </mat-card-content>
           </mat-card>
@@ -96,12 +111,12 @@
                     <span class="value">{{ p.rateLabel }}</span>
                   </div>
                   <div class="row highlight">
-                    <span class="label">Projected in 12 months:</span>
-                    <span class="value">{{ p.projectedIn12m | currency:(p.currency === 'BRL' ? 'BRL' : 'USD'):'symbol':'1.2-2' }}</span>
+                    <span class="label">Projected by {{ projectionEndDate() | date:'mediumDate' }}:</span>
+                    <span class="value">{{ p.projectedValue | currency:(p.currency === 'BRL' ? 'BRL' : 'USD'):'symbol':'1.2-2' }}</span>
                   </div>
                   <div class="row">
                     <span class="label">Gain:</span>
-                    <span class="value gain">+{{ p.gainIn12m | currency:(p.currency === 'BRL' ? 'BRL' : 'USD'):'symbol':'1.2-2' }}</span>
+                    <span class="value gain">+{{ p.projectedGain | currency:(p.currency === 'BRL' ? 'BRL' : 'USD'):'symbol':'1.2-2' }}</span>
                   </div>
                   @if (p.optimizationHint) {
                     <div class="hint">{{ p.optimizationHint }}</div>

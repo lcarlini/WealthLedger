@@ -1,6 +1,3 @@
-// TODO: SQLLITE - This DbContext is used when switching from InMemory to SQLite.
-// It is referenced in Services.cs and Program.cs (both commented out by default).
-
 using WealthLedger.Contracts.Domain;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +16,10 @@ public class WealthLedgerDbContext : DbContext
     public DbSet<IncomeProfile> IncomeProfiles => Set<IncomeProfile>();
     public DbSet<ExtraIncome> ExtraIncomes => Set<ExtraIncome>();
     public DbSet<BusinessDayOverride> BusinessDayOverrides => Set<BusinessDayOverride>();
+    public DbSet<PassiveIncome> PassiveIncomes => Set<PassiveIncome>();
+    public DbSet<InvestmentGoal> InvestmentGoals => Set<InvestmentGoal>();
+    public DbSet<PortfolioSnapshot> PortfolioSnapshots => Set<PortfolioSnapshot>();
+    public DbSet<WatchlistItem> WatchlistItems => Set<WatchlistItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +43,9 @@ public class WealthLedgerDbContext : DbContext
             e.Property(x => x.CdiPercentage).HasColumnType("REAL");
             e.Property(x => x.AnnualRatePercent).HasColumnType("REAL");
             e.Property(x => x.MonthlyMovementAmount).HasColumnType("REAL");
+            e.Property(x => x.Ticker).HasMaxLength(30);
+            e.Property(x => x.Quantity).HasColumnType("REAL");
+            e.Property(x => x.AveragePrice).HasColumnType("REAL");
         });
 
         modelBuilder.Entity<TaskItem>(e =>
@@ -101,6 +105,52 @@ public class WealthLedgerDbContext : DbContext
             e.ToTable("BusinessDayOverrides");
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.Year, x.Month }).IsUnique();
+        });
+
+        modelBuilder.Entity<PassiveIncome>(e =>
+        {
+            e.ToTable("PassiveIncomes");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Amount).HasColumnType("REAL");
+            e.Property(x => x.Notes).HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<InvestmentGoal>(e =>
+        {
+            e.ToTable("InvestmentGoals");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            e.Property(x => x.TargetAmount).HasColumnType("REAL");
+            e.Property(x => x.CurrentAmount).HasColumnType("REAL");
+            e.Property(x => x.MonthlyContribution).HasColumnType("REAL");
+            e.Property(x => x.ExpectedAnnualReturnPercent).HasColumnType("REAL");
+            e.Property(x => x.Notes).HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<PortfolioSnapshot>(e =>
+        {
+            e.ToTable("PortfolioSnapshots");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.TotalAmountBrl).HasColumnType("REAL");
+            e.Property(x => x.CashAmountBrl).HasColumnType("REAL");
+            e.Property(x => x.FixedIncomeAmountBrl).HasColumnType("REAL");
+            e.Property(x => x.VariableIncomeAmountBrl).HasColumnType("REAL");
+            e.Property(x => x.UnrealizedGainBrl).HasColumnType("REAL");
+            e.Property(x => x.Notes).HasMaxLength(500);
+            e.HasIndex(x => x.SnapshotDate);
+        });
+
+        modelBuilder.Entity<WatchlistItem>(e =>
+        {
+            e.ToTable("WatchlistItems");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Ticker).IsRequired().HasMaxLength(30);
+            e.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            e.Property(x => x.TargetPrice).HasColumnType("REAL");
+            e.Property(x => x.AlertAbove).HasColumnType("REAL");
+            e.Property(x => x.AlertBelow).HasColumnType("REAL");
+            e.Property(x => x.Notes).HasMaxLength(500);
         });
     }
 }

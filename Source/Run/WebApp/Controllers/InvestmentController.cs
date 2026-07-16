@@ -46,7 +46,8 @@ public class InvestmentController
             .Append("Name").Append(sep).Append("AccountType").Append(sep).Append("Currency").Append(sep)
             .Append("Amount").Append(sep).Append("CdiPercentage").Append(sep).Append("AnnualRatePercent").Append(sep)
             .Append("MaturityDate").Append(sep).Append("RequiresMonthlyMovement").Append(sep)
-            .Append("MonthlyMovementAmount").Append(sep).Append("CreatedDate").Append(sep).Append("UpdatedDate")
+            .Append("MonthlyMovementAmount").Append(sep).Append("Ticker").Append(sep).Append("Quantity").Append(sep)
+            .Append("AveragePrice").Append(sep).Append("CreatedDate").Append(sep).Append("UpdatedDate")
             .AppendLine();
         foreach (var r in items)
         {
@@ -66,6 +67,13 @@ public class InvestmentController
                 .Append(r.MonthlyMovementAmount.HasValue
                     ? r.MonthlyMovementAmount.Value.ToString("F2", CultureInfo.InvariantCulture)
                     : "").Append(sep)
+                .Append(EscapeCsv(r.Ticker)).Append(sep)
+                .Append(r.Quantity.HasValue
+                    ? r.Quantity.Value.ToString("G29", CultureInfo.InvariantCulture)
+                    : "").Append(sep)
+                .Append(r.AveragePrice.HasValue
+                    ? r.AveragePrice.Value.ToString("F6", CultureInfo.InvariantCulture)
+                    : "").Append(sep)
                 .Append(EscapeCsv(r.CreatedDate.ToString("o", CultureInfo.InvariantCulture))).Append(sep)
                 .Append(EscapeCsv(r.UpdatedDate.ToString("o", CultureInfo.InvariantCulture)))
                 .AppendLine();
@@ -79,7 +87,7 @@ public class InvestmentController
     public IActionResult ImportCsvTemplate()
     {
         const string header =
-            "Id,FinancialInstitutionId,InstitutionName,Name,AccountType,Currency,Amount,CdiPercentage,AnnualRatePercent,MaturityDate,RequiresMonthlyMovement,MonthlyMovementAmount,CreatedDate,UpdatedDate\r\n";
+            "Id,FinancialInstitutionId,InstitutionName,Name,AccountType,Currency,Amount,CdiPercentage,AnnualRatePercent,MaturityDate,RequiresMonthlyMovement,MonthlyMovementAmount,Ticker,Quantity,AveragePrice,CreatedDate,UpdatedDate\r\n";
         return File(Encoding.UTF8.GetBytes(header), "text/csv", "investments-template.csv");
     }
 
@@ -196,6 +204,17 @@ public class InvestmentController
         var mapped = Mapper.Map<IEnumerable<InvestmentResponse>>(result);
         var responses = await EnrichResponses(mapped);
         return new Response<IEnumerable<InvestmentResponse>>(responses);
+    }
+
+    /// <summary>
+    /// Fetches live quotes (brapi for B3, CoinGecko for crypto) and updates
+    /// Amount = Quantity × price for variable-income holdings that have both set.
+    /// </summary>
+    [HttpPost("refresh-prices")]
+    public async Task<Response<RefreshPricesResult>> RefreshPricesAsync(CancellationToken cancellationToken)
+    {
+        var result = await _investmentService.RefreshPricesAsync(cancellationToken);
+        return new Response<RefreshPricesResult>(result);
     }
 
     public override async Task<Response<InvestmentResponse>> CreateAsync([FromBody] InvestmentRequestBody body)
@@ -412,6 +431,43 @@ public class InvestmentController
         {
             error = "Invalid MonthlyMovementAmount.";
             return null;
+        }
+
+        var tickerText = CsvRowHelper.GetCell(cells, "Ticker");
+        body.Ticker = string.IsNullOrWhiteSpace(tickerText) ? null : tickerText.Trim();
+
+        var qtyText = CsvRowHelper.GetCell(cells, "Quantity");
+        if (string.IsNullOrWhiteSpace(qtyText))
+            body.Quantity = null;
+        else if (decimal.TryParse(qtyText, NumberStyles.Any, CultureInfo.InvariantCulture, out var qty))
+            body.Quantity = qty;
+        else
+        {
+            error = "Invalid Quantity.";
+            return null;
+        }
+
+        var avgText = CsvRowHelper.GetCell(cells, "AveragePrice");
+        if (string.IsNullOrWhiteSpace(avgText))
+            body.AveragePrice = null;
+        else if (decimal.TryParse(avgText, NumberStyles.Any, CultureInfo.InvariantCulture, out var avg))
+            body.AveragePrice = avg;
+        else
+        {
+            error = "Invalid AveragePrice.";
+            return null;
+        }
+
+        // Older CSVs without variable-income columns remain valid; normalize unused yield fields.
+        if (AccountTypeRules.IsVariableIncome(body.AccountType))
+        {
+            body.MaturityDate = null;
+            body.RequiresMonthlyMovement = false;
+            body.MonthlyMovementAmount = null;
+            if (body.Currency == Currency.BRL)
+                body.CdiPercentage = 0;
+            else
+                body.AnnualRatePercent ??= 0;
         }
 
         return body;

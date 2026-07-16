@@ -70,7 +70,8 @@ export class ControlComponent implements OnInit {
 
   fromYear = signal(new Date().getFullYear());
   fromMonth = signal(new Date().getMonth() + 1);
-  monthCount = signal(12);
+  projectionYears = signal(3);
+  monthCount = computed(() => this.projectionYears() * 12);
   startingBalance = signal(0);
 
   // ── Income ──
@@ -241,6 +242,10 @@ export class ControlComponent implements OnInit {
   }
 
   applyPeriod(): void {
+    const today = new Date();
+    this.fromYear.set(today.getFullYear());
+    this.fromMonth.set(today.getMonth() + 1);
+    this.projectionYears.set(Math.max(1, Math.floor(this.projectionYears() || 1)));
     this.loadSimulation();
     this.loadIncomePreview();
   }

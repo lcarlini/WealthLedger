@@ -1,5 +1,6 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,11 +10,13 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 
-import { Investment, Currency } from '../../models/investment';
+import { Investment, Currency, hasDeterministicYield, isVariableIncome } from '../../models/investment';
 import { InvestmentService } from '../../shared/services/investment.service';
 import { MarketDataService } from '../../shared/services/market-data.service';
 import { AnalyticsService, SpendingSummaryResponse } from '../../shared/services/analytics.service';
@@ -27,8 +30,8 @@ interface ProjectionRow {
   currency: string;
   rateLabel: string;
   effectiveAnnualRatePercent: number;
-  projectedIn12m: number;
-  gainIn12m: number;
+  projectedValue: number;
+  projectedGain: number;
   belowInflation: boolean;
   optimizationHint?: string;
 }
@@ -38,6 +41,8 @@ interface ProjectionRow {
   standalone: true,
   imports: [
     CurrencyPipe,
+    DatePipe,
+    FormsModule,
     MatCardModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -46,6 +51,8 @@ interface ProjectionRow {
     MatTooltipModule,
     MatTabsModule,
     MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
     MatSnackBarModule,
     BaseChartDirective,
   ],
@@ -70,7 +77,17 @@ export class AnalyticsComponent implements OnInit {
   investments = signal<Investment[]>([]);
   ipcaPerYear = signal<number | null>(null);
   selicPerYear = signal<number | null>(null);
-  projections = computed(() => this.buildProjections(this.investments(), this.ipcaPerYear(), this.selicPerYear()));
+  projectionYears = signal(3);
+  projectionEndDate = computed(() => {
+    const today = new Date();
+    return new Date(today.getFullYear() + this.normalizedProjectionYears(), today.getMonth(), today.getDate());
+  });
+  projections = computed(() => this.buildProjections(
+    this.investments(),
+    this.ipcaPerYear(),
+    this.selicPerYear(),
+    this.normalizedProjectionYears(),
+  ));
 
   // ── Spending ──
   cardSpending = signal<SpendingSummaryResponse | null>(null);
@@ -130,18 +147,41 @@ export class AnalyticsComponent implements OnInit {
     }
   }
 
-  private buildProjections(investments: Investment[], ipca: number | null, selic: number | null): ProjectionRow[] {
+  private buildProjections(
+    investments: Investment[],
+    ipca: number | null,
+    selic: number | null,
+    years: number,
+  ): ProjectionRow[] {
     const rows: ProjectionRow[] = [];
     const cdiBasePercentPerYear = selic ?? 10;
     for (const i of investments) {
+      if (isVariableIncome(i.accountType) || !hasDeterministicYield(i.accountType)) {
+        rows.push({
+          name: i.name,
+          institutionName: i.institutionName,
+          amount: i.amount,
+          currency: i.currency === Currency.BRL ? 'BRL' : i.currency === Currency.USD ? 'USD' : 'EUR',
+          rateLabel: 'Market',
+          effectiveAnnualRatePercent: 0,
+          projectedValue: i.amount,
+          projectedGain: 0,
+          belowInflation: false,
+          optimizationHint: i.ticker
+            ? `${i.ticker}: mark-to-market — update current value as prices change.`
+            : 'Mark-to-market — update current value as prices change.',
+        });
+        continue;
+      }
+
       const rateLabel = i.currency === Currency.USD || i.currency === Currency.EUR
         ? `${i.annualRatePercent}% a.a.`
         : `${i.cdiPercentage}% CDI`;
       const effectiveAnnualRatePercent = i.currency === Currency.BRL
         ? cdiBasePercentPerYear * (i.cdiPercentage / 100)
         : (i.annualRatePercent ?? 0);
-      const projectedIn12m = i.amount * Math.pow(1 + effectiveAnnualRatePercent / 100, 1);
-      const gainIn12m = projectedIn12m - i.amount;
+      const projectedValue = i.amount * Math.pow(1 + effectiveAnnualRatePercent / 100, years);
+      const projectedGain = projectedValue - i.amount;
       const belowInflation = ipca != null && effectiveAnnualRatePercent < ipca;
       let optimizationHint: string | undefined;
       if (belowInflation && ipca != null)
@@ -156,20 +196,28 @@ export class AnalyticsComponent implements OnInit {
         currency: i.currency === Currency.BRL ? 'BRL' : i.currency === Currency.USD ? 'USD' : 'EUR',
         rateLabel,
         effectiveAnnualRatePercent,
-        projectedIn12m,
-        gainIn12m,
+        projectedValue,
+        projectedGain,
         belowInflation: !!belowInflation,
         optimizationHint,
       });
     }
-    return rows.sort((a, b) => b.gainIn12m - a.gainIn12m);
+    return rows.sort((a, b) => b.projectedGain - a.projectedGain);
   }
 
   totalProjectedGainBrl = computed(() =>
     this.projections()
       .filter((p) => p.currency === 'BRL')
-      .reduce((sum, p) => sum + p.gainIn12m, 0)
+      .reduce((sum, p) => sum + p.projectedGain, 0)
   );
+
+  setProjectionYears(value: number): void {
+    this.projectionYears.set(Math.max(1, Math.floor(Number(value) || 1)));
+  }
+
+  private normalizedProjectionYears(): number {
+    return Math.max(1, Math.floor(this.projectionYears() || 1));
+  }
 
   // ── Card Spending ──
   async loadCardSpending(): Promise<void> {
@@ -240,7 +288,7 @@ export class AnalyticsComponent implements OnInit {
         amount: p.amount,
         currency: p.currency,
         rateLabel: p.rateLabel,
-        gainIn12m: p.gainIn12m,
+        projectedGain: p.projectedGain,
         belowInflation: p.belowInflation,
       })),
       cardCategories: (card?.byCategory ?? []).map((c) => ({
@@ -252,6 +300,7 @@ export class AnalyticsComponent implements OnInit {
         totalAmount: c.totalAmount,
       })),
       projectedGainBrl: this.totalProjectedGainBrl(),
+      projectionYears: this.normalizedProjectionYears(),
       ipca: this.ipcaPerYear(),
       selic: this.selicPerYear(),
     };

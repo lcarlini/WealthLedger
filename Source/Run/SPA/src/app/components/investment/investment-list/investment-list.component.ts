@@ -18,7 +18,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSelectModule } from '@angular/material/select';
 
-import { Investment, AccountType, AccountTypeLabels, Currency, CurrencyLabels } from '../../../models/investment';
+import { Investment, AccountType, AccountTypeLabels, Currency, CurrencyLabels, isVariableIncome } from '../../../models/investment';
 import { FinancialInstitution } from '../../../models/financial-institution';
 import { InvestmentService } from '../../../shared/services/investment.service';
 import { FinancialInstitutionService } from '../../../shared/services/financial-institution.service';
@@ -47,8 +47,9 @@ export class InvestmentListComponent implements OnInit {
 
   readonly exportCsvUrl = this.service.getExportCsvUrl();
   readonly importCsvTemplateUrl = this.service.getImportCsvTemplateUrl();
+  refreshingPrices = signal(false);
 
-  displayedColumns = ['institutionName', 'name', 'accountType', 'currency', 'amount', 'rate', 'maturityDate', 'actions'];
+  displayedColumns = ['institutionName', 'name', 'accountType', 'currency', 'amount', 'rate', 'ticker', 'maturityDate', 'actions'];
   dataSource = signal<Investment[]>([]);
   institutions = signal<FinancialInstitution[]>([]);
   totalCount = signal(0);
@@ -108,6 +109,34 @@ export class InvestmentListComponent implements OnInit {
     this.router.navigate(['/investments', id, 'edit']);
   }
 
+  async refreshPrices(): Promise<void> {
+    this.refreshingPrices.set(true);
+    try {
+      const result = await this.service.refreshPrices();
+      const parts = [
+        `${result.updated} updated`,
+        result.failed ? `${result.failed} failed` : null,
+        result.skipped ? `${result.skipped} skipped (missing ticker/qty)` : null,
+      ].filter(Boolean);
+      this.snackBar.open(`Prices: ${parts.join(', ')}.`, 'Close', { duration: 7000 });
+
+      const failures = (result.items ?? []).filter(i => i.status === 'Failed');
+      if (failures.length > 0) {
+        const detail = failures
+          .slice(0, 5)
+          .map(f => `${f.ticker ?? f.name}: ${f.message ?? 'failed'}`)
+          .join(' · ');
+        this.snackBar.open(detail, 'Close', { duration: 9000 });
+      }
+
+      await this.loadData();
+    } catch {
+      this.snackBar.open('Failed to refresh prices.', 'Close', { duration: 4000 });
+    } finally {
+      this.refreshingPrices.set(false);
+    }
+  }
+
   getTypeLabel(type: AccountType): string {
     return this.accountTypeLabels[type] ?? 'Unknown';
   }
@@ -121,6 +150,14 @@ export class InvestmentListComponent implements OnInit {
   }
 
   getRateLabel(row: Investment): string {
+    if (isVariableIncome(row.accountType)) {
+      if (row.quantity && row.averagePrice != null && row.averagePrice > 0) {
+        const cost = row.quantity * row.averagePrice;
+        const gainPct = cost > 0 ? ((row.amount - cost) / cost) * 100 : 0;
+        return `Market · ${gainPct >= 0 ? '+' : ''}${gainPct.toFixed(1)}%`;
+      }
+      return 'Market';
+    }
     if (row.currency === Currency.USD || row.currency === Currency.EUR) {
       return row.annualRatePercent != null ? `${row.annualRatePercent}% a.a.` : '—';
     }
@@ -132,6 +169,12 @@ export class InvestmentListComponent implements OnInit {
       case AccountType.CheckingAccount: return 'type-checking';
       case AccountType.SavingsBox: return 'type-savings';
       case AccountType.FixedTerm: return 'type-fixed';
+      case AccountType.Stock: return 'type-stock';
+      case AccountType.FII: return 'type-fii';
+      case AccountType.ETF: return 'type-etf';
+      case AccountType.InvestmentFund: return 'type-fund';
+      case AccountType.BDR: return 'type-bdr';
+      case AccountType.Crypto: return 'type-crypto';
       default: return '';
     }
   }

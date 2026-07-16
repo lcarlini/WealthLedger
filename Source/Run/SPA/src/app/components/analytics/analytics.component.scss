@@ -9,6 +9,21 @@
 
 .loading-wrap { display: flex; justify-content: center; padding: 48px; }
 
+.projection-settings-card {
+  margin: 16px 0;
+
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  mat-form-field {
+    width: 180px;
+  }
+}
+
 // AI Insights (WebLLM local)
 .ai-insights-card {
   margin-bottom: 24px;

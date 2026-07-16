@@ -2,7 +2,8 @@ export interface DashboardResponse {
   institutionCount: number;
   investmentCount: number;
   totalAmount: number;
-  plannedDebitsNext12Months: number;
+  plannedDebitsProjection: number;
+  projectionYears: number;
   debitsNextMonth: number;
   futureCardDebits: number;
   investmentsByType: InvestmentsByTypeItem[];

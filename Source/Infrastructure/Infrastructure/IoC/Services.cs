@@ -41,6 +41,10 @@ public static class ServiceRegistration
         services.AddScoped<IRepository<IncomeProfile>, EfRepository<IncomeProfile>>();
         services.AddScoped<IRepository<ExtraIncome>, EfRepository<ExtraIncome>>();
         services.AddScoped<IRepository<BusinessDayOverride>, EfRepository<BusinessDayOverride>>();
+        services.AddScoped<IRepository<PassiveIncome>, EfRepository<PassiveIncome>>();
+        services.AddScoped<IRepository<InvestmentGoal>, EfRepository<InvestmentGoal>>();
+        services.AddScoped<IRepository<PortfolioSnapshot>, EfRepository<PortfolioSnapshot>>();
+        services.AddScoped<IRepository<WatchlistItem>, EfRepository<WatchlistItem>>();
 
         // ===================================================================================
 
@@ -56,6 +60,15 @@ public static class ServiceRegistration
 
         services.AddTransient<IDashboardService, DashboardService>();
         services.AddTransient<IMarketDataService, MarketDataService>();
+        services.AddTransient<IStockQuoteService, StockQuoteService>();
+        services.AddTransient<IPortfolioService, PortfolioService>();
+        services.AddTransient<IPassiveIncomeService, PassiveIncomeService>();
+        services.AddTransient<IInvestmentGoalService, InvestmentGoalService>();
+        services.AddTransient<IWatchlistService, WatchlistService>();
+        services.AddTransient<IDataExportService, DataExportService>();
+        services.AddTransient<IPayloadValidator<PassiveIncomeRequestBody>, PassiveIncomeValidator>();
+        services.AddTransient<IPayloadValidator<InvestmentGoalRequestBody>, InvestmentGoalValidator>();
+        services.AddTransient<IPayloadValidator<WatchlistItemRequestBody>, WatchlistItemValidator>();
 
         services.AddTransient<IOfxImportService, OfxImportService>();
 

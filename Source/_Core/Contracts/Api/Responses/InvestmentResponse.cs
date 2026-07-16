@@ -16,6 +16,9 @@ public class InvestmentResponse
     public DateTime? MaturityDate { get; set; }
     public bool RequiresMonthlyMovement { get; set; }
     public decimal? MonthlyMovementAmount { get; set; }
+    public string? Ticker { get; set; }
+    public decimal? Quantity { get; set; }
+    public decimal? AveragePrice { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime UpdatedDate { get; set; }
 }

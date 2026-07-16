@@ -17,6 +17,12 @@
         <mat-icon>upload</mat-icon>
         Import CSV
       </button>
+      <button mat-stroked-button type="button" (click)="refreshPrices()"
+              [disabled]="loading() || refreshingPrices()"
+              matTooltip="Update Amount from live quotes for holdings with Ticker + Quantity (brapi / CoinGecko).">
+        <mat-icon>currency_exchange</mat-icon>
+        {{ refreshingPrices() ? 'Refreshing…' : 'Refresh prices' }}
+      </button>
       <button mat-raised-button color="primary" (click)="navigateToCreate()">
         <mat-icon>add</mat-icon>
         New Investment
@@ -73,6 +79,11 @@
         <ng-container matColumnDef="rate">
           <th mat-header-cell *matHeaderCellDef>Rate</th>
           <td mat-cell *matCellDef="let row">{{ getRateLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="ticker">
+          <th mat-header-cell *matHeaderCellDef>Ticker</th>
+          <td mat-cell *matCellDef="let row">{{ row.ticker || '—' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="maturityDate">

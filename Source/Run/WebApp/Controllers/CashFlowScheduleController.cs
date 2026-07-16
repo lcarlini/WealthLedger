@@ -98,10 +98,10 @@ public class CashFlowScheduleController : ControllerBase
     public async Task<Response<SimulationMatrixResponse>> GetSimulationAsync(
         [FromQuery] int fromYear,
         [FromQuery] int fromMonth,
-        [FromQuery] int monthCount = 12,
+        [FromQuery] int monthCount = 36,
         [FromQuery] decimal startingBalance = 0)
     {
-        if (monthCount < 1 || monthCount > 60) monthCount = 12;
+        if (monthCount < 1 || monthCount > 1200) monthCount = 36;
         return await _service.GetSimulationMatrixAsync(fromYear, fromMonth, monthCount, startingBalance);
     }
 
@@ -140,10 +140,10 @@ public class CashFlowScheduleController : ControllerBase
     public async Task<IActionResult> ExportCsvAsync(
         [FromQuery] int fromYear,
         [FromQuery] int fromMonth,
-        [FromQuery] int monthCount = 12,
+        [FromQuery] int monthCount = 36,
         [FromQuery] decimal startingBalance = 0)
     {
-        if (monthCount < 1 || monthCount > 60) monthCount = 12;
+        if (monthCount < 1 || monthCount > 1200) monthCount = 36;
         var matrix = await _service.GetSimulationMatrixAsync(fromYear, fromMonth, monthCount, startingBalance);
         var sb = new StringBuilder();
         var sep = ",";

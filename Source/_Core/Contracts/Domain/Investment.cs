@@ -14,4 +14,13 @@ public class Investment : BaseEntity
     public DateTime? MaturityDate { get; set; }
     public bool RequiresMonthlyMovement { get; set; }
     public decimal? MonthlyMovementAmount { get; set; }
+
+    /// <summary>Ticker / symbol for variable-income (e.g. PETR4, HGLG11, IVVB11, BTC).</summary>
+    public string? Ticker { get; set; }
+
+    /// <summary>Number of shares, quotas, or units held (variable-income).</summary>
+    public decimal? Quantity { get; set; }
+
+    /// <summary>Average acquisition price per unit (variable-income cost basis).</summary>
+    public decimal? AveragePrice { get; set; }
 }

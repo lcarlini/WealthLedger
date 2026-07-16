@@ -83,8 +83,9 @@ public class TaskController : ControllerBase
     }
 
     [HttpGet("future")]
-    public async Task<Response<IEnumerable<FutureTaskResponse>>> GetFutureAsync([FromQuery] int monthsAhead = 12)
+    public async Task<Response<IEnumerable<FutureTaskResponse>>> GetFutureAsync([FromQuery] int monthsAhead = 36)
     {
+        monthsAhead = Math.Clamp(monthsAhead, 1, 1200);
         var futureTasks = await _taskService.GetFutureTasksAsync(monthsAhead);
         return new Response<IEnumerable<FutureTaskResponse>>(futureTasks);
     }

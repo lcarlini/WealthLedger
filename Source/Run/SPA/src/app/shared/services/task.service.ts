@@ -30,7 +30,7 @@ export class TaskService {
     return response.data ?? [];
   }
 
-  async getFuture(monthsAhead = 12): Promise<FutureTask[]> {
+  async getFuture(monthsAhead = 36): Promise<FutureTask[]> {
     const response = await firstValueFrom(
       this.http.get<ApiResponse<FutureTask[]>>(`${this.baseUrl}/future?monthsAhead=${monthsAhead}`)
     );

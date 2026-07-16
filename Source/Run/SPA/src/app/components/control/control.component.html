@@ -8,34 +8,16 @@
         <mat-card-content>
           <div class="period-bar">
             <mat-form-field appearance="outline">
-              <mat-label>From year</mat-label>
-              <mat-select [ngModel]="fromYear()" (ngModelChange)="fromYear.set($event)">
-                @for (y of yearOptions(); track y) {
-                  <mat-option [value]="y">{{ y }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>From month</mat-label>
-              <mat-select [ngModel]="fromMonth()" (ngModelChange)="fromMonth.set($event)">
-                @for (m of months; track m) {
-                  <mat-option [value]="m">{{ monthNames[m-1] }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Months</mat-label>
-              <mat-select [ngModel]="monthCount()" (ngModelChange)="monthCount.set($event)">
-                <mat-option [value]="6">6</mat-option>
-                <mat-option [value]="12">12</mat-option>
-                <mat-option [value]="24">24</mat-option>
-              </mat-select>
+              <mat-label>Projection years</mat-label>
+              <input matInput type="number" min="1" step="1"
+                     [ngModel]="projectionYears()"
+                     (ngModelChange)="projectionYears.set($event)">
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Starting balance (R$)</mat-label>
               <input matInput type="number" [ngModel]="startingBalance()" (ngModelChange)="startingBalance.set($event)">
             </mat-form-field>
-            <button mat-raised-button (click)="applyPeriod()">Apply</button>
+            <button mat-raised-button (click)="applyPeriod()">Project from today</button>
             <a mat-stroked-button [href]="exportCsvUrl()" download="Control.csv" target="_blank" rel="noopener">
               <mat-icon>download</mat-icon>
               Export CSV

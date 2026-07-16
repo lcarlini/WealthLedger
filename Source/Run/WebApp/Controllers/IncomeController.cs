@@ -92,9 +92,9 @@ public class IncomeController : ControllerBase
     public async Task<Response<IncomePreviewResponse>> GetPreview(
         [FromQuery] int fromYear,
         [FromQuery] int fromMonth,
-        [FromQuery] int monthCount = 12)
+        [FromQuery] int monthCount = 36)
     {
-        if (monthCount < 1 || monthCount > 60) monthCount = 12;
+        if (monthCount < 1 || monthCount > 1200) monthCount = 36;
         var profile = await _service.GetProfileAsync();
         if (profile == null)
             return new Response<IncomePreviewResponse>(new IncomePreviewResponse());

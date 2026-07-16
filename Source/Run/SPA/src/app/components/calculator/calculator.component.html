@@ -1,8 +1,274 @@
 <div class="page-container">
   <h1>Calculator</h1>
-  <p class="subtitle">Yield, comparison, gain/loss, loan simulator, emergency fund, patrimony projection</p>
+  <p class="subtitle">Yield, investment comparison, gain/loss, loan simulator, emergency fund, patrimony projection</p>
 
   <mat-tab-group>
+    <mat-tab label="Investment comparison">
+      <div class="comparison-layout">
+        <mat-card class="calc-card">
+          <mat-card-header>
+            <mat-card-title>Compare investments side by side</mat-card-title>
+            <mat-card-subtitle>
+              Gross and net returns after Brazilian taxes, fees, and inflation.
+              Rates default from live Selic, Poupança, and IPCA when available.
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="period-presets">
+              <span class="preset-label">Projection from today:</span>
+              <mat-form-field appearance="outline" class="custom-years-field">
+                <mat-label>Years</mat-label>
+                <input matInput type="number" min="0.5" step="0.5"
+                       [ngModel]="comparisonSettings().years"
+                       (ngModelChange)="patchComparisonSettings({ years: $event })">
+              </mat-form-field>
+            </div>
+
+            <div class="form-row global-settings">
+              <mat-form-field appearance="outline">
+                <mat-label>CDI base (% a.a.)</mat-label>
+                <input matInput type="number"
+                       [ngModel]="comparisonSettings().cdiBasePercent"
+                       (ngModelChange)="patchComparisonSettings({ cdiBasePercent: $event })">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Poupança (% a.a.)</mat-label>
+                <input matInput type="number"
+                       [ngModel]="comparisonSettings().poupancaPercent"
+                       (ngModelChange)="patchComparisonSettings({ poupancaPercent: $event })">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Inflation / IPCA (% a.a.)</mat-label>
+                <input matInput type="number"
+                       [ngModel]="comparisonSettings().inflationPercent"
+                       (ngModelChange)="patchComparisonSettings({ inflationPercent: $event })">
+              </mat-form-field>
+            </div>
+
+            <div class="toggles">
+              <mat-slide-toggle
+                [ngModel]="comparisonSettings().deductTaxes"
+                (ngModelChange)="patchComparisonSettings({ deductTaxes: $event })">
+                Apply income tax (IR)
+              </mat-slide-toggle>
+              <mat-slide-toggle
+                [ngModel]="comparisonSettings().deductFees"
+                (ngModelChange)="patchComparisonSettings({ deductFees: $event })">
+                Deduct fees
+              </mat-slide-toggle>
+              <mat-slide-toggle
+                [ngModel]="comparisonSettings().adjustForInflation"
+                (ngModelChange)="patchComparisonSettings({ adjustForInflation: $event })">
+                Inflation-adjusted (real) return
+              </mat-slide-toggle>
+            </div>
+
+            @if (marketData(); as md) {
+              <p class="hint">
+                Live market: Selic {{ md.selic | number:'1.2-2' }}% · Poupança ~{{ md.poupanca | number:'1.2-2' }}% · IPCA {{ md.ipca | number:'1.2-2' }}%
+              </p>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <div class="scenario-toolbar">
+          <h3 class="section-title">Scenarios</h3>
+          <mat-form-field appearance="outline" class="add-type-field">
+            <mat-label>Add investment type</mat-label>
+            <mat-select [(ngModel)]="newScenarioProductType">
+              @for (pt of productTypes; track pt) {
+                <mat-option [value]="pt">{{ productLabels[pt] }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button mat-stroked-button type="button"
+                  (click)="addComparisonScenario(newScenarioProductType)">
+            <mat-icon>add</mat-icon>
+            Add scenario
+          </button>
+        </div>
+
+        @for (scenario of comparisonScenarios(); track scenario.id) {
+          <mat-card class="calc-card scenario-card">
+            <mat-card-content>
+              <div class="scenario-header">
+                <mat-form-field appearance="outline" class="scenario-name">
+                  <mat-label>Name</mat-label>
+                  <input matInput [ngModel]="scenario.name"
+                         (ngModelChange)="updateComparisonScenario(scenario.id, { name: $event })">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Type</mat-label>
+                  <mat-select [ngModel]="scenario.productType"
+                              (ngModelChange)="onProductTypeChange(scenario, $event)">
+                    @for (pt of productTypes; track pt) {
+                      <mat-option [value]="pt">{{ productLabels[pt] }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <button mat-icon-button type="button" color="warn"
+                        matTooltip="Remove scenario"
+                        (click)="removeComparisonScenario(scenario.id)"
+                        [disabled]="comparisonScenarios().length <= 1">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Initial (R$)</mat-label>
+                  <input matInput type="number" min="0" [ngModel]="scenario.initialAmount"
+                         (ngModelChange)="updateComparisonScenario(scenario.id, { initialAmount: $event })">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Monthly contribution (R$)</mat-label>
+                  <input matInput type="number" min="0" [ngModel]="scenario.monthlyContribution"
+                         (ngModelChange)="updateComparisonScenario(scenario.id, { monthlyContribution: $event })">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Rate mode</mat-label>
+                  <mat-select [ngModel]="scenario.rateMode"
+                              (ngModelChange)="updateComparisonScenario(scenario.id, { rateMode: $event })">
+                    <mat-option value="cdi">% of CDI</mat-option>
+                    <mat-option value="fixed">Fixed % a.a.</mat-option>
+                    <mat-option value="poupanca">Poupança rate</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                @if (isCdiRateMode(scenario)) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>% CDI</mat-label>
+                    <input matInput type="number" [ngModel]="scenario.cdiPercent"
+                           (ngModelChange)="updateComparisonScenario(scenario.id, { cdiPercent: $event })">
+                  </mat-form-field>
+                }
+                @if (isFixedRateMode(scenario)) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>Expected return (% a.a.)</mat-label>
+                    <input matInput type="number" [ngModel]="scenario.annualRatePercent"
+                           (ngModelChange)="updateComparisonScenario(scenario.id, { annualRatePercent: $event })">
+                  </mat-form-field>
+                }
+                <mat-form-field appearance="outline">
+                  <mat-label>Admin fee (% a.a.)</mat-label>
+                  <input matInput type="number" min="0" [ngModel]="scenario.adminFeePercentPerYear"
+                         (ngModelChange)="updateComparisonScenario(scenario.id, { adminFeePercentPerYear: $event })">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Custody fee (% a.a.)</mat-label>
+                  <input matInput type="number" min="0" [ngModel]="scenario.custodyFeePercentPerYear"
+                         (ngModelChange)="updateComparisonScenario(scenario.id, { custodyFeePercentPerYear: $event })">
+                </mat-form-field>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        @if (investmentComparisonResult(); as cmp) {
+          <mat-card class="calc-card">
+            <mat-card-header>
+              <mat-card-title>Ranking &amp; results</mat-card-title>
+              <mat-card-subtitle>
+                From today through {{ comparisonEndDate() | date:'mediumDate' }} ({{ cmp.months }} months)
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="rank-toggle">
+                <span>Rank by:</span>
+                <button mat-stroked-button type="button"
+                        [class.active-preset]="comparisonRankBy() === 'real'"
+                        (click)="comparisonRankBy.set('real'); runInvestmentComparison()">
+                  Real net gain
+                </button>
+                <button mat-stroked-button type="button"
+                        [class.active-preset]="comparisonRankBy() === 'net'"
+                        (click)="comparisonRankBy.set('net'); runInvestmentComparison()">
+                  Nominal net gain
+                </button>
+              </div>
+
+              <div class="ranking-chips">
+                @for (row of rankedComparison(); track row.scenarioId; let i = $index) {
+                  <mat-chip-set>
+                    <mat-chip [highlighted]="i === 0">
+                      #{{ i + 1 }} {{ row.name }} — {{ row.realNetGain | currency:'BRL':'symbol':'1.0-0' }} real
+                    </mat-chip>
+                  </mat-chip-set>
+                }
+              </div>
+
+              <div class="chart-row">
+                <div class="chart-wrap wide">
+                  <h3 class="section-title">Growth projection</h3>
+                  <canvas baseChart type="line"
+                          [data]="comparisonLineChart()"
+                          [options]="comparisonLineOptions"></canvas>
+                </div>
+                <div class="chart-wrap wide">
+                  <h3 class="section-title">Final value comparison</h3>
+                  <canvas baseChart type="bar"
+                          [data]="comparisonBarChart()"
+                          [options]="comparisonBarOptions"></canvas>
+                </div>
+              </div>
+
+              <h3 class="section-title">Side-by-side breakdown</h3>
+              <div class="table-scroll">
+                <table class="proj-table comparison-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Scenario</th>
+                      <th>Type</th>
+                      <th>Rate</th>
+                      <th>Contributed</th>
+                      <th>Gross gain</th>
+                      <th>IR</th>
+                      <th>Fees</th>
+                      <th>Net final</th>
+                      <th>Real net</th>
+                      <th>Real return</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of rankedComparison(); track row.scenarioId; let i = $index) {
+                      <tr [class.best-row]="i === 0">
+                        <td>{{ i + 1 }}</td>
+                        <td>{{ row.name }}</td>
+                        <td>{{ row.productLabel }}</td>
+                        <td>{{ row.effectiveAnnualRatePercent | number:'1.2-2' }}%</td>
+                        <td>{{ row.totalContributed | currency:'BRL':'symbol':'1.0-0' }}</td>
+                        <td class="gain-value">{{ row.grossGain | currency:'BRL':'symbol':'1.0-0' }}</td>
+                        <td class="negative">{{ row.incomeTax | currency:'BRL':'symbol':'1.0-0' }}</td>
+                        <td class="negative">{{ row.fees | currency:'BRL':'symbol':'1.0-0' }}</td>
+                        <td>{{ row.netFinal | currency:'BRL':'symbol':'1.0-0' }}</td>
+                        <td><strong>{{ row.realNetFinal | currency:'BRL':'symbol':'1.0-0' }}</strong></td>
+                        <td [class.gain-value]="row.realReturnPercent > 0"
+                            [class.negative]="row.realReturnPercent <= 0">
+                          {{ row.realReturnPercent / 100 | percent:'1.1-1' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 class="section-title">Recommendations</h3>
+              <ul class="tips-list">
+                @for (tip of cmp.globalTips; track tip) {
+                  <li>{{ tip }}</li>
+                }
+                @for (row of cmp.scenarios; track row.scenarioId) {
+                  @for (tip of row.tips; track tip) {
+                    <li><strong>{{ row.name }}:</strong> {{ tip }}</li>
+                  }
+                }
+              </ul>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </mat-tab>
+
     <mat-tab label="Yield">
       <mat-card class="calc-card">
         <mat-card-header>
@@ -19,8 +285,8 @@
               <input matInput type="number" [(ngModel)]="yieldForm.ratePerYear" (ngModelChange)="calcYield()">
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Months</mat-label>
-              <input matInput type="number" [(ngModel)]="yieldForm.months" (ngModelChange)="calcYield()">
+              <mat-label>Projection years</mat-label>
+              <input matInput type="number" min="0.1" step="0.1" [(ngModel)]="yieldForm.years" (ngModelChange)="calcYield()">
             </mat-form-field>
           </div>
           <div class="toggles">
@@ -71,8 +337,8 @@
               <input matInput type="number" [(ngModel)]="gainForm.ratePerYear" (ngModelChange)="calcGain()">
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Months</mat-label>
-              <input matInput type="number" [(ngModel)]="gainForm.months" (ngModelChange)="calcGain()">
+              <mat-label>Projection years</mat-label>
+              <input matInput type="number" min="0.1" step="0.1" [(ngModel)]="gainForm.years" (ngModelChange)="calcGain()">
             </mat-form-field>
           </div>
 
@@ -228,8 +494,8 @@
               <input matInput type="number" [(ngModel)]="comparisonForm.amount" (ngModelChange)="calcComparison()">
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Months</mat-label>
-              <input matInput type="number" [(ngModel)]="comparisonForm.months" (ngModelChange)="calcComparison()">
+              <mat-label>Projection years</mat-label>
+              <input matInput type="number" min="0.1" step="0.1" [(ngModel)]="comparisonForm.years" (ngModelChange)="calcComparison()">
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Poupanca % a.a.</mat-label>
@@ -287,8 +553,8 @@
               <input matInput type="number" [(ngModel)]="patrimonyForm.ratePerYear" (ngModelChange)="calcPatrimony()">
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Years</mat-label>
-              <input matInput type="number" [(ngModel)]="patrimonyForm.years" (ngModelChange)="calcPatrimony()">
+              <mat-label>Projection years</mat-label>
+              <input matInput type="number" min="1" step="1" [(ngModel)]="patrimonyForm.years" (ngModelChange)="calcPatrimony()">
             </mat-form-field>
           </div>
           <div class="chart-wrap">
@@ -297,12 +563,12 @@
           <div class="table-wrap">
             <table class="proj-table">
               <thead>
-                <tr><th>Year</th><th>Value</th></tr>
+                <tr><th>Date</th><th>Value</th></tr>
               </thead>
               <tbody>
-                @for (p of patrimonyProjection(); track p.year) {
+                @for (p of patrimonyProjection(); track p.label) {
                   <tr>
-                    <td>{{ p.year }}</td>
+                    <td>{{ p.label }}</td>
                     <td>{{ p.value | currency:'BRL':'symbol':'1.2-2' }}</td>
                   </tr>
                 }

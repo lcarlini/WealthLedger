@@ -48,7 +48,7 @@ export class IncomeService {
     await firstValueFrom(this.http.delete(`${this.base}/extra/${id}`));
   }
 
-  async getPreview(fromYear: number, fromMonth: number, monthCount = 12): Promise<IncomePreviewResponse> {
+  async getPreview(fromYear: number, fromMonth: number, monthCount = 36): Promise<IncomePreviewResponse> {
     const params = new HttpParams()
       .set('fromYear', fromYear)
       .set('fromMonth', fromMonth)

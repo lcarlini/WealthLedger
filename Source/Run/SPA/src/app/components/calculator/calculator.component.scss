@@ -15,6 +15,101 @@
   .subtitle { color: #757575; margin-bottom: 24px; }
 }
 
+.comparison-layout {
+  max-width: 1200px;
+}
+
+.period-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  .preset-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    margin-right: 4px;
+  }
+
+  .custom-years-field {
+    width: 120px;
+    margin-left: 8px;
+  }
+}
+
+.active-preset {
+  border-color: var(--mat-sys-primary) !important;
+  color: var(--mat-sys-primary);
+}
+
+.scenario-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 16px;
+
+  .add-type-field { min-width: 220px; }
+}
+
+.scenario-card .scenario-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+
+  .scenario-name { flex: 1; min-width: 180px; }
+}
+
+.rank-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.ranking-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.chart-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 16px 0;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-wrap.wide {
+  max-width: none;
+}
+
+.comparison-table th,
+.comparison-table td {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.best-row td {
+  background: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
+}
+
+.tips-list {
+  margin: 0;
+  padding-left: 20px;
+  li { margin-bottom: 8px; line-height: 1.45; }
+}
+
+.global-settings mat-form-field { min-width: 160px; }
+
 .calc-card {
   margin-top: 16px;
   margin-bottom: 24px;
