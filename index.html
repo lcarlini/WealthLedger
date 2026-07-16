@@ -160,6 +160,58 @@
     pre code { color: inherit; }
     .inline-code { background: #eef2f7; border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; font-size: 0.88em; color: #0f766e; }
 
+    /* Support / coffee */
+    .support-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 22px;
+      max-width: 760px; margin: 0 auto;
+    }
+    @media (max-width: 640px) { .support-grid { grid-template-columns: 1fr; max-width: 420px; } }
+    .support-card {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 28px 24px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+    }
+    .support-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(4, 120, 87, 0.35);
+      box-shadow: var(--shadow);
+    }
+    .support-card .support-ico {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: grid; place-items: center; font-size: 26px;
+      background: #f1f5f9; border: 1px solid var(--line);
+    }
+    .support-card.pix .support-ico {
+      background: linear-gradient(135deg, rgba(130, 10, 209, 0.12), rgba(0, 200, 150, 0.1));
+      border-color: rgba(130, 10, 209, 0.28);
+    }
+    .support-card.bmc .support-ico {
+      background: linear-gradient(135deg, rgba(255, 221, 0, 0.22), rgba(255, 170, 0, 0.12));
+      border-color: rgba(255, 221, 0, 0.4);
+    }
+    .support-card h3 { font-size: 1.12rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+    .support-card p { color: var(--muted); font-size: 0.95rem; line-height: 1.5; margin: 0; flex: 1; }
+    .support-card .support-action { margin-top: 6px; min-height: 52px; display: flex; align-items: center; justify-content: center; }
+    .btn-pix {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, #820AD1, #9B30EF);
+      color: white; font-weight: 700; font-size: 0.92rem;
+      padding: 12px 22px; border-radius: 999px;
+      box-shadow: 0 10px 28px -10px rgba(130, 10, 209, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: transform .15s ease, box-shadow .2s ease;
+    }
+    .btn-pix:hover { transform: translateY(-2px); box-shadow: 0 14px 32px -10px rgba(130, 10, 209, 0.7); color: white; }
+    .btn-pix .pix-flag { font-size: 16px; line-height: 1; }
+    .support-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--muted); margin-top: 2px;
+    }
+    .support-badge.pix-badge { color: #820AD1; }
+    .support-badge.bmc-badge { color: #b45309; }
+
     /* CTA */
     .cta { text-align: center; }
     .cta .box { background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 56px 32px; box-shadow: var(--shadow); }
@@ -182,6 +234,7 @@
         <a href="#features">Features</a>
         <a href="#privacy">Privacy</a>
         <a href="#start">Get started</a>
+        <a href="#support">Support</a>
         <a href="https://github.com/lcarlini/WealthLedger">Docs</a>
         <a class="btn btn-primary" href="#start">Download free</a>
       </nav>
@@ -327,6 +380,40 @@ cd WealthLedger</code></pre>
         The app opens at <span class="inline-code">http://localhost:5000</span> — one local server for both the app and the API.
         On Windows you can also just right-click a script and choose <strong>“Run with PowerShell”</strong>.
       </p>
+    </div>
+  </section>
+
+  <!-- Support -->
+  <section id="support">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Support the project</span>
+        <h2>Buy me a coffee</h2>
+        <p>If this tool saved you time, a coffee helps keep it free and improving.</p>
+      </div>
+      <div class="support-grid">
+        <div class="support-card bmc">
+          <div class="support-ico" aria-hidden="true">☕</div>
+          <span class="support-badge bmc-badge">International</span>
+          <h3>Buy Me a Coffee</h3>
+          <p>Card or PayPal — one-time tip from anywhere in the world.</p>
+          <div class="support-action">
+            <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="leandrocarS" data-color="#FFDD00" data-emoji="" data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
+          </div>
+        </div>
+        <div class="support-card pix">
+          <div class="support-ico" aria-hidden="true">🇧🇷</div>
+          <span class="support-badge pix-badge">Brazil · PIX</span>
+          <h3>PIX via Nubank</h3>
+          <p>Instant transfer with PIX — open the link and pay in your bank app.</p>
+          <div class="support-action">
+            <a class="btn-pix" href="https://nubank.com.br/cobrar/4salu/6a5911ce-a098-441b-b340-29a387806366" target="_blank" rel="noopener">
+              <span class="pix-flag" aria-hidden="true">🇧🇷</span>
+              <span>Pay with PIX</span>
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
