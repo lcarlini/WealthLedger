@@ -35,6 +35,9 @@ if (-not (Test-Path $dll)) {
 
 Write-Host "`n=== Starting WealthLedger ===" -ForegroundColor Cyan
 Write-Host "  URL:  $url"                     -ForegroundColor Gray
+Write-Host "  Site: https://lcarlini.github.io/WealthLedger/" -ForegroundColor Gray
+Write-Host "  Implemented by Computer Engineer Leandro Carlini Mingorance" -ForegroundColor Gray
+Write-Host "  Reach out: https://lcarlini.github.io/lcarlini/" -ForegroundColor Gray
 Write-Host "  Stop: close this window or press Ctrl+C`n" -ForegroundColor Gray
 
 # Open the browser automatically once the server is up (runs in the background).

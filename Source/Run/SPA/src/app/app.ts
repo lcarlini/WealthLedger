@@ -54,7 +54,7 @@ import { ThemeService, ThemePreference } from './shared/services/theme.service';
 
     <mat-sidenav-container class="app-sidenav-container">
       <mat-sidenav mode="side" opened class="app-sidenav">
-        <mat-nav-list>
+        <mat-nav-list class="app-nav-list">
           <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link">
             <mat-icon matListItemIcon>dashboard</mat-icon>
             <span matListItemTitle>Dashboard</span>
@@ -91,6 +91,15 @@ import { ThemeService, ThemePreference } from './shared/services/theme.service';
             <span matListItemTitle>Calculator</span>
           </a>
         </mat-nav-list>
+        <footer class="app-credit">
+          <a class="app-credit-site" href="https://lcarlini.github.io/WealthLedger/" target="_blank" rel="noopener noreferrer">
+            lcarlini.github.io/WealthLedger
+          </a>
+          <p class="app-credit-author">
+            Implemented by Computer Engineer
+            <a href="https://lcarlini.github.io/lcarlini/" target="_blank" rel="noopener noreferrer">Leandro Carlini Mingorance</a>
+          </p>
+        </footer>
       </mat-sidenav>
 
       <mat-sidenav-content class="app-content">
@@ -136,6 +145,49 @@ import { ThemeService, ThemePreference } from './shared/services/theme.service';
       width: 240px;
       border-right: 1px solid var(--mat-sys-outline-variant);
       background: var(--mat-sys-surface-container-low);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-nav-list {
+      flex: 1 1 auto;
+      overflow: auto;
+    }
+
+    .app-credit {
+      flex: 0 0 auto;
+      padding: 14px 16px 18px;
+      border-top: 1px solid var(--mat-sys-outline-variant);
+      font-size: 0.72rem;
+      line-height: 1.45;
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    .app-credit-site {
+      display: block;
+      font-weight: 600;
+      color: var(--mat-sys-primary);
+      text-decoration: none;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+
+    .app-credit-site:hover {
+      text-decoration: underline;
+    }
+
+    .app-credit-author {
+      margin: 0;
+    }
+
+    .app-credit-author a {
+      color: var(--mat-sys-primary);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .app-credit-author a:hover {
+      text-decoration: underline;
     }
 
     .app-content {

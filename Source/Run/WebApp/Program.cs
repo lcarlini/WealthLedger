@@ -1,3 +1,8 @@
+// WealthLedger — Personal finance, clearly tracked.
+// Implemented by Computer Engineer Leandro Carlini Mingorance.
+// Website: https://lcarlini.github.io/WealthLedger/
+// Reach out: https://lcarlini.github.io/lcarlini/
+
 using WealthLedger.Infrastructure.IoC;
 using Scalar.AspNetCore;
 using WealthLedger.Infrastructure.Data;

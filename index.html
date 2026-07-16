@@ -80,10 +80,11 @@
     .hero p.lead { font-size: 1.18rem; color: var(--muted); max-width: 560px; margin: 0 0 28px; }
     .creator { color: #475569; font-size: 0.95rem; font-weight: 500; margin: -14px 0 28px; line-height: 1.55; }
     .creator strong { color: var(--emerald); }
-    .creator a { color: var(--teal); font-weight: 600; text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .15s, color .15s; }
-    .creator a:hover { color: var(--emerald); border-bottom-color: var(--emerald); }
+    .creator a { color: var(--emerald); font-weight: 600; text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .15s, color .15s; }
+    .creator a:hover { color: var(--teal-deep); border-bottom-color: var(--emerald); }
+    .creator a.author-link { color: var(--emerald); }
     .reach-out { display: block; margin-top: 6px; font-size: 0.9rem; font-weight: 500; color: var(--muted); }
-    .license-note a.author-link { color: var(--teal); font-weight: 600; }
+    .license-note a.author-link { color: var(--emerald); font-weight: 600; }
     .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; }
     .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
     .chip { font-size: 0.82rem; font-weight: 600; padding: 6px 13px; border-radius: 999px; background: #fff; border: 1px solid var(--line); color: #334155; display: inline-flex; align-items: center; gap: 7px; }
@@ -253,7 +254,8 @@
           Your data never leaves your machine.
         </p>
         <p class="creator">
-          Implemented by Computer Engineer <strong>Leandro Carlini Mingorance</strong>
+          Implemented by Computer Engineer
+          <a class="author-link" href="https://lcarlini.github.io/lcarlini/" target="_blank" rel="noopener noreferrer"><strong>Leandro Carlini Mingorance</strong></a>
           <span class="reach-out">Reach out: <a href="https://lcarlini.github.io/lcarlini/" target="_blank" rel="noopener noreferrer">lcarlini.github.io/lcarlini</a></span>
         </p>
         <div class="hero-cta">

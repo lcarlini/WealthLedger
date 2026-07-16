@@ -390,7 +390,11 @@ See the full terms in **[LICENSE](LICENSE)**.
 
 Made for people who want a clear, private view of their money.
 
-<sub><strong>WealthLedger</strong> · Personal finance, clearly tracked · Free for personal use</sub>
+<sub><strong><a href="https://lcarlini.github.io/WealthLedger/">WealthLedger</a></strong> · Personal finance, clearly tracked · Free for personal use</sub>
+
+<br />
+
+<sub><a href="https://lcarlini.github.io/WealthLedger/">lcarlini.github.io/WealthLedger</a></sub>
 
 <br /><br />
 

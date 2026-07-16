@@ -214,4 +214,7 @@ foreach ($dbFile in $dbFiles) {
 
 Write-Title 'Done!'
 Write-Host "  The app was published to: $publishDir" -ForegroundColor Green
+Write-Host "  Website: https://lcarlini.github.io/WealthLedger/" -ForegroundColor Gray
+Write-Host "  Implemented by Computer Engineer Leandro Carlini Mingorance" -ForegroundColor Gray
+Write-Host "  Reach out: https://lcarlini.github.io/lcarlini/" -ForegroundColor Gray
 Write-Host "  Next step: run  ./deploy/2-run.ps1`n" -ForegroundColor Green
