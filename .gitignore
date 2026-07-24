@@ -42,10 +42,14 @@ nunit-*.xml
 # Publish / deploy output (created by deploy/1-setup.ps1, lives in the project root)
 publish/
 
-# SQLite database (runtime data, never versioned)
+# SQLite database (runtime / personal financial data — never versioned)
 *.db
 *.db-shm
 *.db-wal
+*.db.bak
+*.sqlite
+*.sqlite3
+wealthledger.db*
 
 # OS / editor misc
 ~$*
@@ -81,13 +85,29 @@ Source/Run/SPA/src/assets/ai/*.json
 # Secrets & private config
 ############################
 
-# Never commit real secrets or machine-specific overrides
+# Never commit real secrets, tokens, or machine-specific paths
 *.env
 .env.*
+!.env.example
 secrets.json
-appsettings.*.Local.json
+**/secrets.json
+credentials.json
+**/credentials.json
+*.pfx
+*.p12
+*.pem
+*.key
+!*.example.key
+
+# Local overrides (personal DB path, API tokens, etc.)
 appsettings.Local.json
+**/appsettings.Local.json
+appsettings.*.Local.json
 **/appsettings.Production.json
+
+# Keep the committed example templates
+!**/appsettings.Local.example.json
+!**/appsettings.*.example.json
 
 ############################
 # Personal financial data
@@ -98,3 +118,4 @@ appsettings.Local.json
 /data/
 *.local.ofx
 *.local.csv
+**/AppsBkp/

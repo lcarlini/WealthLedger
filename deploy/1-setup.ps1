@@ -156,11 +156,13 @@ if ($SkipModel) {
 # =============================================================================
 Write-Title 'Building the app'
 
-# Keep any existing database safe across re-publishes.
-$dbBackup = @{}
-foreach ($dbFile in $dbFiles) {
-    $dbPath = Join-Path $publishDir $dbFile
-    if (Test-Path $dbPath) { $dbBackup[$dbFile] = [IO.File]::ReadAllBytes($dbPath) }
+# Keep any existing published local overrides (personal data path / tokens).
+$localSettingsName = 'appsettings.Local.json'
+$localSettingsSrc  = Join-Path (Split-Path $apiProj -Parent) $localSettingsName
+$localSettingsPub  = Join-Path $publishDir $localSettingsName
+$localSettingsBackup = $null
+if (Test-Path $localSettingsPub) {
+    $localSettingsBackup = [IO.File]::ReadAllBytes($localSettingsPub)
 }
 
 New-Item -ItemType Directory -Force -Path $publishDir | Out-Null
@@ -169,6 +171,26 @@ Write-Info 'Publishing the API (.NET, Release)...'
 dotnet publish $apiProj -c Release -o $publishDir | Out-Null
 if ($LASTEXITCODE -ne 0) { Write-Fail 'dotnet publish failed.'; exit 1 }
 Write-Ok 'API published.'
+
+# Ensure machine-specific config is present in publish (never committed to git).
+if (Test-Path $localSettingsSrc) {
+    Copy-Item $localSettingsSrc $localSettingsPub -Force
+    Write-Ok "Copied $localSettingsName into publish (personal data path / tokens)."
+} elseif ($null -ne $localSettingsBackup) {
+    [IO.File]::WriteAllBytes($localSettingsPub, $localSettingsBackup)
+    Write-Ok "Restored existing publish $localSettingsName."
+} else {
+    Write-Info "No $localSettingsName found. Copy appsettings.Local.example.json to $localSettingsName and set WealthLedger:DataDirectory."
+}
+
+# Never leave SQLite databases inside publish/ (personal financial data belongs in DataDirectory).
+foreach ($dbFile in $dbFiles) {
+    $dbPath = Join-Path $publishDir $dbFile
+    if (Test-Path $dbPath) {
+        Remove-Item $dbPath -Force -ErrorAction SilentlyContinue
+        Write-Info "Removed $dbFile from publish (database must live in WealthLedger:DataDirectory)."
+    }
+}
 
 Write-Info 'Installing SPA dependencies (npm ci)...'
 Push-Location $spaDir
@@ -200,16 +222,6 @@ if (Test-Path $aiAssets) {
     New-Item -ItemType Directory -Force -Path $aiTarget | Out-Null
     robocopy $aiAssets $aiTarget /MIR /R:2 /W:2 /NFL /NDL /NJH /NJS /nc /ns /np | Out-Null
     if ($LASTEXITCODE -ge 8) { Write-Fail "Failed to copy AI model into $aiTarget."; exit 1 }
-}
-
-# Restore the saved database - a re-publish never overwrites your data.
-foreach ($dbFile in $dbFiles) {
-    $dbPath = Join-Path $publishDir $dbFile
-    if ($dbBackup.ContainsKey($dbFile)) {
-        [IO.File]::WriteAllBytes($dbPath, $dbBackup[$dbFile])
-    } elseif (Test-Path $dbPath) {
-        Remove-Item $dbPath -Force -ErrorAction SilentlyContinue
-    }
 }
 
 Write-Title 'Done!'
