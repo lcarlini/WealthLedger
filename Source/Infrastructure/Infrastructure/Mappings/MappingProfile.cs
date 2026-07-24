@@ -30,5 +30,10 @@ public class MappingProfile : Profile
         CreateMap<WatchlistItem, WatchlistItemResponse>();
 
         CreateMap<PortfolioSnapshot, PortfolioSnapshotResponse>();
+
+        CreateMap<BillPaymentAlertRequestBody, BillPaymentAlert>();
+        CreateMap<BillPaymentAlert, BillPaymentAlertResponse>()
+            .ForMember(d => d.Currency, o => o.MapFrom(s => s.Currency.ToString()))
+            .ForMember(d => d.Recurrence, o => o.MapFrom(s => s.Recurrence.ToString()));
     }
 }

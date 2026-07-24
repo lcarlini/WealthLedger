@@ -81,6 +81,49 @@ public static class SqliteSchemaMigrator
                     "UpdatedDate" TEXT NOT NULL
                 );
                 """, logger);
+
+            await EnsureTableAsync(db, "BillPaymentAlerts", """
+                CREATE TABLE IF NOT EXISTS "BillPaymentAlerts" (
+                    "Id" TEXT NOT NULL CONSTRAINT "PK_BillPaymentAlerts" PRIMARY KEY,
+                    "Name" TEXT NOT NULL,
+                    "Notes" TEXT NULL,
+                    "Amount" REAL NOT NULL,
+                    "Currency" INTEGER NOT NULL,
+                    "DueDay" INTEGER NOT NULL,
+                    "Recurrence" INTEGER NOT NULL,
+                    "StartYear" INTEGER NOT NULL,
+                    "StartMonth" INTEGER NOT NULL,
+                    "EndYear" INTEGER NULL,
+                    "EndMonth" INTEGER NULL,
+                    "IsActive" INTEGER NOT NULL,
+                    "CreatedDate" TEXT NOT NULL,
+                    "UpdatedDate" TEXT NOT NULL
+                );
+                """, logger);
+
+            await EnsureTableAsync(db, "BillPaymentOccurrences", """
+                CREATE TABLE IF NOT EXISTS "BillPaymentOccurrences" (
+                    "Id" TEXT NOT NULL CONSTRAINT "PK_BillPaymentOccurrences" PRIMARY KEY,
+                    "BillPaymentAlertId" TEXT NOT NULL,
+                    "DueYear" INTEGER NOT NULL,
+                    "DueMonth" INTEGER NOT NULL,
+                    "DueDay" INTEGER NOT NULL,
+                    "IsPaid" INTEGER NOT NULL,
+                    "PaidDate" TEXT NULL,
+                    "CreatedDate" TEXT NOT NULL,
+                    "UpdatedDate" TEXT NOT NULL
+                );
+                """, logger);
+
+            await EnsureIndexAsync(db, "IX_BillPaymentOccurrences_AlertYearMonth", """
+                CREATE UNIQUE INDEX IF NOT EXISTS "IX_BillPaymentOccurrences_AlertYearMonth"
+                    ON "BillPaymentOccurrences" ("BillPaymentAlertId", "DueYear", "DueMonth");
+                """, logger);
+
+            await EnsureIndexAsync(db, "IX_BillPaymentOccurrences_DueYearMonth", """
+                CREATE INDEX IF NOT EXISTS "IX_BillPaymentOccurrences_DueYearMonth"
+                    ON "BillPaymentOccurrences" ("DueYear", "DueMonth");
+                """, logger);
         }
         finally
         {
@@ -114,6 +157,19 @@ public static class SqliteSchemaMigrator
         await db.Database.ExecuteSqlRawAsync(createSql);
     }
 
+    private static async Task EnsureIndexAsync(
+        WealthLedgerDbContext db,
+        string indexName,
+        string createSql,
+        ILogger? logger)
+    {
+        if (await IndexExistsAsync(db, indexName))
+            return;
+
+        logger?.LogInformation("Creating missing index {Index}", indexName);
+        await db.Database.ExecuteSqlRawAsync(createSql);
+    }
+
     private static async Task<bool> TableExistsAsync(WealthLedgerDbContext db, string table)
     {
         var connection = db.Database.GetDbConnection();
@@ -122,6 +178,19 @@ public static class SqliteSchemaMigrator
         var p = cmd.CreateParameter();
         p.ParameterName = "$name";
         p.Value = table;
+        cmd.Parameters.Add(p);
+        var result = await cmd.ExecuteScalarAsync();
+        return result != null && result != DBNull.Value;
+    }
+
+    private static async Task<bool> IndexExistsAsync(WealthLedgerDbContext db, string indexName)
+    {
+        var connection = db.Database.GetDbConnection();
+        await using var cmd = connection.CreateCommand();
+        cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='index' AND name=$name";
+        var p = cmd.CreateParameter();
+        p.ParameterName = "$name";
+        p.Value = indexName;
         cmd.Parameters.Add(p);
         var result = await cmd.ExecuteScalarAsync();
         return result != null && result != DBNull.Value;

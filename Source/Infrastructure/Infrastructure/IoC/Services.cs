@@ -45,6 +45,8 @@ public static class ServiceRegistration
         services.AddScoped<IRepository<InvestmentGoal>, EfRepository<InvestmentGoal>>();
         services.AddScoped<IRepository<PortfolioSnapshot>, EfRepository<PortfolioSnapshot>>();
         services.AddScoped<IRepository<WatchlistItem>, EfRepository<WatchlistItem>>();
+        services.AddScoped<IRepository<BillPaymentAlert>, EfRepository<BillPaymentAlert>>();
+        services.AddScoped<IRepository<BillPaymentOccurrence>, EfRepository<BillPaymentOccurrence>>();
 
         // ===================================================================================
 
@@ -74,6 +76,9 @@ public static class ServiceRegistration
 
         services.AddTransient<ICashFlowScheduleService, CashFlowScheduleService>();
         services.AddTransient<IPayloadValidator<CashFlowScheduleItemRequestBody>, CashFlowScheduleItemValidator>();
+
+        services.AddTransient<IBillPaymentAlertService, BillPaymentAlertService>();
+        services.AddTransient<IPayloadValidator<BillPaymentAlertRequestBody>, BillPaymentAlertValidator>();
 
         services.AddTransient<IIncomeService, IncomeService>();
 

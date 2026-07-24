@@ -1,0 +1,333 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Bills &amp; Payments</h1>
+    <button mat-raised-button color="primary" type="button" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      New Alert
+    </button>
+  </div>
+
+  <mat-tab-group>
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Due This Month
+        @if (dueThisMonth().length > 0) {
+          <span class="tab-badge">{{ dueThisMonth().length }}</span>
+        }
+      </ng-template>
+
+      @if (loadingDue()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      }
+
+      <mat-card>
+        <mat-card-content>
+          <table mat-table [dataSource]="dueThisMonth()" class="full-width">
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef class="status-column"></th>
+              <td mat-cell *matCellDef="let row" class="status-column">
+                @if (row.isOverdue) {
+                  <mat-icon class="overdue-icon" matTooltip="Overdue">warning</mat-icon>
+                } @else if (isDueSoon(row)) {
+                  <mat-icon class="current-icon" matTooltip="Due soon">schedule</mat-icon>
+                } @else {
+                  <mat-icon class="current-icon" matTooltip="Due this month">payments</mat-icon>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Bill</th>
+              <td mat-cell *matCellDef="let row" [class.overdue-text]="row.isOverdue">
+                <div class="primary-text">{{ row.name }}</div>
+                @if (row.notes) {
+                  <div class="secondary-text">{{ row.notes }}</div>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.amount | currency:(row.currency || 'BRL'):'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="dueDate">
+              <th mat-header-cell *matHeaderCellDef>Due</th>
+              <td mat-cell *matCellDef="let row"
+                  [class.overdue-text]="row.isOverdue"
+                  [class.due-soon]="!row.isOverdue && isDueSoon(row)">
+                {{ formatDue(row) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="recurrence">
+              <th mat-header-cell *matHeaderCellDef>Recurring</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="type-chip chip-recurrence">{{ formatRecurrence(row.recurrence) }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let row" class="actions-column">
+                <button mat-icon-button type="button" matTooltip="Edit alert" (click)="editFromOccurrence(row)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-raised-button color="primary" type="button"
+                        (click)="markPaid(row)"
+                        [disabled]="row.isVirtual"
+                        matTooltip="Mark as paid">
+                  <mat-icon>check</mat-icon>
+                  Paid
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="dueColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: dueColumns;"></tr>
+
+            @if (!loadingDue() && dueThisMonth().length === 0) {
+              <tr class="mat-row no-data-row">
+                <td class="mat-cell" [attr.colspan]="dueColumns.length">
+                  No bills due this month. Create an alert to get started.
+                </td>
+              </tr>
+            }
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        Upcoming
+        @if (upcoming().length > 0) {
+          <span class="tab-badge">{{ upcoming().length }}</span>
+        }
+      </ng-template>
+
+      @if (loadingUpcoming()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      }
+
+      <mat-card>
+        <mat-card-header>
+          <mat-card-subtitle>
+            Future payment reminders projected from your recurring bill alerts.
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="future-period">
+            <mat-form-field appearance="outline">
+              <mat-label>Months ahead</mat-label>
+              <input matInput type="number" min="1" step="1"
+                     [ngModel]="upcomingMonths()"
+                     (ngModelChange)="upcomingMonths.set($event)">
+            </mat-form-field>
+            <button mat-stroked-button type="button" (click)="loadUpcoming()">
+              Project from today
+            </button>
+          </div>
+
+          <table mat-table [dataSource]="upcoming()" class="full-width">
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef class="status-column"></th>
+              <td mat-cell *matCellDef="let row" class="status-column">
+                <mat-icon class="upcoming-icon" matTooltip="Upcoming">event</mat-icon>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Bill</th>
+              <td mat-cell *matCellDef="let row">
+                <div class="primary-text">{{ row.name }}</div>
+                @if (row.notes) {
+                  <div class="secondary-text">{{ row.notes }}</div>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.amount | currency:(row.currency || 'BRL'):'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="dueDate">
+              <th mat-header-cell *matHeaderCellDef>Due</th>
+              <td mat-cell *matCellDef="let row">{{ formatDue(row) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="recurrence">
+              <th mat-header-cell *matHeaderCellDef>Recurring</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="type-chip chip-recurrence">{{ formatRecurrence(row.recurrence) }}</span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="upcomingColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: upcomingColumns;"></tr>
+
+            @if (!loadingUpcoming() && upcoming().length === 0) {
+              <tr class="mat-row no-data-row">
+                <td class="mat-cell" [attr.colspan]="upcomingColumns.length">
+                  No upcoming alerts in this projection window.
+                </td>
+              </tr>
+            }
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="Past">
+      @if (loadingPast()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      }
+
+      <mat-card>
+        <mat-card-content>
+          <table mat-table [dataSource]="past()" class="full-width">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Bill</th>
+              <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.amount | currency:(row.currency || 'BRL'):'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="dueDate">
+              <th mat-header-cell *matHeaderCellDef>Was Due</th>
+              <td mat-cell *matCellDef="let row">{{ formatDue(row) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="recurrence">
+              <th mat-header-cell *matHeaderCellDef>Recurring</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="type-chip chip-recurrence">{{ formatRecurrence(row.recurrence) }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="paidDate">
+              <th mat-header-cell *matHeaderCellDef>Paid</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.paidDate ? (row.paidDate | date:'dd/MM/yyyy') : '—' }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="pastColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: pastColumns;"></tr>
+
+            @if (!loadingPast() && past().length === 0) {
+              <tr class="mat-row no-data-row">
+                <td class="mat-cell" [attr.colspan]="pastColumns.length">
+                  No paid alerts yet.
+                </td>
+              </tr>
+            }
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+
+    <mat-tab label="Manage Alerts">
+      @if (loadingAlerts()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      }
+
+      <mat-card>
+        <mat-card-header>
+          <mat-card-subtitle>
+            Create and maintain recurring bill and payment reminders.
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <table mat-table [dataSource]="alerts()" class="full-width">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let row">
+                <div class="primary-text">{{ row.name }}</div>
+                @if (row.notes) {
+                  <div class="secondary-text">{{ row.notes }}</div>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.amount | currency:(row.currency || 'BRL'):'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="dueDay">
+              <th mat-header-cell *matHeaderCellDef>Due day</th>
+              <td mat-cell *matCellDef="let row">{{ formatDueDayLabel(row.dueDay, row.recurrence) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="recurrence">
+              <th mat-header-cell *matHeaderCellDef>Recurring</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="type-chip chip-recurrence">{{ formatRecurrence(row.recurrence) }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="period">
+              <th mat-header-cell *matHeaderCellDef>Period</th>
+              <td mat-cell *matCellDef="let row">{{ formatPeriod(row) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef>Active</th>
+              <td mat-cell *matCellDef="let row">
+                <mat-slide-toggle
+                  [checked]="row.isActive"
+                  (change)="toggleActive(row, $event.checked)"
+                  color="primary">
+                </mat-slide-toggle>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let row" class="actions-column">
+                <button mat-icon-button type="button" matTooltip="Edit" (click)="openEditDialog(row)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button type="button" color="warn" matTooltip="Delete" (click)="deleteAlert(row)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="manageColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: manageColumns;"></tr>
+
+            @if (!loadingAlerts() && alerts().length === 0) {
+              <tr class="mat-row no-data-row">
+                <td class="mat-cell" [attr.colspan]="manageColumns.length">
+                  No alerts yet. Click "New Alert" to add something like Maple Bear School (R$ 2,720.00 due on the 10th every month).
+                </td>
+              </tr>
+            }
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </mat-tab>
+  </mat-tab-group>
+</div>

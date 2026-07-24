@@ -10,6 +10,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { TaskService } from './shared/services/task.service';
+import { BillPaymentAlertService } from './shared/services/bill-payment-alert.service';
 import { ThemeService, ThemePreference } from './shared/services/theme.service';
 
 @Component({
@@ -77,6 +78,13 @@ import { ThemeService, ThemePreference } from './shared/services/theme.service';
                       matBadgeColor="warn"
                       matBadgeSize="small">task_alt</mat-icon>
             <span matListItemTitle>My Tasks</span>
+          </a>
+          <a mat-list-item routerLink="/bills-payments" routerLinkActive="active-link">
+            <mat-icon matListItemIcon
+                      [matBadge]="pendingBillCount() > 0 ? pendingBillCount() : null"
+                      matBadgeColor="warn"
+                      matBadgeSize="small">payments</mat-icon>
+            <span matListItemTitle>Bills &amp; Payments</span>
           </a>
           <a mat-list-item routerLink="/control" routerLinkActive="active-link">
             <mat-icon matListItemIcon>table_chart</mat-icon>
@@ -210,9 +218,11 @@ import { ThemeService, ThemePreference } from './shared/services/theme.service';
 })
 export class App implements OnInit {
   private readonly taskService = inject(TaskService);
+  private readonly billAlertService = inject(BillPaymentAlertService);
   private readonly themeService = inject(ThemeService);
 
   pendingTaskCount = signal(0);
+  pendingBillCount = signal(0);
 
   readonly themeMenuIcon = computed(() => {
     switch (this.themeService.preference()) {
@@ -227,17 +237,22 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this.themeService.init();
-    this.loadPendingCount();
-    setInterval(() => this.loadPendingCount(), 30000);
+    this.loadPendingCounts();
+    setInterval(() => this.loadPendingCounts(), 30000);
   }
 
   setTheme(value: ThemePreference): void {
     this.themeService.setPreference(value);
   }
 
-  private async loadPendingCount(): Promise<void> {
+  private async loadPendingCounts(): Promise<void> {
     try {
-      this.pendingTaskCount.set(await this.taskService.getPendingCount());
+      const [tasks, bills] = await Promise.all([
+        this.taskService.getPendingCount(),
+        this.billAlertService.getPendingCount(),
+      ]);
+      this.pendingTaskCount.set(tasks);
+      this.pendingBillCount.set(bills);
     } catch {
       // silently ignore
     }

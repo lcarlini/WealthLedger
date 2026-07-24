@@ -53,6 +53,11 @@ export const routes: Routes = [
       import('./components/my-tasks/my-tasks.component').then(m => m.MyTasksComponent),
   },
   {
+    path: 'bills-payments',
+    loadComponent: () =>
+      import('./components/bills-payments/bills-payments.component').then(m => m.BillsPaymentsComponent),
+  },
+  {
     path: 'control',
     loadComponent: () =>
       import('./components/control/control.component').then(m => m.ControlComponent),

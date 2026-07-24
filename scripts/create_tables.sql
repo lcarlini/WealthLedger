@@ -17,6 +17,7 @@
 -- StatementSource: 1 = Card, 2 = Checking
 -- CashFlowItemType: 1 = Income, 2 = Expense, 3 = Debt, 4 = CardInstallment
 -- CashFlowSource:  1 = Manual, 2 = FromCardImport
+-- BillRecurrence:  1 = Monthly, 2 = Yearly, 3 = Once
 
 CREATE TABLE IF NOT EXISTS FinancialInstitutions (
     Id              TEXT PRIMARY KEY NOT NULL,
@@ -160,6 +161,36 @@ CREATE TABLE IF NOT EXISTS WatchlistItems (
     UpdatedDate     TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS BillPaymentAlerts (
+    Id              TEXT PRIMARY KEY NOT NULL,
+    Name            TEXT NOT NULL,
+    Notes           TEXT,
+    Amount          REAL NOT NULL DEFAULT 0,
+    Currency        INTEGER NOT NULL DEFAULT 1,  -- 1=BRL, 2=USD, 3=EUR
+    DueDay          INTEGER NOT NULL DEFAULT 1,  -- 1-31
+    Recurrence      INTEGER NOT NULL DEFAULT 1,  -- 1=Monthly, 2=Yearly, 3=Once
+    StartYear       INTEGER NOT NULL,
+    StartMonth      INTEGER NOT NULL,
+    EndYear         INTEGER,
+    EndMonth        INTEGER,
+    IsActive        INTEGER NOT NULL DEFAULT 1,  -- 0=false, 1=true
+    CreatedDate     TEXT NOT NULL,
+    UpdatedDate     TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS BillPaymentOccurrences (
+    Id                  TEXT PRIMARY KEY NOT NULL,
+    BillPaymentAlertId  TEXT NOT NULL,
+    DueYear             INTEGER NOT NULL,
+    DueMonth            INTEGER NOT NULL,
+    DueDay              INTEGER NOT NULL,
+    IsPaid              INTEGER NOT NULL DEFAULT 0,  -- 0=false, 1=true
+    PaidDate            TEXT,
+    CreatedDate         TEXT NOT NULL,
+    UpdatedDate         TEXT NOT NULL,
+    FOREIGN KEY (BillPaymentAlertId) REFERENCES BillPaymentAlerts(Id)
+);
+
 -- Useful indexes for common queries
 CREATE INDEX IF NOT EXISTS IX_Investments_FinancialInstitutionId ON Investments(FinancialInstitutionId);
 CREATE INDEX IF NOT EXISTS IX_TaskItems_InvestmentId ON TaskItems(InvestmentId);
@@ -169,3 +200,6 @@ CREATE INDEX IF NOT EXISTS IX_BankTransactions_Date ON BankTransactions(Date);
 CREATE INDEX IF NOT EXISTS IX_CashFlowScheduleItems_StartYearMonth ON CashFlowScheduleItems(StartYear, StartMonth);
 CREATE INDEX IF NOT EXISTS IX_PassiveIncomes_PaymentDate ON PassiveIncomes(PaymentDate);
 CREATE INDEX IF NOT EXISTS IX_PortfolioSnapshots_SnapshotDate ON PortfolioSnapshots(SnapshotDate);
+CREATE INDEX IF NOT EXISTS IX_BillPaymentAlerts_IsActive ON BillPaymentAlerts(IsActive);
+CREATE UNIQUE INDEX IF NOT EXISTS IX_BillPaymentOccurrences_AlertYearMonth ON BillPaymentOccurrences(BillPaymentAlertId, DueYear, DueMonth);
+CREATE INDEX IF NOT EXISTS IX_BillPaymentOccurrences_DueYearMonth ON BillPaymentOccurrences(DueYear, DueMonth);

@@ -20,6 +20,8 @@ public class WealthLedgerDbContext : DbContext
     public DbSet<InvestmentGoal> InvestmentGoals => Set<InvestmentGoal>();
     public DbSet<PortfolioSnapshot> PortfolioSnapshots => Set<PortfolioSnapshot>();
     public DbSet<WatchlistItem> WatchlistItems => Set<WatchlistItem>();
+    public DbSet<BillPaymentAlert> BillPaymentAlerts => Set<BillPaymentAlert>();
+    public DbSet<BillPaymentOccurrence> BillPaymentOccurrences => Set<BillPaymentOccurrence>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -151,6 +153,25 @@ public class WealthLedgerDbContext : DbContext
             e.Property(x => x.AlertAbove).HasColumnType("REAL");
             e.Property(x => x.AlertBelow).HasColumnType("REAL");
             e.Property(x => x.Notes).HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<BillPaymentAlert>(e =>
+        {
+            e.ToTable("BillPaymentAlerts");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Notes).HasMaxLength(500);
+            e.Property(x => x.Amount).HasColumnType("REAL");
+            e.HasIndex(x => x.IsActive);
+        });
+
+        modelBuilder.Entity<BillPaymentOccurrence>(e =>
+        {
+            e.ToTable("BillPaymentOccurrences");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.BillPaymentAlertId);
+            e.HasIndex(x => new { x.BillPaymentAlertId, x.DueYear, x.DueMonth }).IsUnique();
+            e.HasIndex(x => new { x.DueYear, x.DueMonth });
         });
     }
 }
