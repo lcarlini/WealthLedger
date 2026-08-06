@@ -20,16 +20,19 @@ public class InvestmentController
     : BaseEntityController<Investment, InvestmentRequestBody, InvestmentResponse>
 {
     private readonly IInvestmentService _investmentService;
+    private readonly IInvestmentPerformanceService _performanceService;
     private readonly IRepository<FinancialInstitution> _institutionRepository;
 
     public InvestmentController(
         IInvestmentService service,
+        IInvestmentPerformanceService performanceService,
         IPayloadValidator<InvestmentRequestBody> validator,
         IMapper mapper,
         IRepository<FinancialInstitution> institutionRepository)
         : base(service, validator, mapper)
     {
         _investmentService = service;
+        _performanceService = performanceService;
         _institutionRepository = institutionRepository;
     }
 
@@ -217,12 +220,80 @@ public class InvestmentController
         return new Response<RefreshPricesResult>(result);
     }
 
+    [HttpGet("{id:guid}/performance")]
+    public async Task<Response<InvestmentPerformanceResponse>> GetPerformanceAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var perf = await _performanceService.GetPerformanceAsync(id, cancellationToken);
+        if (perf == null)
+            return new Response<InvestmentPerformanceResponse>([new Error("Entity not found")], HttpStatusCode.NotFound);
+        return new Response<InvestmentPerformanceResponse>(perf);
+    }
+
+    [HttpPost("{id:guid}/archive")]
+    public async Task<Response<InvestmentResponse>> ArchiveAsync(Guid id, [FromBody] ArchiveInvestmentRequest? body)
+    {
+        var archived = await _performanceService.ArchiveAsync(id, body ?? new ArchiveInvestmentRequest());
+        if (archived == null)
+            return new Response<InvestmentResponse>([new Error("Entity not found")], HttpStatusCode.NotFound);
+        var mapped = Mapper.Map<InvestmentResponse>(archived);
+        await EnrichSingle(mapped);
+        return new Response<InvestmentResponse>(mapped);
+    }
+
+    [HttpPost("{id:guid}/restore")]
+    public async Task<Response<InvestmentResponse>> RestoreAsync(Guid id)
+    {
+        var restored = await _performanceService.RestoreAsync(id);
+        if (restored == null)
+            return new Response<InvestmentResponse>([new Error("Entity not found")], HttpStatusCode.NotFound);
+        var mapped = Mapper.Map<InvestmentResponse>(restored);
+        await EnrichSingle(mapped);
+        return new Response<InvestmentResponse>(mapped);
+    }
+
+    /// <summary>Soft-delete: archives the investment so history is kept.</summary>
+    public override async Task<Response<InvestmentResponse>> DeleteAsync(Guid id)
+    {
+        var archived = await _performanceService.ArchiveAsync(id, new ArchiveInvestmentRequest
+        {
+            Notes = "Arquivado via exclusão"
+        });
+        if (archived == null)
+            return new Response<InvestmentResponse>([new Error("Entity not found")], HttpStatusCode.NotFound);
+        var mapped = Mapper.Map<InvestmentResponse>(archived);
+        await EnrichSingle(mapped);
+        return new Response<InvestmentResponse>(mapped);
+    }
+
+    [HttpDelete("{id:guid}/permanent")]
+    public async Task<Response<object>> PermanentDeleteAsync(Guid id)
+    {
+        var existing = await Service.GetAsync(id);
+        if (existing == null)
+            return new Response<object>([new Error("Entity not found")], HttpStatusCode.NotFound);
+        await Service.DeleteAsync(id);
+        return new Response<object>(errors: Enumerable.Empty<Error>(), statusCode: HttpStatusCode.NoContent);
+    }
+
     public override async Task<Response<InvestmentResponse>> CreateAsync([FromBody] InvestmentRequestBody body)
     {
-        var response = await base.CreateAsync(body);
-        if (response.Data != null)
-            await EnrichSingle(response.Data);
-        return response;
+        var validationResult = await Validator.ValidateAsync(body);
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .Select(e => Error.ForField(e.PropertyName, e.ErrorMessage))
+                .ToArray();
+            return new Response<InvestmentResponse>(errors, HttpStatusCode.BadRequest);
+        }
+
+        var domain = Mapper.Map<Investment>(body);
+        domain.CreatedDate = domain.UpdatedDate = DateTime.UtcNow;
+        InvestmentLifecycle.ApplyOnCreate(domain, body);
+
+        var result = await Service.UpsertAsync(domain);
+        var mapped = Mapper.Map<InvestmentResponse>(result);
+        await EnrichSingle(mapped);
+        return new Response<InvestmentResponse>(mapped);
     }
 
     public override async Task<Response<InvestmentResponse>> UpdateAsync(Guid id, [FromBody] InvestmentRequestBody body)
@@ -236,10 +307,25 @@ public class InvestmentController
                 [Error.ForField("Amount", "Cannot change amount of a fixed-term investment.")],
                 HttpStatusCode.BadRequest);
 
-        var response = await base.UpdateAsync(id, body);
-        if (response.Data != null)
-            await EnrichSingle(response.Data);
-        return response;
+        body.Id = id;
+        var validationResult = await Validator.ValidateAsync(body);
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .Select(e => Error.ForField(e.PropertyName, e.ErrorMessage))
+                .ToArray();
+            return new Response<InvestmentResponse>(errors, HttpStatusCode.BadRequest);
+        }
+
+        var domain = Mapper.Map<Investment>(body);
+        domain.CreatedDate = existing.CreatedDate;
+        domain.UpdatedDate = DateTime.UtcNow;
+        InvestmentLifecycle.ApplyOnUpdate(domain, existing, body);
+
+        var result = await Service.UpsertAsync(domain);
+        var mapped = Mapper.Map<InvestmentResponse>(result);
+        await EnrichSingle(mapped);
+        return new Response<InvestmentResponse>(mapped);
     }
 
     public override async Task<Response<Contracts.Domain.Pagination.PagedResponse<InvestmentResponse>>> GetPagedAsync(

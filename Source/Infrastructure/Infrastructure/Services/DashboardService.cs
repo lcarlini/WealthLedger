@@ -33,12 +33,19 @@ public class DashboardService : IDashboardService
         projectionYears = Math.Clamp(projectionYears, 1, 100);
         var projectionMonths = projectionYears * 12;
         var institutions = (await _institutionRepository.GetAllAsync()).ToList();
-        var investments = (await _investmentRepository.GetAllAsync()).ToList();
+        var allInvestments = (await _investmentRepository.GetAllAsync()).ToList();
+        foreach (var inv in allInvestments)
+            InvestmentService.NormalizeLifecycleFields(inv);
+
+        var investments = allInvestments.Where(i => i.Status == InvestmentStatus.Active).ToList();
+        var archivedCount = allInvestments.Count(i => i.Status == InvestmentStatus.Archived);
         var pendingCount = await _taskService.GetPendingCountAsync();
 
         var marketData = await _marketDataService.GetMarketDataAsync();
         decimal usdBrl = marketData.UsdBrl > 0 ? marketData.UsdBrl : 0;
         decimal eurBrl = marketData.EurBrl > 0 ? marketData.EurBrl : 0;
+        var selic = marketData.SelicPercentPerYear;
+        var ipca = marketData.IpcaPercentPerYear;
 
         decimal ToBrl(Investment i)
         {
@@ -47,6 +54,17 @@ public class DashboardService : IDashboardService
                 Currency.USD => i.Amount * usdBrl,
                 Currency.EUR => i.Amount * eurBrl,
                 _ => i.Amount
+            };
+        }
+
+        decimal PrincipalBrl(Investment i)
+        {
+            var p = i.PrincipalAmount > 0 ? i.PrincipalAmount : i.Amount;
+            return i.Currency switch
+            {
+                Currency.USD => p * usdBrl,
+                Currency.EUR => p * eurBrl,
+                _ => p
             };
         }
 
@@ -90,18 +108,111 @@ public class DashboardService : IDashboardService
             .Where(item => item.ItemType == CashFlowItemType.CardInstallment)
             .Sum(item => SumFutureItemAmountFrom(item, nextMonthYear, nextMonth));
 
+        var totalAmount = investments.Sum(ToBrl);
+        var totalPrincipal = investments.Sum(PrincipalBrl);
+        var unrealized = totalAmount - totalPrincipal;
+
+        decimal weightedReturn = 0;
+        decimal weightSum = 0;
+        foreach (var inv in investments)
+        {
+            var w = ToBrl(inv);
+            if (w <= 0) continue;
+            decimal annual;
+            if (AccountTypeRules.IsVariableIncome(inv.AccountType))
+                annual = 0;
+            else if (inv.Currency == Currency.BRL)
+                annual = (selic ?? 0) * (inv.CdiPercentage / 100m);
+            else
+                annual = inv.AnnualRatePercent ?? 0;
+
+            weightedReturn += annual * w;
+            weightSum += w;
+        }
+
+        decimal? estimatedAnnual = weightSum > 0 ? Math.Round(weightedReturn / weightSum, 2) : null;
+        decimal? excessCdi = estimatedAnnual.HasValue && selic.HasValue
+            ? Math.Round(estimatedAnnual.Value - selic.Value, 2)
+            : null;
+        decimal? excessIpca = estimatedAnnual.HasValue && ipca.HasValue
+            ? Math.Round(estimatedAnnual.Value - ipca.Value, 2)
+            : null;
+
+        static decimal Project(decimal amount, decimal? annualPct, int years)
+        {
+            if (amount <= 0 || annualPct is null or <= 0) return amount;
+            return Math.Round(amount * (decimal)Math.Pow((double)(1 + annualPct.Value / 100m), years), 2);
+        }
+
+        var verdict = BuildPortfolioVerdict(estimatedAnnual, selic, ipca, excessCdi, excessIpca);
+
+        var topHoldings = investments
+            .Select(i =>
+            {
+                var amt = ToBrl(i);
+                var prin = PrincipalBrl(i);
+                var gainPct = prin > 0 ? Math.Round((amt - prin) / prin * 100m, 2) : 0m;
+                var rateLabel = AccountTypeRules.IsVariableIncome(i.AccountType)
+                    ? "Mercado"
+                    : i.Currency == Currency.BRL
+                        ? $"{i.CdiPercentage:0.##}% CDI"
+                        : $"{i.AnnualRatePercent:0.##}% a.a.";
+                return new DashboardHoldingHighlight
+                {
+                    InvestmentId = i.Id,
+                    Name = i.Name,
+                    AmountBrl = amt,
+                    GainPercent = gainPct,
+                    RateLabel = rateLabel
+                };
+            })
+            .OrderByDescending(h => Math.Abs(h.GainPercent))
+            .Take(5)
+            .ToList();
+
         return new DashboardResponse
         {
             InstitutionCount = institutions.Count,
             InvestmentCount = investments.Count,
-            TotalAmount = investments.Sum(ToBrl),
+            ArchivedInvestmentCount = archivedCount,
+            TotalAmount = totalAmount,
+            TotalPrincipal = totalPrincipal,
+            UnrealizedGain = unrealized,
             PlannedDebitsProjection = plannedDebitsProjection,
             ProjectionYears = projectionYears,
             DebitsNextMonth = debitsNextMonth,
             FutureCardDebits = futureCardDebits,
             InvestmentsByType = byType,
-            PendingTaskCount = pendingCount
+            PendingTaskCount = pendingCount,
+            EstimatedAnnualReturnPercent = estimatedAnnual,
+            SelicPercent = selic,
+            IpcaPercent = ipca,
+            ExcessOverCdiPercent = excessCdi,
+            ExcessOverIpcaPercent = excessIpca,
+            ProjectedValue1Y = Project(totalAmount, estimatedAnnual, 1),
+            ProjectedValue3Y = Project(totalAmount, estimatedAnnual, 3),
+            ProjectedValue5Y = Project(totalAmount, estimatedAnnual, 5),
+            PortfolioVerdict = verdict,
+            TopHoldings = topHoldings
         };
+    }
+
+    private static string BuildPortfolioVerdict(
+        decimal? estimated,
+        decimal? selic,
+        decimal? ipca,
+        decimal? excessCdi,
+        decimal? excessIpca)
+    {
+        if (estimated is null)
+            return "Sem taxa estimada para a carteira ativa.";
+        if (excessIpca is < 0)
+            return $"Carteira projetada abaixo da inflação ({ipca:F2}% IPCA). Revisar alocação.";
+        if (excessCdi is >= 0.5m)
+            return $"Carteira projetada acima do CDI (+{excessCdi:F2} pp vs Selic {selic:F2}%).";
+        if (excessCdi is <= -0.5m)
+            return $"Carteira projetada abaixo do CDI ({excessCdi:F2} pp). Ainda acima da inflação.";
+        return $"Carteira em linha com o CDI (~{selic:F2}% a.a.).";
     }
 
     private static decimal SumFutureItemAmountFrom(CashFlowScheduleItem item, int fromYear, int fromMonth)

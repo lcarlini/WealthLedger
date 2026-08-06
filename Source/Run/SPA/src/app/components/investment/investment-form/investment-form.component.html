@@ -102,13 +102,28 @@
           } @else {
             <div class="row-fields">
               <mat-form-field appearance="outline" class="half-width">
-                <mat-label>Amount</mat-label>
+                <mat-label>Valor atual</mat-label>
                 <input matInput type="number" formControlName="amount"
                        [readonly]="isEdit() && isFixedTermType()"
                        [placeholder]="isForeignCurrency() ? 'In local currency' : 'R$'">
                 @if (form.get('amount')?.hasError('min')) {
                   <mat-error>Amount must be zero or greater.</mat-error>
                 }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Valor aplicado (principal)</mat-label>
+                <input matInput type="number" formControlName="principalAmount"
+                       placeholder="Deixe vazio = igual ao atual">
+              </mat-form-field>
+            </div>
+
+            <div class="row-fields">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Data da aplicação</mat-label>
+                <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+                <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+                <mat-datepicker #startPicker></mat-datepicker>
               </mat-form-field>
 
               @if (isForeignCurrency()) {
@@ -128,6 +143,28 @@
                   }
                 </mat-form-field>
               }
+            </div>
+
+            @if (!isForeignCurrency()) {
+              <mat-slide-toggle formControlName="isIncomeTaxExempt" class="toggle-field">
+                Isento de IR (LCI / LCA / Poupança)
+              </mat-slide-toggle>
+            }
+          }
+
+          @if (isVariableIncomeType()) {
+            <div class="row-fields">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Data da aplicação / compra</mat-label>
+                <input matInput [matDatepicker]="viStartPicker" formControlName="startDate">
+                <mat-datepicker-toggle matIconSuffix [for]="viStartPicker"></mat-datepicker-toggle>
+                <mat-datepicker #viStartPicker></mat-datepicker>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Custo (principal)</mat-label>
+                <input matInput type="number" formControlName="principalAmount"
+                       placeholder="Ou Qty × preço médio">
+              </mat-form-field>
             </div>
           }
 

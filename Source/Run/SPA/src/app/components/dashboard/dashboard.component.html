@@ -1,13 +1,19 @@
 <div class="page-container">
-  <h1>Dashboard</h1>
-  <div class="projection-controls">
-    <mat-form-field appearance="outline">
-      <mat-label>Projection years</mat-label>
-      <input matInput type="number" min="1" step="1"
-             [ngModel]="projectionYears()"
-             (ngModelChange)="setProjectionYears($event)">
-    </mat-form-field>
-    <span>From today through {{ projectionEndDate() | date:'mediumDate' }}</span>
+  <div class="dash-top">
+    <div>
+      <p class="feature-tag">{{ 'dash.tag' | t }}</p>
+      <h1>{{ 'dash.title' | t }}</h1>
+      <p class="dash-lead">{{ 'dash.lead' | t }}</p>
+    </div>
+    <div class="projection-controls">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'dash.projectionYears' | t }}</mat-label>
+        <input matInput type="number" min="1" step="1"
+               [ngModel]="projectionYears()"
+               (ngModelChange)="setProjectionYears($event)">
+      </mat-form-field>
+      <span>{{ 'dash.fromToday' | t }} {{ projectionEndDate() | date:'mediumDate' }}</span>
+    </div>
   </div>
 
   @if (loading()) {
@@ -15,12 +21,86 @@
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   } @else if (data(); as d) {
+    <section class="portfolio-verdict" [ngClass]="{
+      'good': (d.excessOverCdiPercent ?? 0) >= 0.5,
+      'warn': (d.excessOverCdiPercent ?? 0) < -0.5 && (d.excessOverIpcaPercent ?? 0) >= 0,
+      'bad': (d.excessOverIpcaPercent ?? 0) < 0
+    }">
+      <div>
+        <p class="eyebrow">{{ 'dash.quality' | t }}</p>
+        <h2>{{ portfolioVerdictText(d) }}</h2>
+        <p class="meta">
+          {{ 'dash.applied' | t }} {{ (d.totalPrincipal ?? 0) | currency:'BRL':'symbol':'1.2-2' }}
+          → {{ 'dash.current' | t }} {{ d.totalAmount | currency:'BRL':'symbol':'1.2-2' }}
+          · {{ 'dash.gain' | t }} {{ (d.unrealizedGain ?? 0) | currency:'BRL':'symbol':'1.2-2' }}
+          @if (d.archivedInvestmentCount) {
+            · {{ d.archivedInvestmentCount }} {{ 'dash.archivedCount' | t }}
+          }
+        </p>
+      </div>
+      <div class="verdict-stats">
+        <div>
+          <span class="label">{{ 'dash.estReturn' | t }}</span>
+          <span class="value">{{ d.estimatedAnnualReturnPercent != null ? (d.estimatedAnnualReturnPercent | number:'1.2-2') + '%' : '—' }}</span>
+        </div>
+        <div>
+          <span class="label">{{ 'dash.vsCdi' | t }}</span>
+          <span class="value" [class.pos]="(d.excessOverCdiPercent ?? 0) >= 0" [class.neg]="(d.excessOverCdiPercent ?? 0) < 0">
+            {{ d.excessOverCdiPercent != null ? ((d.excessOverCdiPercent >= 0 ? '+' : '') + (d.excessOverCdiPercent | number:'1.2-2') + ' pp') : '—' }}
+          </span>
+        </div>
+        <div>
+          <span class="label">{{ 'dash.vsIpca' | t }}</span>
+          <span class="value" [class.pos]="(d.excessOverIpcaPercent ?? 0) >= 0" [class.neg]="(d.excessOverIpcaPercent ?? 0) < 0">
+            {{ d.excessOverIpcaPercent != null ? ((d.excessOverIpcaPercent >= 0 ? '+' : '') + (d.excessOverIpcaPercent | number:'1.2-2') + ' pp') : '—' }}
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <div class="projection-strip">
+      <article>
+        <span class="label">{{ 'dash.proj1y' | t }}</span>
+        <span class="value">{{ (d.projectedValue1Y ?? d.totalAmount) | currency:'BRL':'symbol':'1.2-2' }}</span>
+      </article>
+      <article>
+        <span class="label">{{ 'dash.proj3y' | t }}</span>
+        <span class="value">{{ (d.projectedValue3Y ?? d.totalAmount) | currency:'BRL':'symbol':'1.2-2' }}</span>
+      </article>
+      <article>
+        <span class="label">{{ 'dash.proj5y' | t }}</span>
+        <span class="value">{{ (d.projectedValue5Y ?? d.totalAmount) | currency:'BRL':'symbol':'1.2-2' }}</span>
+      </article>
+    </div>
+
+    @if (d.topHoldings?.length) {
+      <section class="top-holdings">
+        <h3>{{ 'dash.highlights' | t }}</h3>
+        <div class="holding-row">
+          @for (h of d.topHoldings; track h.investmentId) {
+            <a class="holding-chip" [routerLink]="['/investments', h.investmentId]">
+              <span class="name">{{ h.name }}</span>
+              <span class="rate">{{ h.rateLabel }}</span>
+              <span class="gain" [class.pos]="h.gainPercent >= 0" [class.neg]="h.gainPercent < 0">
+                {{ h.gainPercent >= 0 ? '+' : '' }}{{ h.gainPercent | number:'1.2-2' }}%
+              </span>
+            </a>
+          }
+        </div>
+      </section>
+    } @else {
+      <aside class="history-callout dash-hint">
+        <mat-icon>touch_app</mat-icon>
+        <div>{{ 'dash.hint' | t }}</div>
+      </aside>
+    }
+
     <div class="summary-cards">
       <mat-card class="summary-card">
         <mat-card-content>
           <mat-icon class="card-icon institutions">account_balance</mat-icon>
           <div class="card-value">{{ d.institutionCount }}</div>
-          <div class="card-label">Institutions</div>
+          <div class="card-label">{{ 'dash.institutions' | t }}</div>
         </mat-card-content>
       </mat-card>
 
@@ -28,7 +108,7 @@
         <mat-card-content>
           <mat-icon class="card-icon investments">savings</mat-icon>
           <div class="card-value">{{ d.investmentCount }}</div>
-          <div class="card-label">Investments</div>
+          <div class="card-label">{{ 'dash.investments' | t }}</div>
         </mat-card-content>
       </mat-card>
 
@@ -36,7 +116,7 @@
         <mat-card-content>
           <mat-icon class="card-icon amount">attach_money</mat-icon>
           <div class="card-value">{{ d.totalAmount | currency:'BRL':'symbol':'1.2-2' }}</div>
-          <div class="card-label">Total Amount</div>
+          <div class="card-label">{{ 'dash.totalAmount' | t }}</div>
         </mat-card-content>
       </mat-card>
 
@@ -198,7 +278,7 @@
       <div class="charts-grid">
         <mat-card class="chart-card">
           <mat-card-header>
-            <mat-card-title>Investments by Type</mat-card-title>
+            <mat-card-title>{{ 'dash.chartByType' | t }}</mat-card-title>
           </mat-card-header>
           <mat-card-content class="chart-container">
             <canvas baseChart type="doughnut" [data]="chartData()" [options]="chartOptions"></canvas>
@@ -207,7 +287,7 @@
 
         <mat-card class="chart-card">
           <mat-card-header>
-            <mat-card-title>Patrimony Growth ({{ projectionYears() }} years)</mat-card-title>
+            <mat-card-title>{{ 'dash.chartPatGrowth' | t }} ({{ projectionYears() }}y)</mat-card-title>
           </mat-card-header>
           <mat-card-content class="chart-container">
             <canvas baseChart type="line" [data]="patrimonyChartData()" [options]="lineChartOptions"></canvas>
@@ -216,7 +296,7 @@
 
         <mat-card class="chart-card">
           <mat-card-header>
-            <mat-card-title>Monthly Debt / Expenses</mat-card-title>
+            <mat-card-title>{{ 'dash.chartDebtTitle' | t }}</mat-card-title>
           </mat-card-header>
           <mat-card-content class="chart-container">
             <canvas baseChart type="bar" [data]="debtChartData()" [options]="barChartOptions"></canvas>
@@ -225,7 +305,7 @@
 
         <mat-card class="chart-card">
           <mat-card-header>
-            <mat-card-title>Income vs Expenses</mat-card-title>
+            <mat-card-title>{{ 'dash.chartIncomeExpense' | t }}</mat-card-title>
           </mat-card-header>
           <mat-card-content class="chart-container">
             <canvas baseChart type="bar" [data]="incomeExpenseChartData()" [options]="barChartOptions"></canvas>
@@ -236,9 +316,117 @@
       <mat-card class="empty-card">
         <mat-card-content>
           <mat-icon>info_outline</mat-icon>
-          <p>No investments yet. Create your first investment to see charts here.</p>
+          <p>{{ 'dash.noCharts' | t }}</p>
         </mat-card-content>
       </mat-card>
+    }
+
+    @if (hasFancyCharts()) {
+      <section class="fancy-section">
+        <div class="fancy-head">
+          <p class="feature-tag">{{ 'dash.fancyTag' | t }}</p>
+          <h2>{{ 'dash.fancyTitle' | t }}</h2>
+          <p class="dash-lead">{{ 'dash.fancyLead' | t }}</p>
+        </div>
+
+        <div class="fancy-grid">
+          @if (snowballChartData().labels?.length) {
+            <mat-card class="chart-card fancy wide glow-indigo">
+              <mat-card-header>
+                <mat-card-title>{{ 'dash.chartSnowball' | t }}</mat-card-title>
+                <mat-card-subtitle>{{ 'dash.chartSnowballHint' | t }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content class="chart-container tall">
+                <canvas baseChart type="line" [data]="snowballChartData()" [options]="fancyLineOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          @if (benchmarkRaceChartData().labels?.length) {
+            <mat-card class="chart-card fancy wide glow-teal">
+              <mat-card-header>
+                <mat-card-title>{{ 'dash.chartRace' | t }}</mat-card-title>
+                <mat-card-subtitle>{{ 'dash.chartRaceHint' | t }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content class="chart-container tall">
+                <canvas baseChart type="line" [data]="benchmarkRaceChartData()" [options]="fancyLineOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          @if (yieldPulseChartData().labels?.length) {
+            <mat-card class="chart-card fancy glow-teal">
+              <mat-card-header>
+                <mat-card-title>{{ 'dash.chartYieldPulse' | t }}</mat-card-title>
+                <mat-card-subtitle>{{ 'dash.chartYieldPulseHint' | t }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content class="chart-container">
+                <canvas baseChart type="line" [data]="yieldPulseChartData()" [options]="fancyLineOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          @if (topEarnersChartData().labels?.length) {
+            <mat-card class="chart-card fancy glow-amber">
+              <mat-card-header>
+                <mat-card-title>{{ 'dash.chartTopEarners' | t }}</mat-card-title>
+                <mat-card-subtitle>{{ 'dash.chartTopEarnersHint' | t }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content class="chart-container">
+                <canvas baseChart type="bar" [data]="topEarnersChartData()" [options]="horizontalBarOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          @if (byInstitutionChartData().labels?.length) {
+            <mat-card class="chart-card fancy glow-violet">
+              <mat-card-header>
+                <mat-card-title>{{ 'dash.chartByBank' | t }}</mat-card-title>
+                <mat-card-subtitle>{{ 'dash.chartByBankHint' | t }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content class="chart-container">
+                <canvas baseChart type="polarArea" [data]="byInstitutionChartData()" [options]="polarOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          @if (rateRadarChartData().labels?.length) {
+            <mat-card class="chart-card fancy glow-indigo">
+              <mat-card-header>
+                <mat-card-title>{{ 'dash.chartRates' | t }}</mat-card-title>
+                <mat-card-subtitle>{{ 'dash.chartRatesHint' | t }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content class="chart-container">
+                <canvas baseChart type="radar" [data]="rateRadarChartData()" [options]="radarOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          @if (realPatrimonyChartData().labels?.length) {
+            <mat-card class="chart-card fancy wide glow-green">
+              <mat-card-header>
+                <mat-card-title>{{ 'dash.chartRealPat' | t }}</mat-card-title>
+                <mat-card-subtitle>{{ 'dash.chartRealPatHint' | t }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content class="chart-container tall">
+                <canvas baseChart type="line" [data]="realPatrimonyChartData()" [options]="fancyLineOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          @if (cashflowWaterfallChartData().labels?.length) {
+            <mat-card class="chart-card fancy wide glow-rose">
+              <mat-card-header>
+                <mat-card-title>{{ 'dash.chartCashflow' | t }}</mat-card-title>
+                <mat-card-subtitle>{{ 'dash.chartCashflowHint' | t }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content class="chart-container tall">
+                <canvas baseChart type="bar" [data]="cashflowWaterfallChartData()" [options]="waterfallOptions"></canvas>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </section>
     }
   }
 </div>

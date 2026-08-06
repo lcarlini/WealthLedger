@@ -43,6 +43,13 @@ CREATE TABLE IF NOT EXISTS Investments (
     Ticker                  TEXT,   -- optional; variable-income symbol (e.g. PETR4)
     Quantity                REAL,   -- optional; shares / quotas / units
     AveragePrice            REAL,   -- optional; average acquisition price per unit
+    StartDate               TEXT NOT NULL,  -- when principal was applied
+    PrincipalAmount         REAL NOT NULL DEFAULT 0,  -- original applied amount
+    Status                  INTEGER NOT NULL DEFAULT 1,  -- 1=Active, 2=Archived
+    ArchivedAt              TEXT,
+    RedeemedAmount          REAL,
+    ArchiveNotes            TEXT,
+    IsIncomeTaxExempt       INTEGER NOT NULL DEFAULT 0,  -- LCI/LCA/Poupança
     CreatedDate             TEXT NOT NULL,
     UpdatedDate             TEXT NOT NULL,
     FOREIGN KEY (FinancialInstitutionId) REFERENCES FinancialInstitutions(Id)

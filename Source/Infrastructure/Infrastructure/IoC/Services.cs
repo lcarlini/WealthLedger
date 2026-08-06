@@ -62,6 +62,8 @@ public static class ServiceRegistration
 
         services.AddTransient<IDashboardService, DashboardService>();
         services.AddTransient<IMarketDataService, MarketDataService>();
+        services.AddTransient<IHistoricalIndexService, HistoricalIndexService>();
+        services.AddTransient<IInvestmentPerformanceService, InvestmentPerformanceService>();
         services.AddTransient<IStockQuoteService, StockQuoteService>();
         services.AddTransient<IPortfolioService, PortfolioService>();
         services.AddTransient<IPassiveIncomeService, PassiveIncomeService>();

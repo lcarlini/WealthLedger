@@ -36,10 +36,23 @@ export const routes: Routes = [
         .then(m => m.InvestmentListComponent),
   },
   {
+    path: 'investments/archived',
+    loadComponent: () =>
+      import('./components/investment/investment-list/investment-list.component')
+        .then(m => m.InvestmentListComponent),
+    data: { status: 'archived' },
+  },
+  {
     path: 'investments/new',
     loadComponent: () =>
       import('./components/investment/investment-form/investment-form.component')
         .then(m => m.InvestmentFormComponent),
+  },
+  {
+    path: 'investments/:id',
+    loadComponent: () =>
+      import('./components/investment/investment-detail/investment-detail.component')
+        .then(m => m.InvestmentDetailComponent),
   },
   {
     path: 'investments/:id/edit',

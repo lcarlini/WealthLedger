@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { CurrencyPipe, DatePipe, NgClass } from '@angular/common';
@@ -17,13 +17,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSelectModule } from '@angular/material/select';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
-import { Investment, AccountType, AccountTypeLabels, Currency, CurrencyLabels, isVariableIncome } from '../../../models/investment';
+import { Investment, AccountType, Currency, CurrencyLabels, isVariableIncome, InvestmentStatus } from '../../../models/investment';
 import { FinancialInstitution } from '../../../models/financial-institution';
 import { InvestmentService } from '../../../shared/services/investment.service';
 import { FinancialInstitutionService } from '../../../shared/services/financial-institution.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { CsvImportResultDialogComponent } from '../../../shared/components/csv-import-result-dialog/csv-import-result-dialog.component';
+import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
+import { LanguageService } from '../../../shared/i18n/language.service';
+import { TranslationKey } from '../../../shared/i18n/translations';
 
 @Component({
   selector: 'app-investment-list',
@@ -33,7 +37,8 @@ import { CsvImportResultDialogComponent } from '../../../shared/components/csv-i
     MatTableModule, MatButtonModule, MatIconModule, MatInputModule,
     MatFormFieldModule, MatPaginatorModule, MatCardModule, MatSnackBarModule,
     MatDialogModule, MatTooltipModule, MatProgressSpinnerModule,
-    MatChipsModule, MatSelectModule,
+    MatChipsModule, MatSelectModule, MatButtonToggleModule,
+    TranslatePipe,
   ],
   templateUrl: './investment-list.component.html',
   styleUrl: './investment-list.component.scss',
@@ -42,14 +47,17 @@ export class InvestmentListComponent implements OnInit {
   private readonly service = inject(InvestmentService);
   private readonly institutionService = inject(FinancialInstitutionService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
+  private readonly lang = inject(LanguageService);
 
   readonly exportCsvUrl = this.service.getExportCsvUrl();
   readonly importCsvTemplateUrl = this.service.getImportCsvTemplateUrl();
   refreshingPrices = signal(false);
 
-  displayedColumns = ['institutionName', 'name', 'accountType', 'currency', 'amount', 'rate', 'ticker', 'maturityDate', 'actions'];
+  displayedColumns = ['institutionName', 'name', 'accountType', 'currency', 'amount', 'principal', 'rate', 'ticker', 'maturityDate', 'actions'];
+  allItems = signal<Investment[]>([]);
   dataSource = signal<Investment[]>([]);
   institutions = signal<FinancialInstitution[]>([]);
   totalCount = signal(0);
@@ -57,10 +65,33 @@ export class InvestmentListComponent implements OnInit {
   pageIndex = signal(0);
   searchValue = '';
   loading = signal(false);
-
-  readonly accountTypeLabels = AccountTypeLabels;
+  statusFilter = signal<'active' | 'archived' | 'all'>('active');
+  activeCount = signal(0);
+  archivedCount = signal(0);
 
   ngOnInit(): void {
+    const routeStatus = this.route.snapshot.data['status'] as string | undefined;
+    const queryStatus = this.route.snapshot.queryParamMap.get('status');
+    if (routeStatus === 'archived' || queryStatus === 'archived') {
+      this.statusFilter.set('archived');
+    } else if (queryStatus === 'all' || queryStatus === 'active') {
+      this.statusFilter.set(queryStatus);
+    }
+
+    this.route.queryParamMap.subscribe(params => {
+      if (this.route.snapshot.routeConfig?.path === 'investments/archived') {
+        this.statusFilter.set('archived');
+        this.pageIndex.set(0);
+        this.applyFilters();
+        return;
+      }
+      const status = params.get('status');
+      if (status === 'archived' || status === 'all' || status === 'active') {
+        this.statusFilter.set(status);
+        this.pageIndex.set(0);
+      }
+      this.applyFilters();
+    });
     this.loadInstitutions();
     this.loadData();
   }
@@ -77,11 +108,11 @@ export class InvestmentListComponent implements OnInit {
   async loadData(): Promise<void> {
     this.loading.set(true);
     try {
-      const result = await this.service.getPaged(
-        this.pageIndex() + 1, this.pageSize(), this.searchValue || undefined
-      );
-      this.dataSource.set(result.items);
-      this.totalCount.set(result.totalCount);
+      const items = await this.service.getAll();
+      this.allItems.set(items);
+      this.activeCount.set(items.filter(i => (i.status ?? InvestmentStatus.Active) === InvestmentStatus.Active).length);
+      this.archivedCount.set(items.filter(i => i.status === InvestmentStatus.Archived).length);
+      this.applyFilters();
     } catch {
       this.snackBar.open('Failed to load investments.', 'Close', { duration: 3000 });
     } finally {
@@ -89,20 +120,63 @@ export class InvestmentListComponent implements OnInit {
     }
   }
 
+  applyFilters(): void {
+    const q = this.searchValue.trim().toLowerCase();
+    let rows = this.allItems();
+    const filter = this.statusFilter();
+    if (filter === 'active') {
+      rows = rows.filter(i => (i.status ?? InvestmentStatus.Active) === InvestmentStatus.Active);
+    } else if (filter === 'archived') {
+      rows = rows.filter(i => i.status === InvestmentStatus.Archived);
+    }
+    if (q) {
+      rows = rows.filter(i =>
+        i.name.toLowerCase().includes(q)
+        || (i.institutionName ?? '').toLowerCase().includes(q)
+        || (i.ticker ?? '').toLowerCase().includes(q));
+    }
+
+    this.totalCount.set(rows.length);
+    const start = this.pageIndex() * this.pageSize();
+    this.dataSource.set(rows.slice(start, start + this.pageSize()));
+  }
+
+  setStatusFilter(value: 'active' | 'archived' | 'all'): void {
+    this.statusFilter.set(value);
+    this.pageIndex.set(0);
+    if (value === 'archived') {
+      void this.router.navigate(['/investments', 'archived']);
+    } else if (value === 'all') {
+      void this.router.navigate(['/investments'], { queryParams: { status: 'all' } });
+    } else {
+      void this.router.navigate(['/investments']);
+    }
+    this.applyFilters();
+  }
+
+  needsHistorySetup(row: Investment): boolean {
+    const principal = row.principalAmount ?? 0;
+    return principal <= 0 || Math.abs(principal - row.amount) < 0.01;
+  }
+
   onSearch(value: string): void {
     this.searchValue = value;
     this.pageIndex.set(0);
-    this.loadData();
+    this.applyFilters();
   }
 
   onPageChange(event: PageEvent): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
-    this.loadData();
+    this.applyFilters();
   }
 
   navigateToCreate(): void {
     this.router.navigate(['/investments', 'new']);
+  }
+
+  navigateToDetail(id: string): void {
+    this.router.navigate(['/investments', id]);
   }
 
   navigateToEdit(id: string): void {
@@ -138,7 +212,8 @@ export class InvestmentListComponent implements OnInit {
   }
 
   getTypeLabel(type: AccountType): string {
-    return this.accountTypeLabels[type] ?? 'Unknown';
+    this.lang.lang();
+    return this.lang.t(`account.${AccountType[type]}` as TranslationKey, AccountType[type]);
   }
 
   getCurrencyLabel(c: Currency): string {
@@ -153,7 +228,7 @@ export class InvestmentListComponent implements OnInit {
     if (isVariableIncome(row.accountType)) {
       if (row.quantity && row.averagePrice != null && row.averagePrice > 0) {
         const cost = row.quantity * row.averagePrice;
-        const gainPct = cost > 0 ? ((row.amount - cost) / cost) * 100 : 0;
+        const gainPct = cost > 0 ? ((row.amount - row.averagePrice * row.quantity) / cost) * 100 : 0;
         return `Market · ${gainPct >= 0 ? '+' : ''}${gainPct.toFixed(1)}%`;
       }
       return 'Market';
@@ -180,22 +255,43 @@ export class InvestmentListComponent implements OnInit {
   }
 
   async confirmDelete(investment: Investment): Promise<void> {
+    if (investment.status === InvestmentStatus.Archived) {
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        width: '400px',
+        data: {
+          title: 'Excluir permanentemente',
+          message: `Apagar "${investment.name}" de forma irreversível?`,
+        },
+      });
+      const confirmed = await firstValueFrom(dialogRef.afterClosed());
+      if (confirmed) {
+        try {
+          await this.service.permanentDelete(investment.id);
+          this.snackBar.open('Excluído permanentemente.', 'Close', { duration: 3000 });
+          this.loadData();
+        } catch {
+          this.snackBar.open('Failed to delete investment.', 'Close', { duration: 3000 });
+        }
+      }
+      return;
+    }
+
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: '400px',
       data: {
-        title: 'Delete Investment',
-        message: `Are you sure you want to delete "${investment.name}"?`,
+        title: 'Arquivar investimento',
+        message: `Arquivar "${investment.name}"? O histórico fica em Arquivados (menu lateral).`,
       },
     });
 
     const confirmed = await firstValueFrom(dialogRef.afterClosed());
     if (confirmed) {
       try {
-        await this.service.delete(investment.id);
-        this.snackBar.open('Investment deleted.', 'Close', { duration: 3000 });
+        await this.service.archive(investment.id, { redeemedAmount: investment.amount });
+        this.snackBar.open('Arquivado. Abra Arquivados no menu para ver.', 'Close', { duration: 5000 });
         this.loadData();
       } catch {
-        this.snackBar.open('Failed to delete investment.', 'Close', { duration: 3000 });
+        this.snackBar.open('Falha ao arquivar.', 'Close', { duration: 3000 });
       }
     }
   }

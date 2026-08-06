@@ -46,7 +46,9 @@ public class PortfolioService : IPortfolioService
         CancellationToken cancellationToken = default)
     {
         projectionYears = Math.Clamp(projectionYears, 1, 100);
-        var investments = (await _investmentRepository.GetAllAsync()).ToList();
+        var investments = (await _investmentRepository.GetAllAsync())
+            .Where(i => i.Status == InvestmentStatus.Active || i.Status == 0)
+            .ToList();
         var institutions = (await _institutionRepository.GetAllAsync()).ToList();
         var passive = (await _passiveIncomeRepository.GetAllAsync()).ToList();
         var goals = (await _goalRepository.GetAllAsync()).ToList();
@@ -216,7 +218,9 @@ public class PortfolioService : IPortfolioService
 
     public async Task<IEnumerable<CalendarEventItem>> GetCalendarAsync(int monthsAhead = 12, CancellationToken cancellationToken = default)
     {
-        var investments = (await _investmentRepository.GetAllAsync()).ToList();
+        var investments = (await _investmentRepository.GetAllAsync())
+            .Where(i => i.Status == InvestmentStatus.Active || i.Status == 0)
+            .ToList();
         var institutions = (await _institutionRepository.GetAllAsync()).ToList();
         var passive = (await _passiveIncomeRepository.GetAllAsync()).ToList();
         return await BuildCalendarAsync(investments, institutions, passive, monthsAhead);

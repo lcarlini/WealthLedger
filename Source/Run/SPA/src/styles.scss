@@ -1,14 +1,24 @@
-
-// Include theming for Angular Material with `mat.theme()`.
 @use '@angular/material' as mat;
+
+:root {
+  --wl-accent-teal: #0d9488;
+  --wl-accent-emerald: #059669;
+  --wl-accent-amber: #d97706;
+  --wl-accent-rose: #e11d48;
+  --wl-accent-sky: #0284c7;
+  --wl-gain: #10b981;
+  --wl-loss: #f43f5e;
+  --wl-page-max: 1280px;
+  --wl-sidebar-width: 248px;
+}
 
 html.theme-light {
   color-scheme: light;
   @include mat.theme((
     color: (
       theme-type: light,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
+      primary: mat.$cyan-palette,
+      tertiary: mat.$green-palette,
     ),
     typography: Roboto,
     density: 0,
@@ -20,19 +30,26 @@ html.theme-dark {
   @include mat.theme((
     color: (
       theme-type: dark,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
+      primary: mat.$cyan-palette,
+      tertiary: mat.$green-palette,
     ),
     typography: Roboto,
     density: 0,
   ));
 }
 
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
 body {
   background-color: var(--mat-sys-surface);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
-  margin: 0;
+  font-family: 'DM Sans', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .mat-mdc-header-row,
@@ -44,11 +61,69 @@ mat-header-cell {
   color: var(--mat-sys-on-surface) !important;
 }
 
-html,
-body {
-  height: 100%;
+.page-container {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--wl-page-max);
+  margin-inline: auto;
+  padding: 1.25rem 1.5rem 2.5rem;
 }
 
-body {
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.header-actions .mat-mdc-button-base,
+.action-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 40px;
+}
+
+.mat-mdc-raised-button .mat-icon,
+.mat-mdc-unelevated-button .mat-icon,
+.mat-mdc-outlined-button .mat-icon,
+.mat-mdc-button .mat-icon,
+.action-btn .mat-icon {
+  margin: 0 !important;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-unelevated-button.mat-primary {
+  --mdc-protected-button-container-color: var(--mat-sys-primary);
+  --mdc-protected-button-label-text-color: var(--mat-sys-on-primary);
+  --mdc-filled-button-container-color: var(--mat-sys-primary);
+  --mdc-filled-button-label-text-color: var(--mat-sys-on-primary);
+}
+
+.pos { color: var(--wl-gain) !important; }
+.neg { color: var(--wl-loss) !important; }
+
+.actions-column {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.actions-column .mat-mdc-icon-button {
+  width: 36px;
+  height: 36px;
+  padding: 6px;
 }

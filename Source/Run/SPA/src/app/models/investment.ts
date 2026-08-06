@@ -57,6 +57,16 @@ export const CurrencyLabels: Record<Currency, string> = {
   [Currency.EUR]: 'EUR',
 };
 
+export enum InvestmentStatus {
+  Active = 1,
+  Archived = 2,
+}
+
+export const InvestmentStatusLabels: Record<InvestmentStatus, string> = {
+  [InvestmentStatus.Active]: 'Ativo',
+  [InvestmentStatus.Archived]: 'Arquivado',
+};
+
 export interface Investment {
   id: string;
   financialInstitutionId: string;
@@ -73,6 +83,13 @@ export interface Investment {
   ticker?: string;
   quantity?: number;
   averagePrice?: number;
+  startDate: string;
+  principalAmount: number;
+  status: InvestmentStatus;
+  archivedAt?: string;
+  redeemedAmount?: number;
+  archiveNotes?: string;
+  isIncomeTaxExempt: boolean;
   createdDate: string;
   updatedDate: string;
 }
@@ -92,4 +109,62 @@ export interface InvestmentRequest {
   ticker?: string;
   quantity?: number;
   averagePrice?: number;
+  startDate?: string;
+  principalAmount?: number;
+  isIncomeTaxExempt?: boolean;
+}
+
+export interface ArchiveInvestmentRequest {
+  redeemedAmount?: number;
+  archivedAt?: string;
+  notes?: string;
+}
+
+export interface PerformanceBreakdownItem {
+  key: string;
+  label: string;
+  amount: number;
+  note?: string;
+}
+
+export interface PerformanceProjectionPoint {
+  monthsAhead: number;
+  label: string;
+  projectedGross: number;
+  projectedNet: number;
+  projectedNetGainPercent: number;
+}
+
+export interface InvestmentPerformance {
+  investmentId: string;
+  name: string;
+  accountType: AccountType;
+  currency: Currency;
+  status: InvestmentStatus;
+  startDate: string;
+  asOfDate: string;
+  holdingDays: number;
+  principalAmount: number;
+  currentAmount: number;
+  accruedTheoreticalAmount?: number;
+  grossGain: number;
+  grossGainPercent: number;
+  iofAmount: number;
+  iofRatePercent: number;
+  irAmount: number;
+  irRatePercent: number;
+  isIncomeTaxExempt: boolean;
+  netAmount: number;
+  netGain: number;
+  netGainPercent: number;
+  cdiAccumulatedPercent?: number;
+  cdiEquivalentAccumulatedPercent?: number;
+  ipcaAccumulatedPercent?: number;
+  realGainPercent?: number;
+  excessOverIpcaPercent?: number;
+  excessOverCdiPercent?: number;
+  verdict: string;
+  verdictSummary: string;
+  breakdown: PerformanceBreakdownItem[];
+  projections: PerformanceProjectionPoint[];
 }

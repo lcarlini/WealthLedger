@@ -12,7 +12,15 @@ public class MappingProfile : Profile
         CreateMap<FinancialInstitutionRequestBody, FinancialInstitution>();
         CreateMap<FinancialInstitution, FinancialInstitutionResponse>();
 
-        CreateMap<InvestmentRequestBody, Investment>();
+        CreateMap<InvestmentRequestBody, Investment>()
+            .ForMember(d => d.Status, o => o.Ignore())
+            .ForMember(d => d.ArchivedAt, o => o.Ignore())
+            .ForMember(d => d.RedeemedAmount, o => o.Ignore())
+            .ForMember(d => d.ArchiveNotes, o => o.Ignore())
+            .ForMember(d => d.StartDate, o => o.MapFrom(s =>
+                s.StartDate ?? default))
+            .ForMember(d => d.PrincipalAmount, o => o.MapFrom(s =>
+                s.PrincipalAmount ?? 0m));
         CreateMap<Investment, InvestmentResponse>();
 
         CreateMap<TaskItem, TaskItemResponse>();

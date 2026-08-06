@@ -1,0 +1,200 @@
+<div class="page-container detail-page">
+  <div class="page-header">
+    <button mat-icon-button routerLink="/investments" [matTooltip]="'common.back' | t">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="header-text">
+      <h1>{{ investment()?.name ?? ('inv.investment' | t) }}</h1>
+      @if (investment(); as inv) {
+        <p class="subtitle">
+          {{ accountLabel(inv.accountType) }}
+          · {{ inv.institutionName || '—' }}
+          ·
+          <span class="status-pill" [class.archived]="isArchived()">
+            {{ isArchived() ? ('common.archived' | t) : ('common.active' | t) }}
+          </span>
+        </p>
+      }
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button type="button" class="action-btn" (click)="navigateEdit()">
+        <mat-icon>edit</mat-icon>
+        <span>{{ 'common.edit' | t }}</span>
+      </button>
+      @if (!isArchived()) {
+        <button mat-flat-button color="primary" type="button" class="action-btn" (click)="archive()">
+          <mat-icon>inventory_2</mat-icon>
+          <span>{{ 'inv.archiveRedeem' | t }}</span>
+        </button>
+      } @else {
+        <button mat-stroked-button type="button" class="action-btn" (click)="restore()">
+          <mat-icon>unarchive</mat-icon>
+          <span>{{ 'inv.restore' | t }}</span>
+        </button>
+        <button mat-stroked-button color="warn" type="button" class="action-btn" (click)="permanentDelete()">
+          <mat-icon>delete_forever</mat-icon>
+          <span>{{ 'inv.deleteForever' | t }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (performance(); as p) {
+    @if (needsHistorySetup()) {
+      <aside class="setup-banner">
+        <mat-icon>edit_calendar</mat-icon>
+        <div>
+          <strong>{{ 'inv.setupTitle' | t }}</strong>
+          <p>{{ 'inv.setupBody' | t }}</p>
+          <button mat-flat-button color="primary" type="button" class="action-btn" (click)="navigateEdit()">
+            <mat-icon>edit</mat-icon>
+            <span>{{ 'inv.setupCta' | t }}</span>
+          </button>
+        </div>
+      </aside>
+    }
+
+    <section class="verdict-hero" [ngClass]="verdictClass()">
+      <div class="verdict-copy">
+        <p class="eyebrow">{{ 'inv.verdictCard' | t }}</p>
+        <h2>{{ localizedVerdict(p.verdict) }}</h2>
+        <p class="timeline">
+          {{ 'inv.appliedOn' | t }} <strong>{{ p.startDate | date:'dd/MM/yyyy' }}</strong>
+          → {{ p.asOfDate | date:'dd/MM/yyyy' }}
+          · <strong>{{ p.holdingDays }}</strong> {{ 'inv.days' | t }}
+        </p>
+      </div>
+      <div class="verdict-metrics">
+        <div class="metric">
+          <span class="label">{{ 'inv.netEstimated' | t }}</span>
+          <span class="value">{{ p.netAmount | currency:currencyCode():'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="metric">
+          <span class="label">{{ 'inv.netGain' | t }}</span>
+          <span class="value" [class.pos]="p.netGain >= 0" [class.neg]="p.netGain < 0">
+            {{ p.netGain >= 0 ? '+' : '' }}{{ p.netGain | currency:currencyCode():'symbol':'1.2-2' }}
+            <small>({{ p.netGainPercent | number:'1.2-2' }}%)</small>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid-3">
+      <article class="stat-block">
+        <h3>{{ 'inv.applied' | t }}</h3>
+        <p class="big">{{ p.principalAmount | currency:currencyCode():'symbol':'1.2-2' }}</p>
+        <p class="hint">{{ 'inv.principalHint' | t }}</p>
+      </article>
+      <article class="stat-block">
+        <h3>{{ 'inv.todayRedeem' | t }}</h3>
+        <p class="big">{{ p.currentAmount | currency:currencyCode():'symbol':'1.2-2' }}</p>
+        @if (p.accruedTheoreticalAmount != null) {
+          <p class="hint">{{ 'inv.theoretical' | t }}: {{ p.accruedTheoreticalAmount | currency:currencyCode():'symbol':'1.2-2' }}</p>
+        }
+      </article>
+      <article class="stat-block">
+        <h3>{{ 'inv.gross' | t }}</h3>
+        <p class="big" [class.pos]="p.grossGain >= 0" [class.neg]="p.grossGain < 0">
+          {{ p.grossGain >= 0 ? '+' : '' }}{{ p.grossGain | currency:currencyCode():'symbol':'1.2-2' }}
+        </p>
+        <p class="hint">{{ p.grossGainPercent | number:'1.2-2' }}% {{ 'inv.inPeriod' | t }}</p>
+      </article>
+    </div>
+
+    <div class="panels">
+      <section class="panel">
+        <h3>{{ 'inv.breakdownTitle' | t }}</h3>
+        <ul class="breakdown">
+          @for (item of localizedBreakdown(p); track item.key) {
+            <li [class.total]="item.key === 'net'" [class.tax]="item.key === 'iof' || item.key === 'ir'">
+              <div>
+                <span class="blabel">{{ item.label }}</span>
+                @if (item.note) {
+                  <span class="bnote">{{ item.note }}</span>
+                }
+              </div>
+              <span class="bamount">{{ item.amount | currency:currencyCode():'symbol':'1.2-2' }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h3>{{ 'inv.benchmarksTitle' | t }}</h3>
+        <div class="bench-grid">
+          <div>
+            <span class="label">{{ 'inv.yourNet' | t }}</span>
+            <span class="value">{{ p.netGainPercent | number:'1.2-2' }}%</span>
+          </div>
+          <div>
+            <span class="label">{{ 'inv.cdiAccum' | t }}</span>
+            <span class="value">{{ p.cdiAccumulatedPercent != null ? (p.cdiAccumulatedPercent | number:'1.2-2') + '%' : '—' }}</span>
+          </div>
+          <div>
+            <span class="label">{{ 'inv.yourCdiPct' | t }}</span>
+            <span class="value">{{ p.cdiEquivalentAccumulatedPercent != null ? (p.cdiEquivalentAccumulatedPercent | number:'1.2-2') + '%' : '—' }}</span>
+          </div>
+          <div>
+            <span class="label">{{ 'inv.ipcaAccum' | t }}</span>
+            <span class="value">{{ p.ipcaAccumulatedPercent != null ? (p.ipcaAccumulatedPercent | number:'1.2-2') + '%' : '—' }}</span>
+          </div>
+          <div>
+            <span class="label">{{ 'inv.vsCdi' | t }}</span>
+            <span class="value" [class.pos]="(p.excessOverCdiPercent ?? 0) >= 0" [class.neg]="(p.excessOverCdiPercent ?? 0) < 0">
+              {{ p.excessOverCdiPercent != null ? ((p.excessOverCdiPercent >= 0 ? '+' : '') + (p.excessOverCdiPercent | number:'1.2-2') + ' pp') : '—' }}
+            </span>
+          </div>
+          <div>
+            <span class="label">{{ 'inv.realReturn' | t }}</span>
+            <span class="value" [class.pos]="(p.realGainPercent ?? 0) >= 0" [class.neg]="(p.realGainPercent ?? 0) < 0">
+              {{ p.realGainPercent != null ? ((p.realGainPercent | number:'1.2-2') + '%') : '—' }}
+            </span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    @if (p.projections.length) {
+      <section class="panel projections">
+        <h3>{{ 'inv.projectionsTitle' | t }}</h3>
+        <p class="hint">{{ 'inv.projectionsHint' | t }}</p>
+        <div class="proj-row">
+          @for (pt of localizedProjections(p); track pt.monthsAhead) {
+            @let gain = pt.projectedNet - p.principalAmount;
+            <div class="proj-card">
+              <span class="label">{{ pt.label }}</span>
+              <span class="value">{{ pt.projectedNet | currency:currencyCode():'symbol':'1.2-2' }}</span>
+              <span class="gain" [class.neg]="gain < 0">
+                {{ gain >= 0 ? '+' : '' }}{{ gain | currency:currencyCode():'symbol':'1.2-2' }}
+                <span class="pct">({{ pt.projectedNetGainPercent | number:'1.2-2' }}%)</span>
+              </span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    @if (!isArchived()) {
+      <section class="panel archive-box">
+        <h3>{{ 'inv.archiveBoxTitle' | t }}</h3>
+        <p class="hint">{{ 'inv.archiveBoxHint' | t }}</p>
+        <div class="archive-row">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'inv.redeemedAmount' | t }}</mat-label>
+            <input matInput type="number"
+                   [ngModel]="redeemAmount()"
+                   (ngModelChange)="redeemAmount.set($event)">
+          </mat-form-field>
+          <button mat-flat-button color="primary" type="button" class="action-btn" (click)="archive()">
+            <mat-icon>inventory_2</mat-icon>
+            <span>{{ 'inv.archiveWithAmount' | t }}</span>
+          </button>
+        </div>
+      </section>
+    }
+  }
+</div>

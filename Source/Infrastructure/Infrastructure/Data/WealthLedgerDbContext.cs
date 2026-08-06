@@ -48,6 +48,10 @@ public class WealthLedgerDbContext : DbContext
             e.Property(x => x.Ticker).HasMaxLength(30);
             e.Property(x => x.Quantity).HasColumnType("REAL");
             e.Property(x => x.AveragePrice).HasColumnType("REAL");
+            e.Property(x => x.PrincipalAmount).HasColumnType("REAL");
+            e.Property(x => x.RedeemedAmount).HasColumnType("REAL");
+            e.Property(x => x.ArchiveNotes).HasMaxLength(500);
+            e.HasIndex(x => x.Status);
         });
 
         modelBuilder.Entity<TaskItem>(e =>

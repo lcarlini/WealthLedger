@@ -19,4 +19,13 @@ public class InvestmentRequestBody : IEntityRequestBody
     public string? Ticker { get; set; }
     public decimal? Quantity { get; set; }
     public decimal? AveragePrice { get; set; }
+
+    /// <summary>When the principal was applied. Defaults to today on create when omitted.</summary>
+    public DateTime? StartDate { get; set; }
+
+    /// <summary>Original amount applied. Defaults to Amount on create when omitted.</summary>
+    public decimal? PrincipalAmount { get; set; }
+
+    /// <summary>True for LCI/LCA/Poupança-style products (no IR on gains for PF).</summary>
+    public bool IsIncomeTaxExempt { get; set; }
 }

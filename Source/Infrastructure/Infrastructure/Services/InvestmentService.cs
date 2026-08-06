@@ -31,8 +31,66 @@ public class InvestmentService : IInvestmentService
     public Task<IEnumerable<Investment>> GetAllAsync() => _repository.GetAllAsync();
     public Task<PagedResponse<Investment>> GetPagedAsync(QueryOptions query) => _repository.GetPagedAsync(query);
     public Task<Investment?> GetAsync(Guid id) => _repository.GetAsync(id);
-    public Task<Investment> UpsertAsync(Investment entity) => _repository.UpsertAsync(entity);
+    public async Task<Investment> UpsertAsync(Investment entity)
+    {
+        Investment? existing = null;
+        if (entity.Id != Guid.Empty)
+            existing = await _repository.GetAsync(entity.Id);
+
+        if (existing != null)
+        {
+            // Preserve lifecycle when callers (CSV/mapper) omit archive fields.
+            if (entity.Status == 0)
+                entity.Status = existing.Status;
+            if (entity.ArchivedAt == null && existing.ArchivedAt != null)
+                entity.ArchivedAt = existing.ArchivedAt;
+            if (entity.RedeemedAmount == null && existing.RedeemedAmount != null)
+                entity.RedeemedAmount = existing.RedeemedAmount;
+            if (string.IsNullOrWhiteSpace(entity.ArchiveNotes) && !string.IsNullOrWhiteSpace(existing.ArchiveNotes))
+                entity.ArchiveNotes = existing.ArchiveNotes;
+        }
+
+        NormalizeLifecycleFields(entity, existing);
+        return await _repository.UpsertAsync(entity);
+    }
+
     public Task DeleteAsync(Guid id) => _repository.DeleteAsync(id);
+
+    public async Task<IEnumerable<Investment>> GetByStatusAsync(InvestmentStatus status)
+    {
+        var all = await _repository.GetAllAsync();
+        return all.Where(i => i.Status == status);
+    }
+
+    /// <summary>
+    /// Ensures StartDate / PrincipalAmount / Status have sensible defaults (hybrid model).
+    /// </summary>
+    public static void NormalizeLifecycleFields(Investment entity, Investment? existing = null)
+    {
+        if (entity.Status == 0)
+            entity.Status = InvestmentStatus.Active;
+
+        if (entity.StartDate == default)
+        {
+            entity.StartDate = existing?.StartDate != default && existing?.StartDate != null
+                ? existing.StartDate
+                : (existing?.CreatedDate.Date ?? DateTime.UtcNow.Date);
+        }
+
+        if (entity.PrincipalAmount <= 0)
+        {
+            if (existing is { PrincipalAmount: > 0 })
+                entity.PrincipalAmount = existing.PrincipalAmount;
+            else if (AccountTypeRules.IsVariableIncome(entity.AccountType)
+                     && entity.Quantity is > 0 && entity.AveragePrice is > 0)
+                entity.PrincipalAmount = Math.Round(entity.Quantity.Value * entity.AveragePrice.Value, 2, MidpointRounding.AwayFromZero);
+            else
+                entity.PrincipalAmount = entity.Amount;
+        }
+
+        if (entity.AccountType == AccountType.SavingsBox && existing == null)
+            entity.IsIncomeTaxExempt = true;
+    }
 
     public Task<bool> CheckDuplicateAsync(string fieldName, string fieldValue, Guid? excludeEntityId = null) =>
         _repository.ExistsAsync(fieldName, fieldValue, excludeEntityId);
@@ -48,7 +106,8 @@ public class InvestmentService : IInvestmentService
         var result = new RefreshPricesResult();
         var investments = (await _repository.GetAllAsync()).ToList();
         var candidates = investments
-            .Where(i => AccountTypeRules.IsVariableIncome(i.AccountType)
+            .Where(i => i.Status == InvestmentStatus.Active
+                        && AccountTypeRules.IsVariableIncome(i.AccountType)
                         && !string.IsNullOrWhiteSpace(i.Ticker)
                         && i.Quantity is > 0)
             .ToList();

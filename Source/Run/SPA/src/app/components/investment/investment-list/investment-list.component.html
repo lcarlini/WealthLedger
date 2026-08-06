@@ -1,43 +1,59 @@
 <div class="page-container">
   <div class="page-header">
-    <h1>Investments</h1>
+    <div>
+      <h1>{{ statusFilter() === 'archived' ? ('inv.archivedTitle' | t) : ('inv.title' | t) }}</h1>
+      <p class="page-lead">
+        {{ statusFilter() === 'archived' ? ('inv.leadArchived' | t) : ('inv.leadActive' | t) }}
+      </p>
+    </div>
     <div class="header-actions">
-      <a mat-stroked-button [href]="exportCsvUrl" download="investments.csv" target="_blank" rel="noopener">
+      <a mat-stroked-button class="action-btn" [href]="exportCsvUrl" download="investments.csv" target="_blank" rel="noopener">
         <mat-icon>download</mat-icon>
-        Export CSV
+        <span>{{ 'inv.exportCsv' | t }}</span>
       </a>
-      <a mat-stroked-button [href]="importCsvTemplateUrl" download="investments-template.csv" target="_blank" rel="noopener"
-         matTooltip="Download a header-only CSV to fill and re-import">
+      <a mat-stroked-button class="action-btn" [href]="importCsvTemplateUrl" download="investments-template.csv" target="_blank" rel="noopener">
         <mat-icon>description</mat-icon>
-        CSV template
+        <span>{{ 'inv.csvTemplate' | t }}</span>
       </a>
       <input type="file" #invCsvInput accept=".csv,text/csv" hidden (change)="onCsvSelected($event)">
-      <button mat-stroked-button type="button" (click)="invCsvInput.click()"
-              matTooltip="Import institutions first if your file uses InstitutionName instead of FinancialInstitutionId.">
+      <button mat-stroked-button type="button" class="action-btn" (click)="invCsvInput.click()">
         <mat-icon>upload</mat-icon>
-        Import CSV
+        <span>{{ 'inv.importCsv' | t }}</span>
       </button>
-      <button mat-stroked-button type="button" (click)="refreshPrices()"
-              [disabled]="loading() || refreshingPrices()"
-              matTooltip="Update Amount from live quotes for holdings with Ticker + Quantity (brapi / CoinGecko).">
+      <button mat-stroked-button type="button" class="action-btn" (click)="refreshPrices()"
+              [disabled]="loading() || refreshingPrices()">
         <mat-icon>currency_exchange</mat-icon>
-        {{ refreshingPrices() ? 'Refreshing…' : 'Refresh prices' }}
+        <span>{{ refreshingPrices() ? ('inv.refreshing' | t) : ('inv.refreshPrices' | t) }}</span>
       </button>
-      <button mat-raised-button color="primary" (click)="navigateToCreate()">
+      <button mat-flat-button color="primary" class="action-btn" (click)="navigateToCreate()">
         <mat-icon>add</mat-icon>
-        New Investment
+        <span>{{ 'common.new' | t }}</span>
       </button>
     </div>
   </div>
 
+  <aside class="history-callout">
+    <mat-icon>info</mat-icon>
+    <div>
+      <strong>{{ 'inv.historyCalloutTitle' | t }}</strong> — {{ 'inv.historyCalloutBody' | t }}
+    </div>
+  </aside>
+
   <mat-card>
     <mat-card-content>
-      <mat-form-field class="search-field" appearance="outline">
-        <mat-label>Search</mat-label>
-        <input matInput [ngModel]="searchValue" (ngModelChange)="onSearch($event)"
-               placeholder="Search by name...">
-        <mat-icon matSuffix>search</mat-icon>
-      </mat-form-field>
+      <div class="list-toolbar">
+        <mat-button-toggle-group [value]="statusFilter()" (change)="setStatusFilter($event.value)" class="status-toggles">
+          <mat-button-toggle value="active">{{ 'common.active' | t }} ({{ activeCount() }})</mat-button-toggle>
+          <mat-button-toggle value="archived">{{ 'common.archived' | t }} ({{ archivedCount() }})</mat-button-toggle>
+          <mat-button-toggle value="all">{{ 'common.all' | t }}</mat-button-toggle>
+        </mat-button-toggle-group>
+
+        <mat-form-field class="search-field" appearance="outline">
+          <mat-label>{{ 'common.search' | t }}</mat-label>
+          <input matInput [ngModel]="searchValue" (ngModelChange)="onSearch($event)">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
 
       @if (loading()) {
         <div class="loading-container">
@@ -48,17 +64,22 @@
       <table mat-table [dataSource]="dataSource()" class="full-width">
 
         <ng-container matColumnDef="institutionName">
-          <th mat-header-cell *matHeaderCellDef>Institution</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'inv.institution' | t }}</th>
           <td mat-cell *matCellDef="let row">{{ row.institutionName }}</td>
         </ng-container>
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+          <th mat-header-cell *matHeaderCellDef>{{ 'inv.name' | t }}</th>
+          <td mat-cell *matCellDef="let row">
+            <button type="button" class="linkish" (click)="navigateToDetail(row.id)">{{ row.name }}</button>
+            @if (needsHistorySetup(row) && row.status !== 2) {
+              <span class="setup-badge">{{ 'inv.adjustHistory' | t }}</span>
+            }
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="accountType">
-          <th mat-header-cell *matHeaderCellDef>Type</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'inv.type' | t }}</th>
           <td mat-cell *matCellDef="let row">
             <span class="type-chip" [ngClass]="getTypeClass(row.accountType)">
               {{ getTypeLabel(row.accountType) }}
@@ -67,17 +88,24 @@
         </ng-container>
 
         <ng-container matColumnDef="currency">
-          <th mat-header-cell *matHeaderCellDef>Currency</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'inv.currency' | t }}</th>
           <td mat-cell *matCellDef="let row">{{ getCurrencyLabel(row.currency) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="amount">
-          <th mat-header-cell *matHeaderCellDef>Amount</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'inv.current' | t }}</th>
           <td mat-cell *matCellDef="let row">{{ row.amount | currency:getCurrencyCode(row.currency):'symbol':'1.2-2' }}</td>
         </ng-container>
 
+        <ng-container matColumnDef="principal">
+          <th mat-header-cell *matHeaderCellDef>{{ 'inv.principal' | t }}</th>
+          <td mat-cell *matCellDef="let row">
+            {{ (row.principalAmount ?? row.amount) | currency:getCurrencyCode(row.currency):'symbol':'1.2-2' }}
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="rate">
-          <th mat-header-cell *matHeaderCellDef>Rate</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'inv.rate' | t }}</th>
           <td mat-cell *matCellDef="let row">{{ getRateLabel(row) }}</td>
         </ng-container>
 
@@ -87,31 +115,38 @@
         </ng-container>
 
         <ng-container matColumnDef="maturityDate">
-          <th mat-header-cell *matHeaderCellDef>Maturity</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'inv.maturity' | t }}</th>
           <td mat-cell *matCellDef="let row">
             {{ row.maturityDate ? (row.maturityDate | date:'mediumDate') : '—' }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-column">Actions</th>
-          <td mat-cell *matCellDef="let row" class="actions-column">
-            <button mat-icon-button matTooltip="Edit" (click)="navigateToEdit(row.id)">
+          <th mat-header-cell *matHeaderCellDef class="actions-column">{{ 'inv.actions' | t }}</th>
+          <td mat-cell *matCellDef="let row" class="actions-column" (click)="$event.stopPropagation()">
+            <button mat-icon-button [matTooltip]="'inv.performance' | t" (click)="navigateToDetail(row.id)">
+              <mat-icon>insights</mat-icon>
+            </button>
+            <button mat-icon-button [matTooltip]="'common.edit' | t" (click)="navigateToEdit(row.id)">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button matTooltip="Delete" color="warn" (click)="confirmDelete(row)">
-              <mat-icon>delete</mat-icon>
+            <button mat-icon-button
+                    [matTooltip]="row.status === 2 ? ('inv.deleteForever' | t) : ('inv.archive' | t)"
+                    color="warn"
+                    (click)="confirmDelete(row)">
+              <mat-icon>{{ row.status === 2 ? 'delete_forever' : 'inventory_2' }}</mat-icon>
             </button>
           </td>
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="clickable-row"
+            (click)="navigateToDetail(row.id)"></tr>
 
         @if (!loading() && dataSource().length === 0) {
           <tr class="mat-row no-data-row">
             <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-              No investments found.
+              {{ statusFilter() === 'archived' ? ('inv.emptyArchived' | t) : ('inv.empty' | t) }}
             </td>
           </tr>
         }

@@ -83,6 +83,8 @@ export class InvestmentFormComponent implements OnInit {
       accountType: [AccountType.CheckingAccount, Validators.required],
       currency: [Currency.BRL, Validators.required],
       amount: [0, [Validators.required, Validators.min(0)]],
+      principalAmount: [null as number | null, Validators.min(0)],
+      startDate: [new Date(), Validators.required],
       cdiPercentage: [100, [Validators.required, Validators.min(0)]],
       annualRatePercent: [null as number | null],
       maturityDate: [null],
@@ -91,6 +93,7 @@ export class InvestmentFormComponent implements OnInit {
       ticker: ['', Validators.maxLength(30)],
       quantity: [null as number | null, Validators.min(0)],
       averagePrice: [null as number | null, Validators.min(0)],
+      isIncomeTaxExempt: [false],
     });
 
     this.form.get('accountType')!.valueChanges.subscribe((type: AccountType) => {
@@ -131,6 +134,8 @@ export class InvestmentFormComponent implements OnInit {
         accountType: entity.accountType,
         currency: entity.currency ?? Currency.BRL,
         amount: entity.amount,
+        principalAmount: entity.principalAmount ?? entity.amount,
+        startDate: entity.startDate ? new Date(entity.startDate) : new Date(entity.createdDate),
         cdiPercentage: entity.cdiPercentage,
         annualRatePercent: entity.annualRatePercent ?? null,
         maturityDate: entity.maturityDate ? new Date(entity.maturityDate) : null,
@@ -139,6 +144,7 @@ export class InvestmentFormComponent implements OnInit {
         ticker: entity.ticker ?? '',
         quantity: entity.quantity ?? null,
         averagePrice: entity.averagePrice ?? null,
+        isIncomeTaxExempt: entity.isIncomeTaxExempt ?? false,
       });
       this.applyAccountTypeRules(entity.accountType);
       this.showMonthlyMovement.set(entity.requiresMonthlyMovement);
@@ -163,6 +169,12 @@ export class InvestmentFormComponent implements OnInit {
       if (body.maturityDate instanceof Date) {
         body.maturityDate = body.maturityDate.toISOString();
       }
+      if (body.startDate instanceof Date) {
+        body.startDate = body.startDate.toISOString();
+      }
+      if (body.principalAmount == null || body.principalAmount === '') {
+        body.principalAmount = body.amount;
+      }
 
       if (isVariableIncome(body.accountType)) {
         body.maturityDate = null;
@@ -171,20 +183,25 @@ export class InvestmentFormComponent implements OnInit {
         body.cdiPercentage = 0;
         body.annualRatePercent = body.currency === Currency.BRL ? null : 0;
         body.ticker = body.ticker?.trim() || null;
+        body.isIncomeTaxExempt = false;
       } else {
         body.ticker = null;
         body.quantity = null;
         body.averagePrice = null;
+        if (body.accountType === AccountType.SavingsBox) {
+          body.isIncomeTaxExempt = true;
+        }
       }
 
       if (this.isEdit() && this.entityId()) {
         await this.service.update(this.entityId()!, body);
         this.snackBar.open('Investment updated.', 'Close', { duration: 3000 });
+        this.router.navigate(['/investments', this.entityId()]);
       } else {
-        await this.service.create(body);
+        const created = await this.service.create(body);
         this.snackBar.open('Investment created.', 'Close', { duration: 3000 });
+        this.router.navigate(['/investments', created.id]);
       }
-      this.router.navigate(['/investments']);
     } catch {
       this.snackBar.open('Failed to save investment.', 'Close', { duration: 3000 });
     } finally {

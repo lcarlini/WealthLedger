@@ -23,4 +23,25 @@ public class Investment : BaseEntity
 
     /// <summary>Average acquisition price per unit (variable-income cost basis).</summary>
     public decimal? AveragePrice { get; set; }
+
+    /// <summary>When the principal was applied (holding-period start).</summary>
+    public DateTime StartDate { get; set; }
+
+    /// <summary>Original amount applied. Cost basis for fixed income; for variable income often Qty×AvgPrice.</summary>
+    public decimal PrincipalAmount { get; set; }
+
+    /// <summary>Active positions appear in dashboards; Archived keep history after redemption.</summary>
+    public InvestmentStatus Status { get; set; } = InvestmentStatus.Active;
+
+    /// <summary>When the position was archived (redeemed/closed).</summary>
+    public DateTime? ArchivedAt { get; set; }
+
+    /// <summary>Amount received on redemption (gross of tax withholding when known).</summary>
+    public decimal? RedeemedAmount { get; set; }
+
+    /// <summary>Optional note on why/how it was closed.</summary>
+    public string? ArchiveNotes { get; set; }
+
+    /// <summary>True for LCI/LCA/Poupança-style products (no IR on gains for PF).</summary>
+    public bool IsIncomeTaxExempt { get; set; }
 }

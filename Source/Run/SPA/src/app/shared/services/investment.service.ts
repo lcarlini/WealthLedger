@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ApiResponse } from '../../models/api-response';
 import { PagedResponse } from '../../models/paged-response';
-import { Investment, InvestmentRequest } from '../../models/investment';
+import { Investment, InvestmentRequest, ArchiveInvestmentRequest, InvestmentPerformance } from '../../models/investment';
 import { CsvImportResult } from '../../models/csv-import-result';
 import { RefreshPricesResult } from '../../models/refresh-prices-result';
 
@@ -69,6 +69,31 @@ export class InvestmentService {
     return response.data;
   }
 
+  async getPerformance(id: string): Promise<InvestmentPerformance> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<InvestmentPerformance>>(`${this.baseUrl}/${id}/performance`)
+    );
+    return response.data;
+  }
+
+  async archive(id: string, body: ArchiveInvestmentRequest = {}): Promise<Investment> {
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<Investment>>(`${this.baseUrl}/${id}/archive`, body)
+    );
+    return response.data;
+  }
+
+  async restore(id: string): Promise<Investment> {
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<Investment>>(`${this.baseUrl}/${id}/restore`, {})
+    );
+    return response.data;
+  }
+
+  async permanentDelete(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete(`${this.baseUrl}/${id}/permanent`));
+  }
+
   async getByInstitutionId(institutionId: string): Promise<Investment[]> {
     const response = await firstValueFrom(
       this.http.get<ApiResponse<Investment[]>>(`${this.baseUrl}/by-institution/${institutionId}`)
@@ -90,6 +115,7 @@ export class InvestmentService {
     return response.data;
   }
 
+  /** Soft-delete (archives). Prefer archive() with redeemed amount. */
   async delete(id: string): Promise<void> {
     await firstValueFrom(this.http.delete(`${this.baseUrl}/${id}`));
   }

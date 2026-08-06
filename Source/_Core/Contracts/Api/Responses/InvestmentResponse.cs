@@ -19,6 +19,13 @@ public class InvestmentResponse
     public string? Ticker { get; set; }
     public decimal? Quantity { get; set; }
     public decimal? AveragePrice { get; set; }
+    public DateTime StartDate { get; set; }
+    public decimal PrincipalAmount { get; set; }
+    public InvestmentStatus Status { get; set; }
+    public DateTime? ArchivedAt { get; set; }
+    public decimal? RedeemedAmount { get; set; }
+    public string? ArchiveNotes { get; set; }
+    public bool IsIncomeTaxExempt { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime UpdatedDate { get; set; }
 }

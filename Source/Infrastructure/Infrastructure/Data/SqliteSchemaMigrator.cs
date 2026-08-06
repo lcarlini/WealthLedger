@@ -17,6 +17,30 @@ public static class SqliteSchemaMigrator
             await EnsureInvestmentColumnAsync(db, "Ticker", """ALTER TABLE "Investments" ADD COLUMN "Ticker" TEXT""", logger);
             await EnsureInvestmentColumnAsync(db, "Quantity", """ALTER TABLE "Investments" ADD COLUMN "Quantity" REAL""", logger);
             await EnsureInvestmentColumnAsync(db, "AveragePrice", """ALTER TABLE "Investments" ADD COLUMN "AveragePrice" REAL""", logger);
+            await EnsureInvestmentColumnAsync(db, "StartDate", """ALTER TABLE "Investments" ADD COLUMN "StartDate" TEXT""", logger);
+            await EnsureInvestmentColumnAsync(db, "PrincipalAmount", """ALTER TABLE "Investments" ADD COLUMN "PrincipalAmount" REAL NOT NULL DEFAULT 0""", logger);
+            await EnsureInvestmentColumnAsync(db, "Status", """ALTER TABLE "Investments" ADD COLUMN "Status" INTEGER NOT NULL DEFAULT 1""", logger);
+            await EnsureInvestmentColumnAsync(db, "ArchivedAt", """ALTER TABLE "Investments" ADD COLUMN "ArchivedAt" TEXT""", logger);
+            await EnsureInvestmentColumnAsync(db, "RedeemedAmount", """ALTER TABLE "Investments" ADD COLUMN "RedeemedAmount" REAL""", logger);
+            await EnsureInvestmentColumnAsync(db, "ArchiveNotes", """ALTER TABLE "Investments" ADD COLUMN "ArchiveNotes" TEXT""", logger);
+            await EnsureInvestmentColumnAsync(db, "IsIncomeTaxExempt", """ALTER TABLE "Investments" ADD COLUMN "IsIncomeTaxExempt" INTEGER NOT NULL DEFAULT 0""", logger);
+
+            // Backfill lifecycle fields for existing rows (idempotent-ish).
+            await db.Database.ExecuteSqlRawAsync("""
+                UPDATE "Investments"
+                SET "PrincipalAmount" = "Amount"
+                WHERE ("PrincipalAmount" IS NULL OR "PrincipalAmount" = 0) AND "Amount" > 0
+                """);
+            await db.Database.ExecuteSqlRawAsync("""
+                UPDATE "Investments"
+                SET "StartDate" = "CreatedDate"
+                WHERE "StartDate" IS NULL OR TRIM("StartDate") = ''
+                """);
+            await db.Database.ExecuteSqlRawAsync("""
+                UPDATE "Investments"
+                SET "Status" = 1
+                WHERE "Status" IS NULL OR "Status" = 0
+                """);
 
             await EnsureTableAsync(db, "PassiveIncomes", """
                 CREATE TABLE IF NOT EXISTS "PassiveIncomes" (
