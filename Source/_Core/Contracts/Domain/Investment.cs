@@ -42,6 +42,12 @@ public class Investment : BaseEntity
     /// <summary>Optional note on why/how it was closed.</summary>
     public string? ArchiveNotes { get; set; }
 
+    /// <summary>Book Amount captured immediately before archive overwrite.</summary>
+    public decimal? BookAmountAtArchive { get; set; }
+
+    /// <summary>Index/rate theoretical value at archive time (CDI%/annual rate accrual).</summary>
+    public decimal? ExpectedTheoreticalAtArchive { get; set; }
+
     /// <summary>True for LCI/LCA/Poupança-style products (no IR on gains for PF).</summary>
     public bool IsIncomeTaxExempt { get; set; }
 }

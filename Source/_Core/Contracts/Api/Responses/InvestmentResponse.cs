@@ -25,6 +25,8 @@ public class InvestmentResponse
     public DateTime? ArchivedAt { get; set; }
     public decimal? RedeemedAmount { get; set; }
     public string? ArchiveNotes { get; set; }
+    public decimal? BookAmountAtArchive { get; set; }
+    public decimal? ExpectedTheoreticalAtArchive { get; set; }
     public bool IsIncomeTaxExempt { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime UpdatedDate { get; set; }

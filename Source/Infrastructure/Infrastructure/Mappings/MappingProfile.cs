@@ -17,6 +17,8 @@ public class MappingProfile : Profile
             .ForMember(d => d.ArchivedAt, o => o.Ignore())
             .ForMember(d => d.RedeemedAmount, o => o.Ignore())
             .ForMember(d => d.ArchiveNotes, o => o.Ignore())
+            .ForMember(d => d.BookAmountAtArchive, o => o.Ignore())
+            .ForMember(d => d.ExpectedTheoreticalAtArchive, o => o.Ignore())
             .ForMember(d => d.StartDate, o => o.MapFrom(s =>
                 s.StartDate ?? default))
             .ForMember(d => d.PrincipalAmount, o => o.MapFrom(s =>

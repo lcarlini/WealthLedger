@@ -48,6 +48,10 @@ public class InvestmentService : IInvestmentService
                 entity.RedeemedAmount = existing.RedeemedAmount;
             if (string.IsNullOrWhiteSpace(entity.ArchiveNotes) && !string.IsNullOrWhiteSpace(existing.ArchiveNotes))
                 entity.ArchiveNotes = existing.ArchiveNotes;
+            if (entity.BookAmountAtArchive == null && existing.BookAmountAtArchive != null)
+                entity.BookAmountAtArchive = existing.BookAmountAtArchive;
+            if (entity.ExpectedTheoreticalAtArchive == null && existing.ExpectedTheoreticalAtArchive != null)
+                entity.ExpectedTheoreticalAtArchive = existing.ExpectedTheoreticalAtArchive;
         }
 
         NormalizeLifecycleFields(entity, existing);

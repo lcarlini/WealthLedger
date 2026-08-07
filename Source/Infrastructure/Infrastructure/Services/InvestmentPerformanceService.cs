@@ -32,9 +32,32 @@ public class InvestmentPerformanceService : IInvestmentPerformanceService
         var inv = await _repository.GetAsync(id);
         if (inv == null) return null;
 
+        var archivedAt = (request.ArchivedAt ?? DateTime.UtcNow).ToUniversalTime();
+        var bookAmount = inv.Amount;
+        var redeemed = request.RedeemedAmount ?? inv.Amount;
+
+        var start = inv.StartDate == default ? inv.CreatedDate.Date : inv.StartDate.Date;
+        var asOf = archivedAt.Date;
+        if (asOf < start) asOf = start;
+        var principal = inv.PrincipalAmount > 0
+            ? inv.PrincipalAmount
+            : ResolveVariableCostBasis(inv) ?? inv.Amount;
+
+        decimal? theoretical = null;
+        try
+        {
+            theoretical = await ComputeTheoreticalAmountAsync(inv, principal, start, asOf, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not compute theoretical amount at archive for {Id}", id);
+        }
+
         inv.Status = InvestmentStatus.Archived;
-        inv.ArchivedAt = (request.ArchivedAt ?? DateTime.UtcNow).ToUniversalTime();
-        inv.RedeemedAmount = request.RedeemedAmount ?? inv.Amount;
+        inv.ArchivedAt = archivedAt;
+        inv.BookAmountAtArchive = Round2(bookAmount);
+        inv.ExpectedTheoreticalAtArchive = theoretical;
+        inv.RedeemedAmount = Round2(redeemed);
         inv.ArchiveNotes = string.IsNullOrWhiteSpace(request.Notes) ? inv.ArchiveNotes : request.Notes.Trim();
         inv.Amount = inv.RedeemedAmount.Value;
         inv.UpdatedDate = DateTime.UtcNow;
@@ -50,6 +73,8 @@ public class InvestmentPerformanceService : IInvestmentPerformanceService
         inv.ArchivedAt = null;
         inv.RedeemedAmount = null;
         inv.ArchiveNotes = null;
+        inv.BookAmountAtArchive = null;
+        inv.ExpectedTheoreticalAtArchive = null;
         inv.UpdatedDate = DateTime.UtcNow;
         return await _repository.UpsertAsync(inv);
     }
@@ -93,8 +118,115 @@ public class InvestmentPerformanceService : IInvestmentPerformanceService
         else
             await FillFixedIncomeAsync(response, inv, ct);
 
-        response.Projections = await BuildProjectionsAsync(inv, response, ct);
+        FillRedemptionAnalysis(response, inv);
+
+        response.Projections = inv.Status == InvestmentStatus.Archived
+            ? []
+            : await BuildProjectionsAsync(inv, response, ct);
         return response;
+    }
+
+    private async Task<decimal?> ComputeTheoreticalAmountAsync(
+        Investment inv,
+        decimal principal,
+        DateTime start,
+        DateTime asOf,
+        CancellationToken ct)
+    {
+        if (AccountTypeRules.IsVariableIncome(inv.AccountType))
+            return null;
+
+        if (inv.Currency == Currency.BRL && inv.CdiPercentage >= 0)
+        {
+            var window = await _historicalIndex.GetWindowAsync(start, asOf, ct);
+            var pct = inv.CdiPercentage / 100m;
+            var factor = pct == 0
+                ? 1m
+                : (decimal)Math.Pow((double)window.CdiAccumulatedFactor, (double)pct);
+            return Round2(principal * factor);
+        }
+
+        var rate = inv.AnnualRatePercent ?? 0m;
+        var holdingDays = Math.Max(0, (asOf - start).Days);
+        var years = holdingDays / 365.25m;
+        var annualFactor = (decimal)Math.Pow((double)(1 + rate / 100m), (double)years);
+        return Round2(principal * annualFactor);
+    }
+
+    private static void FillRedemptionAnalysis(InvestmentPerformanceResponse r, Investment inv)
+    {
+        if (inv.Status != InvestmentStatus.Archived || !inv.RedeemedAmount.HasValue)
+            return;
+
+        var redeemed = inv.RedeemedAmount.Value;
+        var book = inv.BookAmountAtArchive;
+        var theo = inv.ExpectedTheoreticalAtArchive ?? r.AccruedTheoreticalAmount;
+
+        r.BookAmount = book;
+        r.TheoreticalAmount = theo;
+
+        if (book.HasValue)
+        {
+            r.VsBookDelta = Round2(redeemed - book.Value);
+            r.VsBookPercent = book.Value != 0
+                ? Round2(r.VsBookDelta.Value / book.Value * 100m)
+                : 0m;
+        }
+
+        if (theo.HasValue)
+        {
+            r.VsTheoreticalDelta = Round2(redeemed - theo.Value);
+            r.VsTheoreticalPercent = theo.Value != 0
+                ? Round2(r.VsTheoreticalDelta.Value / theo.Value * 100m)
+                : 0m;
+        }
+
+        var (verdict, summary) = ClassifyRedemption(redeemed, book, theo);
+        r.RedemptionVerdict = verdict;
+        r.RedemptionSummary = summary;
+    }
+
+    private static (string Verdict, string Summary) ClassifyRedemption(
+        decimal redeemed,
+        decimal? book,
+        decimal? theo)
+    {
+        static int Sign(decimal redeemed, decimal baseline)
+        {
+            var tol = Math.Max(0.50m, Math.Abs(baseline) * 0.001m);
+            var delta = redeemed - baseline;
+            if (delta > tol) return 1;
+            if (delta < -tol) return -1;
+            return 0;
+        }
+
+        var vsBook = book.HasValue ? Sign(redeemed, book.Value) : 0;
+        var vsTheo = theo.HasValue ? Sign(redeemed, theo.Value) : 0;
+        var hasBook = book.HasValue;
+        var hasTheo = theo.HasValue;
+
+        if ((!hasBook || vsBook == 0) && (!hasTheo || vsTheo == 0))
+        {
+            return ("match", "Resgate em linha com carteira e teórico.");
+        }
+
+        if (hasBook && hasTheo && vsBook == 1 && vsTheo == 1)
+            return ("above_both", "Resgate acima da carteira e do teórico.");
+        if (hasBook && hasTheo && vsBook == -1 && vsTheo == -1)
+            return ("below_both", "Resgate abaixo da carteira e do teórico.");
+        if (hasBook && hasTheo && vsBook != 0 && vsTheo != 0 && vsBook != vsTheo)
+            return ("mixed", "Resgate acima de um baseline e abaixo do outro.");
+
+        if (vsBook == 1)
+            return ("above_book", "Resgate acima do saldo em carteira.");
+        if (vsTheo == 1)
+            return ("above_theoretical", "Resgate acima do valor teórico (índice/taxa).");
+        if (vsBook == -1)
+            return ("below_book", "Resgate abaixo do saldo em carteira.");
+        if (vsTheo == -1)
+            return ("below_theoretical", "Resgate abaixo do valor teórico (índice/taxa).");
+
+        return ("match", "Resgate em linha com os baselines disponíveis.");
     }
 
     private async Task FillFixedIncomeAsync(InvestmentPerformanceResponse r, Investment inv, CancellationToken ct)

@@ -158,7 +158,7 @@
       </section>
     </div>
 
-    @if (p.projections.length) {
+    @if (p.projections.length && !isArchived()) {
       <section class="panel projections">
         <h3>{{ 'inv.projectionsTitle' | t }}</h3>
         <p class="hint">{{ 'inv.projectionsHint' | t }}</p>
@@ -174,6 +174,51 @@
               </span>
             </div>
           }
+        </div>
+      </section>
+    }
+
+    @if (isArchived() && investment(); as inv) {
+      <section class="panel redemption-analysis" [ngClass]="redemptionVerdictClass()">
+        <h3>{{ 'inv.redemptionAnalysis' | t }}</h3>
+        <p class="verdict-chip">
+          {{ localizedRedemptionVerdict(p.redemptionVerdict, p.redemptionSummary) }}
+        </p>
+        <div class="meta-row">
+          @if (inv.archivedAt) {
+            <span>{{ 'inv.archivedOn' | t }}: <strong>{{ inv.archivedAt | date:'dd/MM/yyyy' }}</strong></span>
+          }
+          @if (inv.archiveNotes) {
+            <span>{{ 'inv.archiveNotes' | t }}: {{ inv.archiveNotes }}</span>
+          }
+        </div>
+        <div class="redeem-compare">
+          <div class="compare-block">
+            <span class="label">{{ 'inv.redeemedAmount' | t }}</span>
+            <span class="value">{{ (inv.redeemedAmount ?? p.currentAmount) | currency:currencyCode():'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="compare-block">
+            <span class="label">{{ 'inv.bookAtArchive' | t }}</span>
+            <span class="value">{{ (p.bookAmount ?? inv.bookAmountAtArchive) != null ? ((p.bookAmount ?? inv.bookAmountAtArchive)! | currency:currencyCode():'symbol':'1.2-2') : '—' }}</span>
+            @if (p.vsBookDelta != null) {
+              <span class="delta" [class.pos]="p.vsBookDelta >= 0" [class.neg]="p.vsBookDelta < 0">
+                {{ 'inv.vsBook' | t }}:
+                {{ p.vsBookDelta >= 0 ? '+' : '' }}{{ p.vsBookDelta | currency:currencyCode():'symbol':'1.2-2' }}
+                ({{ p.vsBookPercent != null ? ((p.vsBookPercent >= 0 ? '+' : '') + (p.vsBookPercent | number:'1.2-2') + '%') : '—' }})
+              </span>
+            }
+          </div>
+          <div class="compare-block">
+            <span class="label">{{ 'inv.theoreticalAtArchive' | t }}</span>
+            <span class="value">{{ (p.theoreticalAmount ?? inv.expectedTheoreticalAtArchive) != null ? ((p.theoreticalAmount ?? inv.expectedTheoreticalAtArchive)! | currency:currencyCode():'symbol':'1.2-2') : '—' }}</span>
+            @if (p.vsTheoreticalDelta != null) {
+              <span class="delta" [class.pos]="p.vsTheoreticalDelta >= 0" [class.neg]="p.vsTheoreticalDelta < 0">
+                {{ 'inv.vsTheoretical' | t }}:
+                {{ p.vsTheoreticalDelta >= 0 ? '+' : '' }}{{ p.vsTheoreticalDelta | currency:currencyCode():'symbol':'1.2-2' }}
+                ({{ p.vsTheoreticalPercent != null ? ((p.vsTheoreticalPercent >= 0 ? '+' : '') + (p.vsTheoreticalPercent | number:'1.2-2') + '%') : '—' }})
+              </span>
+            }
+          </div>
         </div>
       </section>
     }
@@ -194,6 +239,34 @@
             <span>{{ 'inv.archiveWithAmount' | t }}</span>
           </button>
         </div>
+        @if (redemptionPreview(); as preview) {
+          <div class="redemption-preview" [ngClass]="redemptionVerdictClass()">
+            <p class="preview-title">{{ 'inv.redemptionPreview' | t }}</p>
+            <p class="verdict-chip">{{ localizedRedemptionVerdict(preview.verdict) }}</p>
+            <div class="redeem-compare">
+              <div class="compare-block">
+                <span class="label">{{ 'inv.vsBook' | t }}</span>
+                <span class="delta" [class.pos]="preview.vsBookDelta >= 0" [class.neg]="preview.vsBookDelta < 0">
+                  {{ preview.vsBookDelta >= 0 ? '+' : '' }}{{ preview.vsBookDelta | currency:currencyCode():'symbol':'1.2-2' }}
+                  ({{ preview.vsBookPercent >= 0 ? '+' : '' }}{{ preview.vsBookPercent | number:'1.2-2' }}%)
+                </span>
+                <span class="hint">{{ preview.bookAmount | currency:currencyCode():'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="compare-block">
+                <span class="label">{{ 'inv.vsTheoretical' | t }}</span>
+                @if (preview.vsTheoreticalDelta != null) {
+                  <span class="delta" [class.pos]="preview.vsTheoreticalDelta >= 0" [class.neg]="preview.vsTheoreticalDelta < 0">
+                    {{ preview.vsTheoreticalDelta >= 0 ? '+' : '' }}{{ preview.vsTheoreticalDelta | currency:currencyCode():'symbol':'1.2-2' }}
+                    ({{ preview.vsTheoreticalPercent != null ? ((preview.vsTheoreticalPercent >= 0 ? '+' : '') + (preview.vsTheoreticalPercent | number:'1.2-2') + '%') : '—' }})
+                  </span>
+                  <span class="hint">{{ preview.theoreticalAmount != null ? (preview.theoreticalAmount | currency:currencyCode():'symbol':'1.2-2') : '—' }}</span>
+                } @else {
+                  <span class="hint">—</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
       </section>
     }
   }

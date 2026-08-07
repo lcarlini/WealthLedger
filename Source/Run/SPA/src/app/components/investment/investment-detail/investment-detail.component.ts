@@ -23,12 +23,70 @@ import {
   InvestmentStatus,
   PerformanceBreakdownItem,
   PerformanceProjectionPoint,
+  RedemptionPreview,
+  RedemptionVerdictCode,
 } from '../../../models/investment';
 import { InvestmentService } from '../../../shared/services/investment.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import { LanguageService } from '../../../shared/i18n/language.service';
 import { TranslationKey } from '../../../shared/i18n/translations';
+
+function classifyRedemption(
+  redeemed: number,
+  book: number,
+  theo: number | null,
+): RedemptionVerdictCode {
+  const sign = (baseline: number): -1 | 0 | 1 => {
+    const tol = Math.max(0.5, Math.abs(baseline) * 0.001);
+    const delta = redeemed - baseline;
+    if (delta > tol) return 1;
+    if (delta < -tol) return -1;
+    return 0;
+  };
+
+  const vsBook = sign(book);
+  const vsTheo = theo != null ? sign(theo) : 0;
+  const hasTheo = theo != null;
+
+  if (vsBook === 0 && (!hasTheo || vsTheo === 0)) return 'match';
+  if (hasTheo && vsBook === 1 && vsTheo === 1) return 'above_both';
+  if (hasTheo && vsBook === -1 && vsTheo === -1) return 'below_both';
+  if (hasTheo && vsBook !== 0 && vsTheo !== 0 && vsBook !== vsTheo) return 'mixed';
+  if (vsBook === 1) return 'above_book';
+  if (vsTheo === 1) return 'above_theoretical';
+  if (vsBook === -1) return 'below_book';
+  if (vsTheo === -1) return 'below_theoretical';
+  return 'match';
+}
+
+function buildRedemptionPreview(
+  redeemed: number,
+  book: number,
+  theo: number | null | undefined,
+): RedemptionPreview {
+  const theoretical = theo ?? null;
+  const vsBookDelta = Math.round((redeemed - book) * 100) / 100;
+  const vsBookPercent = book !== 0 ? Math.round((vsBookDelta / book) * 10000) / 100 : 0;
+  const vsTheoreticalDelta =
+    theoretical != null ? Math.round((redeemed - theoretical) * 100) / 100 : null;
+  const vsTheoreticalPercent =
+    theoretical != null && theoretical !== 0 && vsTheoreticalDelta != null
+      ? Math.round((vsTheoreticalDelta / theoretical) * 10000) / 100
+      : theoretical != null
+        ? 0
+        : null;
+
+  return {
+    bookAmount: book,
+    theoreticalAmount: theoretical,
+    vsBookDelta,
+    vsBookPercent,
+    vsTheoreticalDelta,
+    vsTheoreticalPercent,
+    verdict: classifyRedemption(redeemed, book, theoretical),
+  };
+}
 
 @Component({
   selector: 'app-investment-detail',
@@ -66,6 +124,31 @@ export class InvestmentDetailComponent implements OnInit {
     if (v === 'beat_cdi') return 'verdict-good';
     if (v === 'lag_ipca') return 'verdict-bad';
     if (v === 'lag_cdi') return 'verdict-warn';
+    return 'verdict-neutral';
+  });
+
+  /** Live preview while typing redeemed amount (active only). */
+  redemptionPreview = computed((): RedemptionPreview | null => {
+    if (this.isArchived()) return null;
+    const inv = this.investment();
+    const redeemed = this.redeemAmount();
+    if (!inv || redeemed == null || Number.isNaN(Number(redeemed))) return null;
+    const p = this.performance();
+    return buildRedemptionPreview(
+      Number(redeemed),
+      inv.amount,
+      p?.accruedTheoreticalAmount,
+    );
+  });
+
+  redemptionVerdictClass = computed(() => {
+    const code =
+      this.performance()?.redemptionVerdict
+      ?? this.redemptionPreview()?.verdict
+      ?? '';
+    if (code.startsWith('above') || code === 'match') return 'verdict-good';
+    if (code.startsWith('below')) return 'verdict-bad';
+    if (code === 'mixed') return 'verdict-warn';
     return 'verdict-neutral';
   });
 
@@ -181,6 +264,15 @@ export class InvestmentDetailComponent implements OnInit {
     const translated = this.lang.t(key);
     if (translated !== key) return translated;
     return this.performance()?.verdictSummary || code;
+  }
+
+  localizedRedemptionVerdict(code: string | null | undefined, fallback?: string | null): string {
+    this.lang.lang();
+    if (!code) return fallback || '';
+    const key = `inv.redemption.${code}` as TranslationKey;
+    const translated = this.lang.t(key);
+    if (translated !== key) return translated;
+    return fallback || code;
   }
 
   localizedBreakdown(p: InvestmentPerformance): PerformanceBreakdownItem[] {

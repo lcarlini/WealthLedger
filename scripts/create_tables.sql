@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS Investments (
     ArchivedAt              TEXT,
     RedeemedAmount          REAL,
     ArchiveNotes            TEXT,
+    BookAmountAtArchive     REAL,   -- Amount right before archive overwrite
+    ExpectedTheoreticalAtArchive REAL, -- CDI%/rate theoretical at archive time
     IsIncomeTaxExempt       INTEGER NOT NULL DEFAULT 0,  -- LCI/LCA/Poupança
     CreatedDate             TEXT NOT NULL,
     UpdatedDate             TEXT NOT NULL,

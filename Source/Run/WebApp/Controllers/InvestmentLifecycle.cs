@@ -26,6 +26,8 @@ internal static class InvestmentLifecycle
         domain.ArchivedAt = existing.ArchivedAt;
         domain.RedeemedAmount = existing.RedeemedAmount;
         domain.ArchiveNotes = existing.ArchiveNotes;
+        domain.BookAmountAtArchive = existing.BookAmountAtArchive;
+        domain.ExpectedTheoreticalAtArchive = existing.ExpectedTheoreticalAtArchive;
         domain.StartDate = body.StartDate?.Date ?? existing.StartDate;
         domain.PrincipalAmount = body.PrincipalAmount is > 0
             ? body.PrincipalAmount.Value

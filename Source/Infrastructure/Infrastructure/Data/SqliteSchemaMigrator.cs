@@ -23,6 +23,8 @@ public static class SqliteSchemaMigrator
             await EnsureInvestmentColumnAsync(db, "ArchivedAt", """ALTER TABLE "Investments" ADD COLUMN "ArchivedAt" TEXT""", logger);
             await EnsureInvestmentColumnAsync(db, "RedeemedAmount", """ALTER TABLE "Investments" ADD COLUMN "RedeemedAmount" REAL""", logger);
             await EnsureInvestmentColumnAsync(db, "ArchiveNotes", """ALTER TABLE "Investments" ADD COLUMN "ArchiveNotes" TEXT""", logger);
+            await EnsureInvestmentColumnAsync(db, "BookAmountAtArchive", """ALTER TABLE "Investments" ADD COLUMN "BookAmountAtArchive" REAL""", logger);
+            await EnsureInvestmentColumnAsync(db, "ExpectedTheoreticalAtArchive", """ALTER TABLE "Investments" ADD COLUMN "ExpectedTheoreticalAtArchive" REAL""", logger);
             await EnsureInvestmentColumnAsync(db, "IsIncomeTaxExempt", """ALTER TABLE "Investments" ADD COLUMN "IsIncomeTaxExempt" INTEGER NOT NULL DEFAULT 0""", logger);
 
             // Backfill lifecycle fields for existing rows (idempotent-ish).

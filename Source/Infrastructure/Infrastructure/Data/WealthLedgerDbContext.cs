@@ -51,6 +51,8 @@ public class WealthLedgerDbContext : DbContext
             e.Property(x => x.PrincipalAmount).HasColumnType("REAL");
             e.Property(x => x.RedeemedAmount).HasColumnType("REAL");
             e.Property(x => x.ArchiveNotes).HasMaxLength(500);
+            e.Property(x => x.BookAmountAtArchive).HasColumnType("REAL");
+            e.Property(x => x.ExpectedTheoreticalAtArchive).HasColumnType("REAL");
             e.HasIndex(x => x.Status);
         });
 

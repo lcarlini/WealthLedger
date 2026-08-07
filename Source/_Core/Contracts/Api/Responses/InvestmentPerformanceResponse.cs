@@ -51,6 +51,23 @@ public class InvestmentPerformanceResponse
     public string Verdict { get; set; } = string.Empty;
     public string VerdictSummary { get; set; } = string.Empty;
 
+    /// <summary>Book amount baseline for redemption comparison (snapshot when archived).</summary>
+    public decimal? BookAmount { get; set; }
+
+    /// <summary>Theoretical baseline for redemption comparison (snapshot when archived).</summary>
+    public decimal? TheoreticalAmount { get; set; }
+
+    public decimal? VsBookDelta { get; set; }
+    public decimal? VsBookPercent { get; set; }
+    public decimal? VsTheoreticalDelta { get; set; }
+    public decimal? VsTheoreticalPercent { get; set; }
+
+    /// <summary>
+    /// above_both | above_book | above_theoretical | match | below_book | below_theoretical | below_both | mixed
+    /// </summary>
+    public string? RedemptionVerdict { get; set; }
+    public string? RedemptionSummary { get; set; }
+
     public List<PerformanceBreakdownItem> Breakdown { get; set; } = [];
     public List<PerformanceProjectionPoint> Projections { get; set; } = [];
 }

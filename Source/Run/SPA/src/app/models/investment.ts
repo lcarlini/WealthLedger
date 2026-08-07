@@ -89,6 +89,8 @@ export interface Investment {
   archivedAt?: string;
   redeemedAmount?: number;
   archiveNotes?: string;
+  bookAmountAtArchive?: number;
+  expectedTheoreticalAtArchive?: number;
   isIncomeTaxExempt: boolean;
   createdDate: string;
   updatedDate: string;
@@ -165,6 +167,35 @@ export interface InvestmentPerformance {
   excessOverCdiPercent?: number;
   verdict: string;
   verdictSummary: string;
+  bookAmount?: number;
+  theoreticalAmount?: number;
+  vsBookDelta?: number;
+  vsBookPercent?: number;
+  vsTheoreticalDelta?: number;
+  vsTheoreticalPercent?: number;
+  redemptionVerdict?: string;
+  redemptionSummary?: string;
   breakdown: PerformanceBreakdownItem[];
   projections: PerformanceProjectionPoint[];
+}
+
+/** Client-side redemption preview (active holdings) / shared verdict codes. */
+export type RedemptionVerdictCode =
+  | 'above_both'
+  | 'above_book'
+  | 'above_theoretical'
+  | 'match'
+  | 'below_book'
+  | 'below_theoretical'
+  | 'below_both'
+  | 'mixed';
+
+export interface RedemptionPreview {
+  bookAmount: number;
+  theoreticalAmount: number | null;
+  vsBookDelta: number;
+  vsBookPercent: number;
+  vsTheoreticalDelta: number | null;
+  vsTheoreticalPercent: number | null;
+  verdict: RedemptionVerdictCode;
 }
