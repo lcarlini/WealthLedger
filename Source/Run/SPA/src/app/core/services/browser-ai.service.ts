@@ -103,6 +103,40 @@ export class BrowserAiService {
     return text;
   }
 
+  /**
+   * Free-form chat turn for the advisor page. Runs fully in the browser, so the aggregated figures in
+   * `systemPrompt` never leave this machine.
+   */
+  async chat(
+    systemPrompt: string,
+    history: { role: 'user' | 'assistant'; content: string }[],
+    question: string,
+  ): Promise<string> {
+    await this.ensureReady();
+    if (!this.engine) {
+      throw new Error('Local AI engine is not initialized.');
+    }
+
+    const completion = await this.engine.chat.completions.create({
+      stream: false,
+      messages: [
+        { role: 'system', content: `${systemPrompt}\nReply in plain text only: no HTML, XML or thinking tags.` },
+        ...history,
+        { role: 'user', content: question },
+      ],
+      temperature: 0.3,
+      max_tokens: 900,
+      extra_body: { enable_thinking: false },
+    });
+
+    const content = completion.choices?.[0]?.message?.content;
+    const text = sanitizeInsightText(typeof content === 'string' ? content : '');
+    if (!text) {
+      throw new Error('The model returned an empty response.');
+    }
+    return text;
+  }
+
   /** WebLLM cleanModelUrl() requires absolute URLs and appends /resolve/main/ to model paths. */
   private resolveAppConfigUrls(appConfig: AppConfig): AppConfig {
     const origin = window.location.origin;

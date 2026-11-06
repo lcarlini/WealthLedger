@@ -96,6 +96,9 @@ public static class ServiceRegistration
         // Singleton: owns the gate that serializes settings read-modify-write.
         services.AddSingleton<IAppSettingsService, WealthLedger.Infrastructure.Settings.AppSettingsService>();
 
+        services.AddTransient<WealthLedger.Infrastructure.Advisor.AdvisorContextBuilder>();
+        services.AddTransient<IAiAdvisorService, WealthLedger.Infrastructure.Advisor.AiAdvisorService>();
+
         services.AddAutoMapper(typeof(ServiceRegistration).Assembly);
 
         return services;

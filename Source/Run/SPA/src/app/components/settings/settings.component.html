@@ -252,6 +252,13 @@
 
         <div class="actions">
           <button mat-raised-button type="submit" [disabled]="busy()">{{ 'settings.app.save' | t }}</button>
+          @if (aiProvider !== 'local') {
+            <button mat-stroked-button type="button" [disabled]="busy() || missingCloudKey()" (click)="testAi()">
+              <mat-icon>wifi_tethering</mat-icon>
+              {{ 'settings.ai.test' | t }}
+            </button>
+            <span class="hint">{{ 'settings.ai.testHint' | t }}</span>
+          }
         </div>
       </form>
     } @else {

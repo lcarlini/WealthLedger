@@ -1,0 +1,109 @@
+<div class="page-container advisor-page">
+  <app-page-header
+    tag="AI"
+    [title]="'advisor.title' | t"
+    [lead]="'advisor.lead' | t"
+    icon="psychology"
+    iconColor="var(--wl-nav-icon-analytics)"
+  />
+
+  @if (missingKey()) {
+    <p class="banner banner-warning" role="status">
+      {{ 'settings.ai.missingKey' | t }}
+      <a routerLink="/settings">{{ 'advisor.openSettings' | t }}</a>
+    </p>
+  }
+
+  <section class="panel" aria-labelledby="advisor-config">
+    <h2 id="advisor-config" class="visually-hidden">{{ 'advisor.title' | t }}</h2>
+    <div class="config-row">
+      <div class="scope" role="group" [attr.aria-label]="'advisor.scope' | t">
+        @for (s of scopes; track s) {
+          <button
+            type="button"
+            class="chip"
+            [class.active]="scope() === s"
+            [attr.aria-pressed]="scope() === s"
+            (click)="setScope(s)"
+          >{{ scopeKey(s) | t }}</button>
+        }
+      </div>
+      <p class="provider">
+        <mat-icon aria-hidden="true">{{ provider() === 'local' ? 'lock' : 'cloud' }}</mat-icon>
+        {{ providerKey() | t }}
+        <a routerLink="/settings">{{ 'advisor.change' | t }}</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="panel chat" aria-labelledby="advisor-chat">
+    <h2 id="advisor-chat" class="visually-hidden">{{ 'advisor.conversation' | t }}</h2>
+
+    <div class="log" role="log" aria-live="polite" aria-relevant="additions">
+      @if (messages().length === 0) {
+        <div class="empty">
+          <p>{{ 'advisor.empty' | t }}</p>
+          <ul class="suggestions">
+            @for (key of suggestions(); track key) {
+              <li>
+                <button type="button" class="suggestion" [disabled]="busy()" (click)="send(lang.t(key))">
+                  {{ key | t }}
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      @for (m of messages(); track $index) {
+        <article class="bubble" [class.user]="m.role === 'user'" [class.assistant]="m.role === 'assistant'">
+          <h3 class="who">{{ (m.role === 'user' ? 'advisor.you' : 'advisor.assistant') | t }}</h3>
+          <p class="text">{{ m.content }}</p>
+          @if (m.meta) {
+            <p class="meta">{{ m.meta }}</p>
+          }
+        </article>
+      }
+
+      @if (busy()) {
+        <div class="thinking" role="status">
+          <mat-spinner diameter="20" />
+          @if (localLoading()) {
+            <span>{{ 'advisor.loadingModel' | t }} {{ localProgress() }}%</span>
+          } @else {
+            <span>{{ 'advisor.thinking' | t }}</span>
+          }
+        </div>
+      }
+    </div>
+
+    @if (error(); as message) {
+      <p class="banner banner-error" role="alert">{{ message }}</p>
+    }
+
+    <form class="composer" (ngSubmit)="send()">
+      <label class="visually-hidden" for="advisor-input">{{ 'advisor.inputLabel' | t }}</label>
+      <textarea
+        id="advisor-input"
+        name="question"
+        rows="3"
+        [maxlength]="limits.questionMaxLength"
+        [placeholder]="'advisor.placeholder' | t"
+        [(ngModel)]="input"
+        (keydown)="onKeydown($event)"
+      ></textarea>
+      <div class="composer-actions">
+        <span class="counter">{{ input.length }} / {{ limits.questionMaxLength }}</span>
+        @if (messages().length > 0) {
+          <button mat-button type="button" [disabled]="busy()" (click)="clear()">{{ 'advisor.clear' | t }}</button>
+        }
+        <button mat-raised-button type="submit" [disabled]="busy() || !input.trim()">
+          <mat-icon>send</mat-icon>
+          {{ 'advisor.send' | t }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <p class="disclaimer">{{ 'advisor.disclaimer' | t }}</p>
+</div>

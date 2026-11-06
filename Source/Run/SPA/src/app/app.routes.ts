@@ -101,6 +101,11 @@ export const routes: Routes = [
       import('./components/trades/trades.component').then(m => m.TradesComponent),
   },
   {
+    path: 'advisor',
+    loadComponent: () =>
+      import('./components/advisor/advisor.component').then(m => m.AdvisorComponent),
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./components/settings/settings.component').then(m => m.SettingsComponent),

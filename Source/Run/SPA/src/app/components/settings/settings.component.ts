@@ -22,6 +22,7 @@ import {
   BackupService,
   BackupStatus,
 } from '../../shared/services/backup.service';
+import { AdvisorService } from '../../shared/services/advisor.service';
 import {
   AI_PROVIDERS,
   AiProvider,
@@ -54,6 +55,7 @@ export class SettingsComponent implements OnInit {
   readonly backups = inject(BackupService);
   readonly lang = inject(LanguageService);
   readonly appSettingsApi = inject(AppSettingsService);
+  private readonly advisorApi = inject(AdvisorService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -127,6 +129,13 @@ export class SettingsComponent implements OnInit {
 
   async saveAppSettings(): Promise<void> {
     await this.run(async () => {
+      await this.saveAppSettingsCore();
+      this.toast(this.lang.t('settings.app.saved'));
+    });
+  }
+
+  private async saveAppSettingsCore(): Promise<void> {
+    {
       const update: AppSettingsUpdate = {
         aiProvider: this.aiProvider,
         aiModel: this.aiModel,
@@ -138,8 +147,7 @@ export class SettingsComponent implements OnInit {
       if (this.brapiToken.trim()) update.brapiToken = this.brapiToken.trim();
       if (this.fredKey.trim()) update.fredApiKey = this.fredKey.trim();
       this.applyAppSettings(await this.appSettingsApi.update(update));
-      this.toast(this.lang.t('settings.app.saved'));
-    });
+    }
   }
 
   async clearSecret(field: 'anthropicApiKey' | 'openAiApiKey' | 'brapiToken' | 'fredApiKey'): Promise<void> {
@@ -154,6 +162,15 @@ export class SettingsComponent implements OnInit {
     await this.run(async () => {
       this.applyAppSettings(await this.appSettingsApi.update({ [field]: '' }));
       this.toast(this.lang.t('settings.keys.cleared'));
+    });
+  }
+
+  /** Saves what was typed, then checks the key with a request that carries no personal data. */
+  async testAi(): Promise<void> {
+    await this.run(async () => {
+      await this.saveAppSettingsCore();
+      const result = await this.advisorApi.test();
+      this.toast(`${this.lang.t('settings.ai.testOk')} (${result.model})`);
     });
   }
 
