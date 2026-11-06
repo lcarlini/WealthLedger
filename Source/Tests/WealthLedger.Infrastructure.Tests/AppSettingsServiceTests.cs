@@ -61,6 +61,41 @@ public sealed class AppSettingsServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Each_provider_keeps_its_own_model()
+    {
+        var service = Create();
+        await service.UpdateAsync(new AppSettingsUpdate(AiProvider: AiProviders.Anthropic, AiModel: "claude-sonnet-5-5"));
+        await service.UpdateAsync(new AppSettingsUpdate(AiProvider: AiProviders.Ollama, AiModel: "qwen3:8b"));
+
+        var view = await Create().GetViewAsync();
+        Assert.Equal("qwen3:8b", view.AiModels[AiProviders.Ollama]);
+        Assert.Equal("claude-sonnet-5-5", view.AiModels[AiProviders.Anthropic]);
+    }
+
+    [Fact]
+    public async Task Blank_model_removes_only_that_providers_model()
+    {
+        var service = Create();
+        await service.UpdateAsync(new AppSettingsUpdate(AiProvider: AiProviders.Anthropic, AiModel: "claude-opus-5-5"));
+        await service.UpdateAsync(new AppSettingsUpdate(AiProvider: AiProviders.OpenAi, AiModel: "gpt-4o"));
+        await service.UpdateAsync(new AppSettingsUpdate(AiProvider: AiProviders.OpenAi, AiModel: "  "));
+
+        var view = await Create().GetViewAsync();
+        Assert.False(view.AiModels.ContainsKey(AiProviders.OpenAi));
+        Assert.Equal("claude-opus-5-5", view.AiModels[AiProviders.Anthropic]);
+    }
+
+    [Fact]
+    public async Task Legacy_single_model_is_migrated_to_the_saved_provider()
+    {
+        await File.WriteAllTextAsync(_location.AppSettingsPath,
+            """{"AiProvider":"ollama","AiModel":"llama3.1:8b","AllowCloudData":false,"Secrets":{},"OllamaBaseUrl":"http://localhost:11434"}""");
+
+        var view = await Create().GetViewAsync();
+        Assert.Equal("llama3.1:8b", view.AiModels[AiProviders.Ollama]);
+    }
+
+    [Fact]
     public async Task Corrupt_file_falls_back_to_defaults()
     {
         await File.WriteAllTextAsync(_location.AppSettingsPath, "{ not json");

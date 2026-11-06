@@ -22,7 +22,7 @@ describe('AppSettingsService', () => {
     const pending = service.get();
 
     http.expectOne('/api/settings').flush({
-      data: { aiProvider: 'local', aiModel: null, allowCloudData: false, anthropicKeyConfigured: true },
+      data: { aiProvider: 'local', aiModels: {}, allowCloudData: false, anthropicKeyConfigured: true },
       errors: [],
     });
 

@@ -123,4 +123,18 @@ describe('SettingsComponent', () => {
 
     expect(backups.updateSettings).not.toHaveBeenCalled();
   });
+
+  it('keeps a separate model for each AI provider when switching', () => {
+    const component = create().componentInstance;
+
+    component.aiProvider = 'anthropic';
+    component.aiModel = 'claude-sonnet-5-5';
+    component.aiProvider = 'ollama';
+    expect(component.aiModel).toBe('');
+
+    component.aiModel = 'qwen3:8b';
+    component.aiProvider = 'anthropic';
+    expect(component.aiModel).toBe('claude-sonnet-5-5');
+    expect(component.models['ollama']).toBe('qwen3:8b');
+  });
 });

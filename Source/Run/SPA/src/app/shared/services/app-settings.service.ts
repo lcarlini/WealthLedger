@@ -3,19 +3,21 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { ApiResponse } from '../../models/api-response';
 
-export type AiProvider = 'local' | 'anthropic' | 'openai';
+export type AiProvider = 'local' | 'anthropic' | 'openai' | 'ollama';
 
-export const AI_PROVIDERS: readonly AiProvider[] = ['local', 'anthropic', 'openai'];
+export const AI_PROVIDERS: readonly AiProvider[] = ['local', 'anthropic', 'openai', 'ollama'];
 
 /** What the server reports. Secrets are never returned, only whether each one is saved. */
 export interface AppSettingsView {
   aiProvider: AiProvider;
-  aiModel: string | null;
+  /** Model chosen per provider; a missing entry means that provider's default. */
+  aiModels: Record<string, string>;
   allowCloudData: boolean;
   anthropicKeyConfigured: boolean;
   openAiKeyConfigured: boolean;
   brapiTokenConfigured: boolean;
   fredKeyConfigured: boolean;
+  ollamaBaseUrl: string;
 }
 
 /** Partial update: omitted/null = unchanged; for secrets an empty string removes the saved value. */
@@ -27,6 +29,7 @@ export interface AppSettingsUpdate {
   openAiApiKey?: string;
   brapiToken?: string;
   fredApiKey?: string;
+  ollamaBaseUrl?: string;
 }
 
 @Injectable({ providedIn: 'root' })

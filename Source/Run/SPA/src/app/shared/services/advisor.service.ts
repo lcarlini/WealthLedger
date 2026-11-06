@@ -51,6 +51,11 @@ export class AdvisorService {
     );
   }
 
+  /** Models installed in the local Ollama server; empty when Ollama is not running. */
+  ollamaModels(): Promise<string[]> {
+    return this.call(this.http.get<ApiResponse<string[]>>(`${this.baseUrl}/ollama-models`));
+  }
+
   /** Checks the saved key and model with a request that carries no personal data. */
   test(): Promise<AdvisorAnswer> {
     return this.call(this.http.post<ApiResponse<AdvisorAnswer>>(`${this.baseUrl}/test`, {}));

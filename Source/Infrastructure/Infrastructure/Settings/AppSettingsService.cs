@@ -31,9 +31,13 @@ public sealed class AppSettingsService : IAppSettingsService
     private sealed class Stored
     {
         public string AiProvider { get; set; } = AiProviders.Local;
+        /// <summary>Model per provider (provider id → model name). Blank or missing means the provider's default.</summary>
+        public Dictionary<string, string> Models { get; set; } = new();
+        /// <summary>Legacy single model field from before per-provider models; migrated into <see cref="Models"/> on load.</summary>
         public string? AiModel { get; set; }
         public bool AllowCloudData { get; set; }
         public Dictionary<string, string> Secrets { get; set; } = new();
+        public string OllamaBaseUrl { get; set; } = AppSettingsEndpoints.DefaultOllamaUrl;
     }
 
     public async Task<AppSettingsView> GetViewAsync(CancellationToken ct = default)
@@ -47,6 +51,7 @@ public sealed class AppSettingsService : IAppSettingsService
     {
         if (update.AiProvider is not null && !AiProviders.All.Contains(update.AiProvider))
             throw new ArgumentException($"Unknown AI provider '{update.AiProvider}'.", nameof(update));
+        if (update.OllamaBaseUrl is not null) AppSettingsEndpoints.NormalizeOllamaUrl(update.OllamaBaseUrl);
         foreach (var value in new[] { update.AiModel, update.AnthropicApiKey, update.OpenAiApiKey, update.BrapiToken, update.FredApiKey })
         {
             if (value is { Length: > MaxValueLength })
@@ -58,8 +63,9 @@ public sealed class AppSettingsService : IAppSettingsService
         {
             var stored = await LoadAsync(ct);
             if (update.AiProvider is not null) stored.AiProvider = update.AiProvider;
-            if (update.AiModel is not null) stored.AiModel = string.IsNullOrWhiteSpace(update.AiModel) ? null : update.AiModel.Trim();
+            if (update.AiModel is not null) SetModel(stored, stored.AiProvider, update.AiModel);
             if (update.AllowCloudData is not null) stored.AllowCloudData = update.AllowCloudData.Value;
+            if (update.OllamaBaseUrl is not null) stored.OllamaBaseUrl = AppSettingsEndpoints.NormalizeOllamaUrl(update.OllamaBaseUrl);
 
             SetSecret(stored, AppSecret.AnthropicApiKey, update.AnthropicApiKey);
             SetSecret(stored, AppSecret.OpenAiApiKey, update.OpenAiApiKey);
@@ -88,6 +94,12 @@ public sealed class AppSettingsService : IAppSettingsService
         finally { _gate.Release(); }
     }
 
+    private static void SetModel(Stored stored, string provider, string model)
+    {
+        if (string.IsNullOrWhiteSpace(model)) stored.Models.Remove(provider);
+        else stored.Models[provider] = model.Trim();
+    }
+
     private void SetSecret(Stored stored, AppSecret secret, string? value)
     {
         if (value is null) return;
@@ -99,9 +111,9 @@ public sealed class AppSettingsService : IAppSettingsService
         => stored.Secrets.TryGetValue(secret.ToString(), out var v) && _protector.Unprotect(v) is not null;
 
     private AppSettingsView ToView(Stored s) => new(
-        s.AiProvider, s.AiModel, s.AllowCloudData,
+        s.AiProvider, new Dictionary<string, string>(s.Models), s.AllowCloudData,
         Has(s, AppSecret.AnthropicApiKey), Has(s, AppSecret.OpenAiApiKey),
-        Has(s, AppSecret.BrapiToken), Has(s, AppSecret.FredApiKey));
+        Has(s, AppSecret.BrapiToken), Has(s, AppSecret.FredApiKey), AppSettingsEndpoints.NormalizeOllamaUrlOrDefault(s.OllamaBaseUrl));
 
     private async Task<Stored> LoadAsync(CancellationToken ct)
     {
@@ -112,6 +124,11 @@ public sealed class AppSettingsService : IAppSettingsService
             var loaded = await JsonSerializer.DeserializeAsync<Stored>(stream, JsonOptions, ct) ?? new Stored();
             if (!AiProviders.All.Contains(loaded.AiProvider)) loaded.AiProvider = AiProviders.Local;
             loaded.Secrets ??= new();
+            loaded.Models ??= new();
+            loaded.OllamaBaseUrl ??= AppSettingsEndpoints.DefaultOllamaUrl;
+            if (loaded.AiModel is { Length: > 0 } legacy && loaded.Models.Count == 0)
+                loaded.Models[loaded.AiProvider] = legacy;
+            loaded.AiModel = null;
             return loaded;
         }
         catch (Exception ex) when (ex is JsonException or IOException)

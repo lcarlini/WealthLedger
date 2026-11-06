@@ -47,6 +47,11 @@ public class AdvisorController(IAiAdvisorService advisor) : ControllerBase
         }
     }
 
+    /// <summary>Models installed in the local Ollama server, to fill the model picker.</summary>
+    [HttpGet("ollama-models")]
+    public async Task<Response<IReadOnlyList<string>>> OllamaModelsAsync(CancellationToken ct)
+        => new(await advisor.ListOllamaModelsAsync(ct));
+
     /// <summary>Checks the saved key and model with a tiny request that carries no personal data.</summary>
     [HttpPost("test")]
     public async Task<Response<AdvisorAnswer>> TestAsync(CancellationToken ct)

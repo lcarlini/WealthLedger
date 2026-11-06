@@ -18,4 +18,7 @@ public interface IAiAdvisorService
     /// never leaves the user's machine.
     /// </summary>
     Task<AdvisorContext> GetContextAsync(string scope, string language, CancellationToken ct = default);
+
+    /// <summary>Model names installed in the local Ollama server. Empty when Ollama is not reachable.</summary>
+    Task<IReadOnlyList<string>> ListOllamaModelsAsync(CancellationToken ct = default);
 }

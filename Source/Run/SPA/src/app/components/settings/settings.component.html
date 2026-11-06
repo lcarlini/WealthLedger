@@ -191,53 +191,50 @@
       <form class="backup-form" (ngSubmit)="saveAppSettings()">
         <div class="num-field">
           <label for="ai-provider">{{ 'settings.ai.provider' | t }}</label>
-          <select id="ai-provider" name="aiProvider" [(ngModel)]="aiProvider">
+          <select id="ai-provider" name="aiProvider" [(ngModel)]="aiProvider" (ngModelChange)="onProviderChange()">
             @for (p of providers; track p) {
               <option [value]="p">{{ providerKey(p) | t }}</option>
             }
           </select>
+          <span class="hint">{{ providerHintKey(aiProvider) | t }}</span>
         </div>
 
-        @if (aiProvider !== 'local') {
+        @if (aiProvider === 'anthropic' || aiProvider === 'openai') {
+          <div class="num-field secret-field">
+            <label for="ai-key">{{ keyLabelKey() | t }}</label>
+            <input
+              id="ai-key"
+              type="password"
+              name="aiKey"
+              autocomplete="off"
+              spellcheck="false"
+              [placeholder]="(keySaved() ? 'settings.keys.savedPlaceholder' : 'settings.keys.notSet') | t"
+              [(ngModel)]="currentKey"
+            />
+            @if (keySaved()) {
+              <button mat-button type="button" color="warn" [disabled]="busy()" (click)="clearSecret(currentSecretField())">
+                {{ 'settings.keys.clear' | t }}
+              </button>
+            }
+          </div>
+
           <div class="num-field">
             <label for="ai-model">{{ 'settings.ai.model' | t }}</label>
-            <input id="ai-model" type="text" name="aiModel" autocomplete="off" spellcheck="false" [(ngModel)]="aiModel" />
-          </div>
-
-          <div class="num-field secret-field">
-            <label for="anthropic-key">{{ 'settings.ai.anthropicKey' | t }}</label>
             <input
-              id="anthropic-key"
-              type="password"
-              name="anthropicKey"
+              id="ai-model"
+              type="text"
+              name="aiModel"
+              list="ai-model-options"
               autocomplete="off"
               spellcheck="false"
-              [placeholder]="(a.anthropicKeyConfigured ? 'settings.keys.savedPlaceholder' : 'settings.keys.notSet') | t"
-              [(ngModel)]="anthropicKey"
+              [placeholder]="defaultModel()"
+              [(ngModel)]="aiModel"
             />
-            @if (a.anthropicKeyConfigured) {
-              <button mat-button type="button" color="warn" [disabled]="busy()" (click)="clearSecret('anthropicApiKey')">
-                {{ 'settings.keys.clear' | t }}
-              </button>
-            }
-          </div>
-
-          <div class="num-field secret-field">
-            <label for="openai-key">{{ 'settings.ai.openAiKey' | t }}</label>
-            <input
-              id="openai-key"
-              type="password"
-              name="openAiKey"
-              autocomplete="off"
-              spellcheck="false"
-              [placeholder]="(a.openAiKeyConfigured ? 'settings.keys.savedPlaceholder' : 'settings.keys.notSet') | t"
-              [(ngModel)]="openAiKey"
-            />
-            @if (a.openAiKeyConfigured) {
-              <button mat-button type="button" color="warn" [disabled]="busy()" (click)="clearSecret('openAiApiKey')">
-                {{ 'settings.keys.clear' | t }}
-              </button>
-            }
+            <datalist id="ai-model-options">
+              @for (m of modelSuggestions(); track m) {
+                <option [value]="m"></option>
+              }
+            </datalist>
           </div>
 
           <label class="toggle-row wide-row">
@@ -248,6 +245,39 @@
           @if (missingCloudKey()) {
             <p class="banner banner-warning" role="status">{{ 'settings.ai.missingKey' | t }}</p>
           }
+        }
+
+        @if (aiProvider === 'ollama') {
+          <div class="num-field">
+            <label for="ollama-url">{{ 'settings.ai.ollamaUrl' | t }}</label>
+            <input id="ollama-url" type="url" name="ollamaUrl" autocomplete="off" spellcheck="false" [(ngModel)]="ollamaUrl" />
+          </div>
+
+          <div class="num-field">
+            <label for="ai-model">{{ 'settings.ai.ollamaModel' | t }}</label>
+            <input
+              id="ai-model"
+              type="text"
+              name="aiModel"
+              list="ai-model-options"
+              autocomplete="off"
+              spellcheck="false"
+              [placeholder]="defaultModel()"
+              [(ngModel)]="aiModel"
+            />
+            <datalist id="ai-model-options">
+              @for (m of modelSuggestions(); track m) {
+                <option [value]="m"></option>
+              }
+            </datalist>
+            <button mat-button type="button" [disabled]="loadingModels()" (click)="loadOllamaModels()">
+              <mat-icon>refresh</mat-icon>
+              {{ 'settings.ai.refreshModels' | t }}
+            </button>
+            @if (!loadingModels() && ollamaModels().length === 0) {
+              <p class="hint">{{ 'settings.ai.noOllamaModels' | t }}</p>
+            }
+          </div>
         }
 
         <div class="actions">

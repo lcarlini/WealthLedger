@@ -70,17 +70,32 @@ export class SettingsComponent implements OnInit {
   readonly providers = AI_PROVIDERS;
   readonly appSettings = signal<AppSettingsView | null>(null);
   aiProvider: AiProvider = 'local';
-  aiModel = '';
+  /** Model per provider. The form edits the entry for the selected provider only (see aiModel). */
+  models: Record<string, string> = {};
+  readonly ollamaModels = signal<string[]>([]);
+  readonly loadingModels = signal(false);
   allowCloudData = false;
   anthropicKey = '';
   openAiKey = '';
   brapiToken = '';
   fredKey = '';
+  ollamaUrl = '';
 
   // Form model for the backup policy (bound with ngModel).
   enabled = true;
   intervalDays = 15;
   maxBackups = 10;
+
+  private static readonly defaultModels: Partial<Record<AiProvider, string>> = {
+    anthropic: 'claude-haiku-5-5',
+    openai: 'gpt-4o-mini',
+    ollama: 'llama3.1:8b',
+  };
+
+  private static readonly modelSuggestions: Partial<Record<AiProvider, string[]>> = {
+    anthropic: ['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5'],
+    openai: ['gpt-4o-mini', 'gpt-4o'],
+  };
 
   private static readonly reasonKeys: Record<string, string> = {
     manual: 'settings.backup.reason.manual',
@@ -106,16 +121,82 @@ export class SettingsComponent implements OnInit {
   private applyAppSettings(view: AppSettingsView): void {
     this.appSettings.set(view);
     this.aiProvider = view.aiProvider;
-    this.aiModel = view.aiModel ?? '';
+    this.models = { ...view.aiModels };
     this.allowCloudData = view.allowCloudData;
     this.anthropicKey = '';
     this.openAiKey = '';
     this.brapiToken = '';
     this.fredKey = '';
+    this.ollamaUrl = view.ollamaBaseUrl;
+  }
+
+  /** Model name for the selected provider; blank means that provider's default. */
+  get aiModel(): string {
+    return this.models[this.aiProvider] ?? '';
+  }
+
+  set aiModel(value: string) {
+    this.models = { ...this.models, [this.aiProvider]: value };
+  }
+
+  /** The key field shown for the selected provider (only cloud providers have one). */
+  get currentKey(): string {
+    if (this.aiProvider === 'openai') return this.openAiKey;
+    if (this.aiProvider === 'anthropic') return this.anthropicKey;
+    return '';
+  }
+
+  set currentKey(value: string) {
+    if (this.aiProvider === 'openai') this.openAiKey = value;
+    else if (this.aiProvider === 'anthropic') this.anthropicKey = value;
+  }
+
+  currentSecretField(): 'anthropicApiKey' | 'openAiApiKey' {
+    return this.aiProvider === 'openai' ? 'openAiApiKey' : 'anthropicApiKey';
+  }
+
+  keyLabelKey(): string {
+    return this.aiProvider === 'openai' ? 'settings.ai.openAiKey' : 'settings.ai.anthropicKey';
+  }
+
+  keySaved(): boolean {
+    const view = this.appSettings();
+    if (!view) return false;
+    return this.aiProvider === 'openai' ? view.openAiKeyConfigured : view.anthropicKeyConfigured;
   }
 
   providerKey(provider: AiProvider): string {
     return `settings.ai.provider.${provider}`;
+  }
+
+  providerHintKey(provider: AiProvider): string {
+    return `settings.ai.hint.${provider}`;
+  }
+
+  /** Default model shown as the placeholder; the server uses the same defaults when the field is blank. */
+  defaultModel(): string {
+    return SettingsComponent.defaultModels[this.aiProvider] ?? '';
+  }
+
+  /** Suggestions for the model field. The field also accepts any other name, so new models work without an update. */
+  modelSuggestions(): string[] {
+    if (this.aiProvider === 'ollama') return this.ollamaModels();
+    return SettingsComponent.modelSuggestions[this.aiProvider] ?? [];
+  }
+
+  onProviderChange(): void {
+    if (this.aiProvider === 'ollama') void this.loadOllamaModels();
+  }
+
+  async loadOllamaModels(): Promise<void> {
+    this.loadingModels.set(true);
+    try {
+      this.ollamaModels.set(await this.advisorApi.ollamaModels());
+    } catch {
+      this.ollamaModels.set([]);
+    } finally {
+      this.loadingModels.set(false);
+    }
   }
 
   /** True when the chosen cloud provider has no saved key and none is being typed. */
@@ -130,6 +211,7 @@ export class SettingsComponent implements OnInit {
   async saveAppSettings(): Promise<void> {
     await this.run(async () => {
       await this.saveAppSettingsCore();
+      if (this.aiProvider === 'ollama') await this.loadOllamaModels();
       this.toast(this.lang.t('settings.app.saved'));
     });
   }
@@ -146,6 +228,7 @@ export class SettingsComponent implements OnInit {
       if (this.openAiKey.trim()) update.openAiApiKey = this.openAiKey.trim();
       if (this.brapiToken.trim()) update.brapiToken = this.brapiToken.trim();
       if (this.fredKey.trim()) update.fredApiKey = this.fredKey.trim();
+      if (this.aiProvider === 'ollama' && this.ollamaUrl.trim()) update.ollamaBaseUrl = this.ollamaUrl.trim();
       this.applyAppSettings(await this.appSettingsApi.update(update));
     }
   }
