@@ -85,7 +85,8 @@ function projectMonthly(
   months: number,
 ): { points: MonthlyProjectionPoint[]; totalContributed: number; grossFinal: number; fees: number } {
   const annualRate = resolveEffectiveAnnualRate(scenario, settings);
-  const monthlyRate = annualRate / 100 / 12;
+  // Brazilian rates (CDI, Selic, "% a.a.") are effective annual rates: compound, don't divide by 12.
+  const monthlyRate = Math.pow(1 + annualRate / 100, 1 / 12) - 1;
   const monthlyAdminFee = settings.deductFees ? scenario.adminFeePercentPerYear / 100 / 12 : 0;
   const monthlyCustodyFee = settings.deductFees ? scenario.custodyFeePercentPerYear / 100 / 12 : 0;
   const totalFeeRate = monthlyAdminFee + monthlyCustodyFee;

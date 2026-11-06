@@ -355,7 +355,7 @@ public class WatchlistController : ControllerBase
                     }
                 }
             }
-            catch
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // quote optional
             }

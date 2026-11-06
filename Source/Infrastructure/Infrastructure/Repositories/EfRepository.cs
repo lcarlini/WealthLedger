@@ -76,7 +76,9 @@ public class EfRepository<T> : IRepository<T> where T : BaseEntity
             if (entity.Id == Guid.Empty)
                 entity.Id = Guid.NewGuid();
 
-            entity.CreatedDate = DateTime.UtcNow;
+            // Keep the original creation time when restoring/importing data; only stamp genuinely new rows.
+            if (entity.CreatedDate == default)
+                entity.CreatedDate = DateTime.UtcNow;
             entity.UpdatedDate = DateTime.UtcNow;
             await _dbSet.AddAsync(entity);
         }

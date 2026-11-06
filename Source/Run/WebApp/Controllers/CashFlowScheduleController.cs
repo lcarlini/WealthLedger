@@ -102,6 +102,7 @@ public class CashFlowScheduleController : ControllerBase
         [FromQuery] decimal startingBalance = 0)
     {
         if (monthCount < 1 || monthCount > 1200) monthCount = 36;
+        fromMonth = Math.Clamp(fromMonth, 1, 12);
         return await _service.GetSimulationMatrixAsync(fromYear, fromMonth, monthCount, startingBalance);
     }
 
@@ -144,6 +145,7 @@ public class CashFlowScheduleController : ControllerBase
         [FromQuery] decimal startingBalance = 0)
     {
         if (monthCount < 1 || monthCount > 1200) monthCount = 36;
+        fromMonth = Math.Clamp(fromMonth, 1, 12);
         var matrix = await _service.GetSimulationMatrixAsync(fromYear, fromMonth, monthCount, startingBalance);
         var sb = new StringBuilder();
         var sep = ",";

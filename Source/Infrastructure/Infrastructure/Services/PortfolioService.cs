@@ -189,6 +189,20 @@ public class PortfolioService : IPortfolioService
 
     public async Task<PortfolioSnapshot> CaptureSnapshotAsync(string? notes = null, CancellationToken cancellationToken = default)
     {
+        // Never record a snapshot while FX rates are missing: foreign holdings would count as R$0 and leave
+        // a permanent dip in the net-worth history.
+        var active = (await _investmentRepository.GetAllAsync()).Where(i => i.Status == InvestmentStatus.Active).ToList();
+        if (active.Any(i => i.Currency != Currency.BRL))
+        {
+            MarketDataResponse? fx = null;
+            try { fx = await _marketDataService.GetMarketDataAsync(); } catch { /* treated as unavailable below */ }
+            var missing = fx == null
+                          || (active.Any(i => i.Currency == Currency.USD) && fx.UsdBrl <= 0)
+                          || (active.Any(i => i.Currency == Currency.EUR) && fx.EurBrl <= 0);
+            if (missing)
+                throw new InvalidOperationException("Exchange rates are unavailable; snapshot skipped to avoid recording a wrong net worth.");
+        }
+
         var overview = await GetOverviewAsync(cancellationToken: cancellationToken);
         var today = DateTime.UtcNow.Date;
 

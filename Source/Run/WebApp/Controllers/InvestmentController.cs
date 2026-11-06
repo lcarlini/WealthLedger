@@ -183,11 +183,17 @@ public class InvestmentController
 
             var domain = Mapper.Map<Investment>(body);
             if (isCreate)
+            {
                 domain.CreatedDate = domain.UpdatedDate = DateTime.UtcNow;
+                InvestmentLifecycle.ApplyOnCreate(domain, body);
+            }
             else
             {
                 domain.CreatedDate = existing!.CreatedDate;
                 domain.UpdatedDate = DateTime.UtcNow;
+                // The CSV has no tax-exempt column: keep the stored flag instead of resetting it.
+                body.IsIncomeTaxExempt = existing.IsIncomeTaxExempt;
+                InvestmentLifecycle.ApplyOnUpdate(domain, existing, body);
             }
 
             await Service.UpsertAsync(domain);
@@ -454,7 +460,7 @@ public class InvestmentController
         body.Currency = currency;
 
         var amountText = CsvRowHelper.GetCell(cells, "Amount") ?? "0";
-        if (!decimal.TryParse(amountText, NumberStyles.Any, CultureInfo.InvariantCulture, out var amount))
+        if (!CsvRowHelper.TryParseDecimal(amountText, out var amount))
         {
             error = "Invalid Amount.";
             return null;
@@ -463,7 +469,7 @@ public class InvestmentController
         body.Amount = amount;
 
         var cdiText = CsvRowHelper.GetCell(cells, "CdiPercentage") ?? "0";
-        if (!decimal.TryParse(cdiText, NumberStyles.Any, CultureInfo.InvariantCulture, out var cdi))
+        if (!CsvRowHelper.TryParseDecimal(cdiText, out var cdi))
         {
             error = "Invalid CdiPercentage.";
             return null;
@@ -474,7 +480,7 @@ public class InvestmentController
         var arpText = CsvRowHelper.GetCell(cells, "AnnualRatePercent");
         if (string.IsNullOrWhiteSpace(arpText))
             body.AnnualRatePercent = null;
-        else if (decimal.TryParse(arpText, NumberStyles.Any, CultureInfo.InvariantCulture, out var arp))
+        else if (CsvRowHelper.TryParseDecimal(arpText, out var arp))
             body.AnnualRatePercent = arp;
         else
         {
@@ -488,11 +494,11 @@ public class InvestmentController
         else if (DateTime.TryParse(
                      matText,
                      CultureInfo.InvariantCulture,
-                     DateTimeStyles.RoundtripKind | DateTimeStyles.AssumeUniversal,
-                     out var mat))
-            body.MaturityDate = mat.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(mat, DateTimeKind.Utc)
-                : mat.ToUniversalTime();
+                     DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal,
+                     out var mat)
+                 || DateTime.TryParse(matText, new CultureInfo("pt-BR"),
+                     DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out mat))
+            body.MaturityDate = DateTime.SpecifyKind(mat, DateTimeKind.Utc);
         else
         {
             error = "Invalid MaturityDate.";
@@ -511,7 +517,7 @@ public class InvestmentController
         var mmText = CsvRowHelper.GetCell(cells, "MonthlyMovementAmount");
         if (string.IsNullOrWhiteSpace(mmText))
             body.MonthlyMovementAmount = null;
-        else if (decimal.TryParse(mmText, NumberStyles.Any, CultureInfo.InvariantCulture, out var mm))
+        else if (CsvRowHelper.TryParseDecimal(mmText, out var mm))
             body.MonthlyMovementAmount = mm;
         else
         {
@@ -525,7 +531,7 @@ public class InvestmentController
         var qtyText = CsvRowHelper.GetCell(cells, "Quantity");
         if (string.IsNullOrWhiteSpace(qtyText))
             body.Quantity = null;
-        else if (decimal.TryParse(qtyText, NumberStyles.Any, CultureInfo.InvariantCulture, out var qty))
+        else if (CsvRowHelper.TryParseDecimal(qtyText, out var qty))
             body.Quantity = qty;
         else
         {
@@ -536,7 +542,7 @@ public class InvestmentController
         var avgText = CsvRowHelper.GetCell(cells, "AveragePrice");
         if (string.IsNullOrWhiteSpace(avgText))
             body.AveragePrice = null;
-        else if (decimal.TryParse(avgText, NumberStyles.Any, CultureInfo.InvariantCulture, out var avg))
+        else if (CsvRowHelper.TryParseDecimal(avgText, out var avg))
             body.AveragePrice = avg;
         else
         {

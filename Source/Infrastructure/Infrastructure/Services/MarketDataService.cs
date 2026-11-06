@@ -1,6 +1,7 @@
 using System.Text.Json;
 using WealthLedger.Application.Services;
 using WealthLedger.Contracts.Api.Responses;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace WealthLedger.Infrastructure.Services;
@@ -15,15 +16,23 @@ public class MarketDataService : IMarketDataService
 
     private static MarketDataCache _cache = new();
 
-    public MarketDataService(IHttpClientFactory httpClientFactory, ILogger<MarketDataService> logger)
+    private readonly IConfiguration? _configuration;
+
+    public MarketDataService(
+        IHttpClientFactory httpClientFactory,
+        ILogger<MarketDataService> logger,
+        IConfiguration? configuration = null)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _configuration = configuration;
     }
 
     public async Task<MarketDataResponse> GetMarketDataAsync()
     {
         var client = _httpClientFactory.CreateClient();
+        // Offline or slow providers must not hold a dashboard request for the 100 s default.
+        client.Timeout = TimeSpan.FromSeconds(10);
         client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "WealthLedger/1.0");
 
         var now = DateTime.UtcNow;
@@ -282,30 +291,33 @@ public class MarketDataService : IMarketDataService
             _logger.LogWarning(ex, "BTC price fetch failed");
         }
 
-        try
+        // FRED requires a personal API key (free); "DEMO_KEY" is not valid there. Skip the call when none is set.
+        var fredKey = _configuration?["MarketData:FredApiKey"];
+        if (!string.IsNullOrWhiteSpace(fredKey))
         {
-            // Fed Funds effective rate from BCB SGS series 3795 (US interest rate - a proxy)
-            // Alternatively use a simplified approach: fetch from a public JSON endpoint
-            // Using the Fed's public data via FRED API (no key for basic access)
-            var fredUrl = "https://api.stlouisfed.org/fred/series/observations?series_id=FEDFUNDS&sort_order=desc&limit=1&file_type=json&api_key=DEMO_KEY";
-            var fedJson = await client.GetStringAsync(fredUrl);
-            using var fedDoc = JsonDocument.Parse(fedJson);
-            if (fedDoc.RootElement.TryGetProperty("observations", out var obs) &&
-                obs.GetArrayLength() > 0)
+            try
             {
-                var valStr = obs[0].GetProperty("value").GetString();
-                if (!string.IsNullOrEmpty(valStr) && valStr != "." &&
-                    decimal.TryParse(valStr, System.Globalization.NumberStyles.Any,
-                        System.Globalization.CultureInfo.InvariantCulture, out var val))
+                var fredUrl = "https://api.stlouisfed.org/fred/series/observations?series_id=FEDFUNDS&sort_order=desc&limit=1&file_type=json&api_key="
+                              + Uri.EscapeDataString(fredKey.Trim());
+                var fedJson = await client.GetStringAsync(fredUrl);
+                using var fedDoc = JsonDocument.Parse(fedJson);
+                if (fedDoc.RootElement.TryGetProperty("observations", out var obs) &&
+                    obs.GetArrayLength() > 0)
                 {
-                    fedRate = val;
+                    var valStr = obs[0].GetProperty("value").GetString();
+                    if (!string.IsNullOrEmpty(valStr) && valStr != "." &&
+                        decimal.TryParse(valStr, System.Globalization.NumberStyles.Any,
+                            System.Globalization.CultureInfo.InvariantCulture, out var val))
+                    {
+                        fedRate = val;
+                    }
                 }
+                _logger.LogInformation("FRED Fed Funds Rate: {FedRate}", fedRate);
             }
-            _logger.LogInformation("FRED Fed Funds Rate: {FedRate}", fedRate);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Fed Funds rate fetch failed");
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Fed Funds rate fetch failed");
+            }
         }
 
         return (btcUsd, fedRate);

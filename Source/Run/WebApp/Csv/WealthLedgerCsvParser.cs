@@ -152,6 +152,36 @@ public class CsvParseResult
 
 public static class CsvRowHelper
 {
+    /// <summary>
+    /// Parses a decimal that may use either pt-BR ("1.500,50", "1500,50") or invariant ("1,500.50", "1500.50")
+    /// notation. The right-most separator is the decimal mark when both appear; a lone comma is a decimal comma.
+    /// </summary>
+    public static bool TryParseDecimal(string? text, out decimal value)
+    {
+        value = 0;
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        var t = text.Trim().Replace("R$", "").Replace("$", "").Replace(" ", "").Replace(" ", "");
+        var lastComma = t.LastIndexOf(',');
+        var lastDot = t.LastIndexOf('.');
+        if (lastComma >= 0 && lastDot >= 0)
+        {
+            t = lastComma > lastDot
+                ? t.Replace(".", "").Replace(',', '.')
+                : t.Replace(",", "");
+        }
+        else if (lastComma >= 0)
+        {
+            t = t.IndexOf(',') == lastComma ? t.Replace(',', '.') : t.Replace(",", "");
+        }
+        else if (lastDot >= 0 && t.IndexOf('.') != lastDot)
+        {
+            t = t.Replace(".", "");
+        }
+
+        return decimal.TryParse(t, System.Globalization.NumberStyles.Number | System.Globalization.NumberStyles.AllowLeadingSign,
+            System.Globalization.CultureInfo.InvariantCulture, out value);
+    }
+
     public static string? GetCell(IReadOnlyDictionary<string, string> cells, string columnName)
     {
         foreach (var kv in cells)

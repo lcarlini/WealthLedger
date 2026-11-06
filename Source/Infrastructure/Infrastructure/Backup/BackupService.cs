@@ -229,13 +229,24 @@ public sealed partial class BackupService : IBackupService, IDisposable
                 return false;
             }
 
-            // Safety net: snapshot the current database first. If this fails, the restore is aborted.
-            if (File.Exists(_location.DatabasePath))
-                await CreateCoreAsync(ReasonPreRestore, ct);
-
-            SqliteConnection.ClearAllPools();
+            // Copy the chosen backup aside BEFORE the safety snapshot: the snapshot prunes old backups and could
+            // otherwise delete the very file being restored.
             var staging = _location.DatabasePath + ".restoring";
             File.Copy(source, staging, overwrite: true);
+
+            // Safety net: snapshot the current database. If this fails, the restore is aborted.
+            try
+            {
+                if (File.Exists(_location.DatabasePath))
+                    await CreateCoreAsync(ReasonPreRestore, ct);
+            }
+            catch
+            {
+                DeleteIfExists(staging);
+                throw;
+            }
+
+            SqliteConnection.ClearAllPools();
             DeleteIfExists(_location.DatabasePath + "-wal");
             DeleteIfExists(_location.DatabasePath + "-shm");
             File.Move(staging, _location.DatabasePath, overwrite: true);

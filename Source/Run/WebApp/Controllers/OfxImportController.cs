@@ -30,7 +30,15 @@ public class OfxImportController : ControllerBase
             return new Response<StatementImportResponse>([new Error("No file uploaded")], HttpStatusCode.BadRequest);
 
         using var stream = file.OpenReadStream();
-        var importEntity = await _importService.ImportOfxAsync(stream, file.FileName, source);
+        StatementImport importEntity;
+        try
+        {
+            importEntity = await _importService.ImportOfxAsync(stream, file.FileName, source);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return new Response<StatementImportResponse>([new Error(ex.Message)], HttpStatusCode.BadRequest);
+        }
         var response = new StatementImportResponse
         {
             Id = importEntity.Id,

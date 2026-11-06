@@ -268,7 +268,7 @@ public class InvestmentService : IInvestmentService
 
         if (fromCurrency == "USD")
         {
-            if (market?.UsdBrl is <= 0)
+            if (market is null || market.UsdBrl <= 0)
             {
                 error = "USD/BRL rate unavailable for conversion.";
                 return false;
@@ -280,7 +280,7 @@ public class InvestmentService : IInvestmentService
 
         if (fromCurrency == "EUR")
         {
-            if (market?.EurBrl is <= 0)
+            if (market is null || market.EurBrl <= 0)
             {
                 error = "EUR/BRL rate unavailable for conversion.";
                 return false;
@@ -311,7 +311,7 @@ public class InvestmentService : IInvestmentService
 
         if (toCurrency == "USD")
         {
-            if (market?.UsdBrl is <= 0)
+            if (market is null || market.UsdBrl <= 0)
             {
                 error = "USD/BRL rate unavailable for conversion.";
                 return false;
@@ -323,7 +323,7 @@ public class InvestmentService : IInvestmentService
 
         if (toCurrency == "EUR")
         {
-            if (market?.EurBrl is <= 0)
+            if (market is null || market.EurBrl <= 0)
             {
                 error = "EUR/BRL rate unavailable for conversion.";
                 return false;

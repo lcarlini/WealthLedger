@@ -54,7 +54,7 @@ public class TaskService : ITaskService
         await EnsureScheduledTasksAsync();
         var now = DateTime.UtcNow;
         var today = now.Date;
-        var investments = (await _investmentRepository.GetAllAsync()).ToList();
+        var investments = (await _investmentRepository.GetAllAsync()).Where(i => i.Status == InvestmentStatus.Active).ToList();
         var institutions = (await _institutionRepository.GetAllAsync()).ToList();
         var allTasks = (await _taskRepository.GetAllAsync()).ToList();
 
@@ -148,7 +148,7 @@ public class TaskService : ITaskService
     public async Task EnsureMonthlyTasksAsync()
     {
         var now = DateTime.UtcNow;
-        var investments = await _investmentRepository.GetAllAsync();
+        var investments = (await _investmentRepository.GetAllAsync()).Where(i => i.Status == InvestmentStatus.Active);
         var requiresMovement = investments.Where(i => i.RequiresMonthlyMovement);
 
         var allTasks = await _taskRepository.GetAllAsync();
@@ -181,7 +181,7 @@ public class TaskService : ITaskService
     public async Task EnsureMaturityTasksAsync()
     {
         var today = DateTime.UtcNow.Date;
-        var investments = (await _investmentRepository.GetAllAsync()).ToList();
+        var investments = (await _investmentRepository.GetAllAsync()).Where(i => i.Status == InvestmentStatus.Active).ToList();
         var allTasks = (await _taskRepository.GetAllAsync()).ToList();
 
         foreach (var inv in investments.Where(i =>

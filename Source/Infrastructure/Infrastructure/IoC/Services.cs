@@ -63,7 +63,8 @@ public static class ServiceRegistration
 
         services.AddTransient<IDashboardService, DashboardService>();
         services.AddTransient<IMarketDataService, MarketDataService>();
-        services.AddTransient<IHistoricalIndexService, HistoricalIndexService>();
+        // Singleton so its per-window cache survives between requests (BCB is slow).
+        services.AddSingleton<IHistoricalIndexService, HistoricalIndexService>();
         services.AddTransient<IInvestmentPerformanceService, InvestmentPerformanceService>();
         services.AddTransient<IStockQuoteService, StockQuoteService>();
         services.AddTransient<IPortfolioService, PortfolioService>();

@@ -36,6 +36,8 @@ public class OfxImportService : IOfxImportService
     {
         // Parse before touching the database: a malformed file must never remove an existing import.
         var transactions = ParseOfx(fileContent);
+        if (transactions.Count == 0)
+            throw new InvalidOperationException("The OFX file has no readable transactions; the existing import was left untouched.");
 
         StatementImport? result = null;
         await _unitOfWork.ExecuteAsync(async () =>
@@ -170,7 +172,14 @@ public class OfxImportService : IOfxImportService
     {
         try
         {
-            using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            using var buffer = new MemoryStream();
+            stream.CopyTo(buffer);
+            var bytes = buffer.ToArray();
+            // Many Brazilian banks declare CHARSET:1252 (or ENCODING:USASCII) and send Windows-1252/Latin-1 bytes.
+            var head = Encoding.ASCII.GetString(bytes, 0, Math.Min(bytes.Length, 600));
+            var legacy = Regex.IsMatch(head, @"CHARSET\s*:\s*(1252|ISO-8859-1|LATIN1)", RegexOptions.IgnoreCase);
+            var encoding = legacy ? Encoding.Latin1 : Encoding.UTF8;
+            using var reader = new StreamReader(new MemoryStream(bytes), encoding, detectEncodingFromByteOrderMarks: true);
             var raw = reader.ReadToEnd();
 
             var xmlContent = ExtractXmlFromOfx(raw);
@@ -237,7 +246,7 @@ public class OfxImportService : IOfxImportService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to parse OFX file");
-            return [];
+            throw new InvalidOperationException("The OFX file could not be parsed; the existing import was left untouched.", ex);
         }
     }
 
@@ -445,12 +454,36 @@ public class OfxImportService : IOfxImportService
     {
         if (string.IsNullOrWhiteSpace(description)) return null;
         var upper = description.ToUpperInvariant();
+        // The most specific (longest) keyword wins, so "MERCADOLIVRE" beats "MERCADO".
+        string? best = null;
+        var bestLength = 0;
         foreach (var (keyword, category) in CategoryRules)
         {
-            if (upper.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                return category;
+            var trimmed = keyword.Trim();
+            if (trimmed.Length <= bestLength) continue;
+            if (!ContainsKeyword(upper, keyword)) continue;
+            best = category;
+            bestLength = trimmed.Length;
         }
-        return "Other";
+        return best ?? "Other";
+    }
+
+    // Very short keywords (TED, TIM, DOC, IOF...) must match whole words, not fragments of other words.
+    private static bool ContainsKeyword(string upper, string keyword)
+    {
+        var trimmed = keyword.Trim();
+        if (trimmed.Length > 4)
+            return upper.Contains(keyword, StringComparison.Ordinal);
+        var index = 0;
+        while ((index = upper.IndexOf(trimmed, index, StringComparison.Ordinal)) >= 0)
+        {
+            var before = index == 0 || !char.IsLetter(upper[index - 1]);
+            var end = index + trimmed.Length;
+            var after = end >= upper.Length || !char.IsLetter(upper[end]);
+            if (before && after) return true;
+            index++;
+        }
+        return false;
     }
 
     /// <summary>
@@ -462,6 +495,9 @@ public class OfxImportService : IOfxImportService
         int updated = 0;
         foreach (var tx in all)
         {
+            // Respect categories already set (possibly by hand): only fill empty or generic ones.
+            if (!string.IsNullOrWhiteSpace(tx.Category) && tx.Category != "Other")
+                continue;
             var newCat = CategorizeTransaction(tx.Description);
             if (tx.Category != newCat)
             {

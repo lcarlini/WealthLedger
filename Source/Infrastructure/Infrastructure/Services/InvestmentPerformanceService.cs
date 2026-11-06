@@ -416,25 +416,22 @@ public class InvestmentPerformanceService : IInvestmentPerformanceService
         if (annualRate <= 0)
             return [];
 
-        var baseAmount = current.NetAmount > 0 ? current.NetAmount : current.CurrentAmount;
+        // Project from the GROSS value: tax is applied once on (gross - principal) below.
+        // Starting from NetAmount would tax the gain already earned twice.
+        var evaluated = current.PrincipalAmount + current.GrossGain;
+        var baseAmount = evaluated > 0 ? evaluated : current.CurrentAmount;
         var points = new List<PerformanceProjectionPoint>();
         foreach (var months in new[] { 3, 6, 12, 24, 36 })
         {
             var years = months / 12m;
             var gross = Round2(baseAmount * (decimal)Math.Pow((double)(1 + annualRate / 100m), (double)years));
-            var holdingDays = current.HoldingDays + (int)Math.Round(months * 30.4375);
-            var gain = gross - baseAmount;
-            var applyIof = inv.AccountType != AccountType.SavingsBox && inv.Currency == Currency.BRL && months < 1;
-            var (_, _, _, _, netGain) = BrazilianInvestmentTax.ApplyTaxes(
-                gain, holdingDays, current.IsIncomeTaxExempt, applyIof);
-            // For forward projections beyond 30 days IOF=0; IR uses future holding days from start
+            // IR uses the total holding time from the start date at the projected date.
             var fullHolding = current.HoldingDays + (int)Math.Round(months * 30.4375);
-            var (iof, _, ir, _, netFromPrincipal) = BrazilianInvestmentTax.ApplyTaxes(
+            var (_, _, _, _, netFromPrincipal) = BrazilianInvestmentTax.ApplyTaxes(
                 gross - current.PrincipalAmount,
                 fullHolding,
                 current.IsIncomeTaxExempt,
                 inv.AccountType != AccountType.SavingsBox && inv.Currency == Currency.BRL);
-            _ = (iof, netGain);
             var net = Round2(current.PrincipalAmount + netFromPrincipal);
             points.Add(new PerformanceProjectionPoint
             {

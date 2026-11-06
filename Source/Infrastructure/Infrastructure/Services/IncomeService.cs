@@ -159,6 +159,10 @@ public class IncomeService : IIncomeService
             new(year, 12, 25), // Natal
         };
 
+        // Dia Nacional de Zumbi e da Consciência Negra: national holiday since 2024 (Lei 14.759/2023).
+        if (year >= 2024)
+            holidays.Add(new DateTime(year, 11, 20));
+
         var easter = ComputeEaster(year);
         holidays.Add(easter.AddDays(-48)); // Carnival Monday
         holidays.Add(easter.AddDays(-47)); // Carnival Tuesday

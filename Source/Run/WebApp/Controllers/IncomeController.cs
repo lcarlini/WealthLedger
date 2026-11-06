@@ -51,6 +51,8 @@ public class IncomeController : ControllerBase
     [HttpPost("extra")]
     public async Task<Response<ExtraIncome>> AddExtra([FromBody] ExtraIncomeRequest body)
     {
+        if (body.Month is < 1 or > 12 || body.Year is < 1900 or > 2200)
+            return new Response<ExtraIncome>([new Error("Month must be 1-12 and Year a valid year.")], HttpStatusCode.BadRequest);
         var entry = new ExtraIncome
         {
             Year = body.Year,
@@ -73,6 +75,8 @@ public class IncomeController : ControllerBase
     [HttpPut("business-days")]
     public async Task<Response<object>> SetBusinessDayOverride([FromBody] BusinessDayOverrideRequest body)
     {
+        if (body.Month is < 1 or > 12 || body.Year is < 1900 or > 2200)
+            return new Response<object>(errors: ["Month must be 1-12 and Year a valid year"], statusCode: HttpStatusCode.BadRequest);
         if (body.Days < 0 || body.Days > 31)
             return new Response<object>(errors: ["Days must be between 0 and 31"], statusCode: HttpStatusCode.BadRequest);
         await _service.SetBusinessDayOverrideAsync(body.Year, body.Month, body.Days);
@@ -95,6 +99,7 @@ public class IncomeController : ControllerBase
         [FromQuery] int monthCount = 36)
     {
         if (monthCount < 1 || monthCount > 1200) monthCount = 36;
+        fromMonth = Math.Clamp(fromMonth, 1, 12);
         var profile = await _service.GetProfileAsync();
         if (profile == null)
             return new Response<IncomePreviewResponse>(new IncomePreviewResponse());

@@ -113,7 +113,7 @@ export class PortfolioComponent implements OnInit {
     incomeType: PassiveIncomeType.Dividend,
     currency: Currency.BRL,
     amount: 0,
-    paymentDate: new Date().toISOString().slice(0, 10),
+    paymentDate: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10),
     investmentId: '' as string | '',
     notes: '',
   };

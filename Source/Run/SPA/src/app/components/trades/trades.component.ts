@@ -75,7 +75,7 @@ export class TradesComponent implements OnInit {
   /** Form model. Quantity and price are shown or hidden depending on the trade type. */
   form = {
     side: TradeSide.Buy as TradeSide,
-    tradeDate: new Date().toISOString().slice(0, 10),
+    tradeDate: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10),
     quantity: null as number | null,
     unitPrice: null as number | null,
     fees: 0,
