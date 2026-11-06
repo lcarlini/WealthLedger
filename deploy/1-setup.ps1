@@ -156,6 +156,30 @@ if ($SkipModel) {
 # =============================================================================
 Write-Title 'Building the app'
 
+# Stop any running WealthLedger server so publish/wwwroot is not locked
+# (otherwise Remove-Item / Copy-Item can leave a mix of old + new files).
+function Stop-WealthLedgerListeners {
+    param([int[]]$Ports = @(5000))
+    foreach ($port in $Ports) {
+        $pids = @(
+            Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue |
+                Select-Object -ExpandProperty OwningProcess -Unique
+        ) | Where-Object { $_ -and $_ -gt 0 }
+        foreach ($procId in $pids) {
+            try {
+                $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$procId" -ErrorAction SilentlyContinue
+                $cmd = [string]$proc.CommandLine
+                if ($cmd -match 'WealthLedger\.WebApp\.dll' -or ($cmd -match 'dotnet' -and $cmd -match 'WealthLedger')) {
+                    Write-Info "Stopping running server on port $port (PID $procId)..."
+                    Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
+                }
+            } catch { }
+        }
+    }
+    Start-Sleep -Milliseconds 800
+}
+Stop-WealthLedgerListeners
+
 # Keep any existing published local overrides (personal data path / tokens).
 $localSettingsName = 'appsettings.Local.json'
 $localSettingsSrc  = Join-Path (Split-Path $apiProj -Parent) $localSettingsName
@@ -183,13 +207,22 @@ if (Test-Path $localSettingsSrc) {
     Write-Info "No $localSettingsName found. Copy appsettings.Local.example.json to $localSettingsName and set WealthLedger:DataDirectory."
 }
 
-# Never leave SQLite databases inside publish/ (personal financial data belongs in DataDirectory).
-foreach ($dbFile in $dbFiles) {
-    $dbPath = Join-Path $publishDir $dbFile
-    if (Test-Path $dbPath) {
-        Remove-Item $dbPath -Force -ErrorAction SilentlyContinue
-        Write-Info "Removed $dbFile from publish (database must live in WealthLedger:DataDirectory)."
+# Databases must live in WealthLedger:DataDirectory, not in publish/. Never delete them here:
+# move any copy found in publish/ aside into a timestamped folder so no data can be lost.
+$legacyDbPaths = @($dbFiles | ForEach-Object { Join-Path $publishDir $_ } | Where-Object { Test-Path $_ })
+if ($legacyDbPaths.Count -gt 0) {
+    $legacyDir = Join-Path (Split-Path $publishDir -Parent) ("wealthledger-legacy-db-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    try {
+        New-Item -ItemType Directory -Force -Path $legacyDir | Out-Null
+        foreach ($dbPath in $legacyDbPaths) {
+            Move-Item -LiteralPath $dbPath -Destination $legacyDir -ErrorAction Stop
+        }
+    } catch {
+        Write-Fail "Could not move database files out of publish/: $($_.Exception.Message)"
+        exit 1
     }
+    Write-Info "Moved database file(s) found in publish/ to $legacyDir (nothing was deleted)."
+    Write-Info 'Make sure WealthLedger:DataDirectory in appsettings.Local.json points at your live database folder.'
 }
 
 Write-Info 'Installing SPA dependencies (npm ci)...'

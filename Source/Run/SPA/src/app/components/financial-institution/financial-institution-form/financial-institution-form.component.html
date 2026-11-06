@@ -1,10 +1,15 @@
 <div class="page-container">
-  <div class="page-header">
-    <button mat-icon-button (click)="onCancel()">
+  <app-page-header
+    tag="Institutions · Form"
+    [title]="(isEdit() ? 'Edit' : 'New') + ' financial institution'"
+    lead="Name and logo for banks or brokers in your portfolio"
+    icon="account_balance"
+    iconColor="var(--wl-nav-icon-bank)"
+  >
+    <button leading mat-icon-button type="button" (click)="onCancel()" matTooltip="Back">
       <mat-icon>arrow_back</mat-icon>
     </button>
-    <h1>{{ isEdit() ? 'Edit' : 'New' }} Financial Institution</h1>
-  </div>
+  </app-page-header>
 
   @if (loading()) {
     <div class="loading-container">
@@ -19,7 +24,7 @@
             @if (imagePreview()) {
               <div class="image-preview-container">
                 <img [src]="imagePreview()" alt="Institution image" class="image-preview">
-                <button mat-icon-button class="remove-image-btn" type="button" (click)="removeImage()">
+                <button mat-icon-button class="remove-image-btn" type="button" (click)="removeImage()" matTooltip="Remove image">
                   <mat-icon>close</mat-icon>
                 </button>
               </div>

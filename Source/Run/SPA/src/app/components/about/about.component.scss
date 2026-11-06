@@ -1,14 +1,15 @@
-.about-page {
-  box-sizing: border-box;
-  min-height: 100%;
-  padding: 40px 24px;
-  display: grid;
-  place-items: start center;
-}
-
 .about-card {
   width: min(680px, 100%);
-  border: 1px solid var(--mat-sys-outline-variant);
+  border: 1px solid var(--wl-border, var(--mat-sys-outline-variant));
+  margin-inline: auto;
+}
+
+h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--wl-text);
 }
 
 mat-card-content {

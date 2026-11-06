@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using WealthLedger.Application.Services;
 using WealthLedger.Contracts.Api.Responses;
 using WealthLedger.Contracts.Domain.Enums;
@@ -136,16 +137,32 @@ public class StockQuoteService : IStockQuoteService
         if (!doc.RootElement.TryGetProperty("results", out var results) || results.GetArrayLength() == 0)
             return null;
 
-        var item = results[0];
+        var quote = ParseBrapiItem(results[0], ticker);
+        if (quote != null)
+            _logger.LogInformation("brapi {Ticker}: {Price} {Currency}", quote.Ticker, quote.Price, quote.Currency);
+
+        return quote;
+    }
+
+    /// <summary>
+    /// Parses one brapi quote result. Returns null when there is no usable positive price.
+    /// Kept static and free of I/O so it can be unit-tested with sample payloads.
+    /// </summary>
+    public static StockQuote? ParseBrapiItem(JsonElement item, string requestedTicker)
+    {
+        if (item.ValueKind != JsonValueKind.Object)
+            return null;
+
         if (!item.TryGetProperty("regularMarketPrice", out var priceEl) ||
-            priceEl.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            priceEl.ValueKind != JsonValueKind.Number ||
+            !priceEl.TryGetDecimal(out var price) ||
+            price <= 0)
             return null;
 
-        var price = priceEl.GetDecimal();
-        if (price <= 0)
-            return null;
+        var currency = item.TryGetProperty("currency", out var cur) && cur.ValueKind == JsonValueKind.String
+            ? cur.GetString() ?? "BRL"
+            : "BRL";
 
-        var currency = item.TryGetProperty("currency", out var cur) ? cur.GetString() ?? "BRL" : "BRL";
         DateTime? asOf = null;
         if (item.TryGetProperty("regularMarketTime", out var timeEl) &&
             timeEl.ValueKind == JsonValueKind.String &&
@@ -155,9 +172,9 @@ public class StockQuoteService : IStockQuoteService
             asOf = parsed.ToUniversalTime();
         }
 
-        var symbol = item.TryGetProperty("symbol", out var sym) ? sym.GetString() ?? ticker : ticker;
-
-        _logger.LogInformation("brapi {Ticker}: {Price} {Currency}", symbol, price, currency);
+        var symbol = item.TryGetProperty("symbol", out var sym) && sym.ValueKind == JsonValueKind.String
+            ? sym.GetString() ?? requestedTicker
+            : requestedTicker;
 
         return new StockQuote
         {
@@ -168,6 +185,12 @@ public class StockQuoteService : IStockQuoteService
             Source = "brapi"
         };
     }
+
+    /// <summary>
+    /// True for B3 codes such as PETR4, BOVA11, HGLG11 or BBDC4F. US-style symbols (AAPL, VOO) are not B3 codes.
+    /// </summary>
+    public static bool IsB3Ticker(string ticker) =>
+        Regex.IsMatch(NormalizeTicker(ticker), @"^[A-Z]{4}\d{1,2}[A-Z]?$");
 
     private async Task<StockQuote?> FetchCryptoQuoteAsync(
         HttpClient client,

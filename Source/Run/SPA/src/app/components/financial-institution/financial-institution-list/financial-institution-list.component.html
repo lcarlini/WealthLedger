@@ -1,27 +1,31 @@
 <div class="page-container">
-  <div class="page-header">
-    <h1>Financial Institutions</h1>
-    <div class="header-actions">
-      <a mat-stroked-button [href]="exportCsvUrl" download="financial-institutions.csv" target="_blank" rel="noopener">
+  <app-page-header
+    tag="Institutions"
+    title="Financial institutions"
+    lead="Banks and brokers linked to your investments and cash accounts"
+    icon="account_balance"
+    iconColor="var(--wl-nav-icon-bank)"
+  >
+      <a mat-stroked-button class="action-btn" [href]="exportCsvUrl" download="financial-institutions.csv" target="_blank" rel="noopener"
+         matTooltip="Export CSV">
         <mat-icon>download</mat-icon>
         Export CSV
       </a>
-      <a mat-stroked-button [href]="importCsvTemplateUrl" download="financial-institutions-template.csv" target="_blank" rel="noopener"
+      <a mat-stroked-button class="action-btn" [href]="importCsvTemplateUrl" download="financial-institutions-template.csv" target="_blank" rel="noopener"
          matTooltip="Download a header-only CSV to fill and re-import">
         <mat-icon>description</mat-icon>
         CSV template
       </a>
       <input type="file" #fiCsvInput accept=".csv,text/csv" hidden (change)="onCsvSelected($event)">
-      <button mat-stroked-button type="button" (click)="fiCsvInput.click()">
+      <button mat-stroked-button type="button" class="action-btn" (click)="fiCsvInput.click()" matTooltip="Import CSV">
         <mat-icon>upload</mat-icon>
         Import CSV
       </button>
-      <button mat-raised-button color="primary" (click)="navigateToCreate()">
+      <button mat-flat-button color="primary" class="action-btn" (click)="navigateToCreate()" matTooltip="New institution">
         <mat-icon>add</mat-icon>
-        New Institution
+        New institution
       </button>
-    </div>
-  </div>
+  </app-page-header>
 
   <mat-card>
     <mat-card-content>
@@ -40,6 +44,7 @@
         </div>
       }
 
+      <div class="table-scroll">
       <table mat-table [dataSource]="dataSource()" class="full-width">
 
         <ng-container matColumnDef="imageUrl">
@@ -93,6 +98,7 @@
           </tr>
         }
       </table>
+      </div>
 
       <mat-paginator
         [length]="totalCount()"

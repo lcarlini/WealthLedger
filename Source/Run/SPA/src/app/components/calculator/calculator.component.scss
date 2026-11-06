@@ -1,18 +1,5 @@
 .page-container {
-  padding: 24px;
   max-width: 960px;
-  margin: 0 auto;
-
-  h1 { 
-    font-weight: 400; 
-    margin-bottom: 8px;
-    background-color: var(--mat-sys-surface-container-high);
-    color: var(--mat-sys-on-surface);
-    padding: 12px 16px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.06);
-  }
-  .subtitle { color: #757575; margin-bottom: 24px; }
 }
 
 .comparison-layout {
@@ -28,7 +15,7 @@
 
   .preset-label {
     font-size: 13px;
-    color: rgba(255,255,255,0.7);
+    color: var(--wl-text-muted);
     margin-right: 4px;
   }
 
@@ -140,22 +127,26 @@
   background: var(--mat-sys-surface-container);
   color: var(--mat-sys-on-surface);
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--wl-border);
 
   .result-line { margin: 4px 0; }
   &.three-cols {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
+
+    @media (max-width: 720px) {
+      grid-template-columns: 1fr;
+    }
   }
   .result-item {
     text-align: center;
-    .result-label { font-size: 12px; color: rgba(255,255,255,0.7); }
+    .result-label { font-size: 12px; color: var(--wl-text-muted); }
     .result-value { font-size: 18px; font-weight: 500; }
   }
 }
 
-.hint { font-size: 12px; color: #757575; margin-bottom: 8px; }
+.hint { font-size: 12px; color: var(--wl-text-muted, #757575); margin-bottom: 8px; }
 .section-title { margin-top: 24px; margin-bottom: 8px; font-weight: 500; }
 
 .chart-wrap {
@@ -165,8 +156,9 @@
 
 .table-scroll {
   max-height: 400px;
-  overflow-y: auto;
+  overflow: auto;
   margin-top: 8px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .proj-table {
@@ -183,7 +175,7 @@
   }
   td {
     color: var(--mat-sys-on-surface);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid var(--wl-border);
   }
   tr:nth-child(even) td { background: var(--mat-sys-surface); }
 }
@@ -197,5 +189,5 @@ mat-header-cell {
   z-index: 1;
 }
 
-.gain-value { color: #2e7d32; }
-.negative { color: #d32f2f; }
+.gain-value { color: var(--wl-gain); }
+.negative { color: var(--wl-loss); }

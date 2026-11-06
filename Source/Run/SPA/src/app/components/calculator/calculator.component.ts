@@ -29,6 +29,7 @@ import {
   createStarterScenarios,
 } from '../../shared/calculators/investment-comparison.models';
 import { runComparison } from '../../shared/calculators/investment-comparison.engine';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 interface GainRow {
   month: number;
@@ -67,6 +68,7 @@ interface LoanRow {
     MatTableModule,
     MatTooltipModule,
     BaseChartDirective,
+    PageHeaderComponent,
   ],
   templateUrl: './calculator.component.html',
   styleUrl: './calculator.component.scss',
@@ -242,7 +244,7 @@ export class CalculatorComponent implements OnInit {
   }
 
   private buildComparisonCharts(result: ComparisonRunResult): void {
-    const palette = ['#1976d2', '#2e7d32', '#f57c00', '#7b1fa2', '#00838f', '#c62828', '#5d4037', '#455a64'];
+    const palette = ['#3b82f6', '#10b981', '#f97316', '#a855f7', '#14b8a6', '#f43f5e', '#6366f1', '#94a3b8'];
     const today = new Date();
     const yearLabels = Array.from({ length: Math.ceil(result.months / 12) }, (_, i) => {
       const date = new Date(today.getFullYear() + i + 1, today.getMonth(), today.getDate());
@@ -378,8 +380,8 @@ export class CalculatorComponent implements OnInit {
         data: points.map((p) => p.value),
         fill: true,
         tension: 0.3,
-        borderColor: '#1976d2',
-        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+        borderColor: '#14b8a6',
+        backgroundColor: 'rgba(20, 184, 166, 0.1)',
       }],
     });
   }

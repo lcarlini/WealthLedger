@@ -1,16 +1,138 @@
 <!doctype html>
-<html lang="en" class="theme-light">
+<html lang="en" class="theme-blue theme-dark" data-theme="blue" data-accent="teal" data-density="comfortable" data-contrast="standard" data-motion="on">
 <head>
   <meta charset="utf-8">
   <title>WealthLedger — Personal finance, clearly tracked</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="WealthLedger is a free, self-hosted personal finance app for tracking investments, institutions, cash flow, and bank statements — with your data staying 100% on your own machine.">
   <meta name="author" content="Leandro Carlini Mingorance">
   <link rel="author" href="https://lcarlini.github.io/lcarlini/">
-  <meta name="theme-color" content="#047857">
+  <meta name="theme-color" content="#0b1629">
+  <meta name="color-scheme" content="dark light">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,600;1,9..40,500&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <!-- Apply saved appearance BEFORE CSS/JS so the first paint is never the default teal layout -->
+  <script>
+    (function () {
+      var KEY = 'wealthledger-appearance-v2';
+      var LEGACY = 'wealthledger-theme';
+      var ACCENTS = { blue: '#3b82f6', teal: '#14b8a6', purple: '#a855f7', orange: '#f97316', pink: '#ec4899' };
+      var THEME_BG = { blue: '#070f1c', white: '#f1f5f9', black: '#000000' };
+      var THEME_COLOR = { blue: '#0b1629', white: '#f8fafc', black: '#000000' };
+
+      function clampScale(n) {
+        n = Math.round((Number(n) || 100) / 5) * 5;
+        return Math.min(180, Math.max(70, n));
+      }
+      function hexParts(hex) {
+        hex = String(hex || '').replace('#', '');
+        if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
+        var n = parseInt(hex, 16);
+        return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      }
+      function mix(hex, withHex, amount) {
+        amount = Math.min(1, Math.max(0, amount));
+        var a = hexParts(hex), b = hexParts(withHex);
+        return '#' + [0, 1, 2].map(function (i) {
+          return Math.round(a[i] * (1 - amount) + b[i] * amount).toString(16).padStart(2, '0');
+        }).join('');
+      }
+
+      var state = { theme: 'blue', accent: 'teal', density: 'comfortable', contrast: 'standard', motion: 'on', textScale: 100, autoscale: true };
+      try {
+        var raw = localStorage.getItem(KEY);
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          for (var k in parsed) if (Object.prototype.hasOwnProperty.call(parsed, k)) state[k] = parsed[k];
+        } else {
+          var legacy = localStorage.getItem(LEGACY);
+          if (legacy === 'light') state.theme = 'white';
+          else if (legacy === 'dark') state.theme = 'black';
+        }
+      } catch (e) { /* private mode */ }
+
+      if (state.theme !== 'blue' && state.theme !== 'white' && state.theme !== 'black') state.theme = 'blue';
+      if (!ACCENTS[state.accent]) state.accent = 'teal';
+
+      var root = document.documentElement;
+      root.className = 'theme-' + state.theme + ' ' + (state.theme === 'white' ? 'theme-light' : 'theme-dark');
+      root.dataset.theme = state.theme;
+      root.dataset.accent = state.accent;
+      root.dataset.density = state.density || 'comfortable';
+      root.dataset.contrast = state.contrast || 'standard';
+      root.dataset.motion = state.motion || 'on';
+      root.style.colorScheme = state.theme === 'white' ? 'light' : 'dark';
+      root.style.backgroundColor = THEME_BG[state.theme];
+
+      var hex = ACCENTS[state.accent];
+      var rgb = hexParts(hex).join(', ');
+      var strong = mix(hex, '#000000', state.theme === 'white' ? 0.28 : 0.22);
+      var soft = mix(hex, state.theme === 'white' ? '#ffffff' : '#0b1629', 0.72);
+      var muted = mix(hex, state.theme === 'white' ? '#ffffff' : '#94a3b8', 0.45);
+      root.style.setProperty('--wl-accent', hex);
+      root.style.setProperty('--wl-accent-rgb', rgb);
+      root.style.setProperty('--wl-accent-strong', strong);
+      root.style.setProperty('--wl-accent-soft', soft);
+      root.style.setProperty('--wl-accent-muted', muted);
+      root.style.setProperty('--mat-sys-primary', hex);
+      root.style.setProperty('--mat-sys-on-primary', '#ffffff');
+      root.style.setProperty('--mat-sys-primary-container', soft);
+      root.style.setProperty('--mat-sys-on-primary-container', state.theme === 'white' ? strong : '#ffffff');
+      root.style.setProperty('--mat-sys-inverse-primary', muted);
+
+      if (state.theme === 'white') {
+        root.style.setProperty('--wl-toolbar', 'linear-gradient(90deg, ' + strong + ' 0%, ' + hex + ' 55%, ' + mix(hex, '#0369a1', 0.35) + ' 100%)');
+        root.style.setProperty('--wl-title-gradient', 'linear-gradient(90deg, ' + strong + ', ' + hex + ' 50%, ' + mix(hex, '#7c3aed', 0.35) + ')');
+      } else if (state.theme === 'black') {
+        root.style.setProperty('--wl-toolbar', 'linear-gradient(90deg, #000 0%, ' + mix(hex, '#000000', 0.75) + ' 50%, #000 100%)');
+        root.style.setProperty('--wl-title-gradient', 'linear-gradient(90deg, ' + hex + ', ' + mix(hex, '#38bdf8', 0.4) + ' 48%, ' + mix(hex, '#a78bfa', 0.45) + ')');
+      } else {
+        root.style.setProperty('--wl-toolbar', 'linear-gradient(90deg, ' + mix(hex, '#0a1a33', 0.65) + ' 0%, ' + mix(hex, '#0d2244', 0.55) + ' 50%, #0b1c38 100%)');
+        root.style.setProperty('--wl-title-gradient', 'linear-gradient(90deg, ' + hex + ', ' + mix(hex, '#38bdf8', 0.4) + ' 48%, ' + mix(hex, '#a78bfa', 0.45) + ')');
+      }
+
+      var scale = clampScale(state.textScale);
+      if (state.autoscale !== false) {
+        var w = window.innerWidth || 1280;
+        var boost = 0;
+        if (w < 360) boost = -10;
+        else if (w < 480) boost = -5;
+        else if (w >= 2560) boost = 20;
+        else if (w >= 1920) boost = 10;
+        else if (w >= 1440) boost = 5;
+        scale = clampScale(scale + boost);
+      }
+      root.style.fontSize = (16 * scale) / 100 + 'px';
+      root.style.setProperty('--wl-text-scale', String(scale));
+
+      document.addEventListener('DOMContentLoaded', function () {
+        document.body.style.backgroundColor = THEME_BG[state.theme];
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', state.theme === 'white' ? hex : THEME_COLOR[state.theme]);
+      });
+    })();
+  </script>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #070f1c;
+      color: #e8eef9;
+    }
+    html.theme-white, html.theme-white body {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    html.theme-black, html.theme-black body {
+      background: #000;
+      color: #f5f5f5;
+    }
+    app-root { display: block; min-height: 100%; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,500&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>

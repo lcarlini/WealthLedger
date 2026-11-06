@@ -17,12 +17,33 @@ namespace WealthLedger.WebApp.Controllers;
 public class FinancialInstitutionController
     : BaseEntityController<FinancialInstitution, FinancialInstitutionRequestBody, FinancialInstitutionResponse>
 {
+    private readonly IInvestmentService _investments;
+
     public FinancialInstitutionController(
         IEntityService<FinancialInstitution> service,
         IPayloadValidator<FinancialInstitutionRequestBody> validator,
-        IMapper mapper)
+        IMapper mapper,
+        IInvestmentService investments)
         : base(service, validator, mapper)
     {
+        _investments = investments;
+    }
+
+    /// <summary>
+    /// Refuses to delete an institution that still owns investments; deleting it would orphan them.
+    /// </summary>
+    [HttpDelete("{id}")]
+    public override async Task<Response<FinancialInstitutionResponse>> DeleteAsync(Guid id)
+    {
+        var linked = (await _investments.GetByInstitutionIdAsync(id)).Count();
+        if (linked > 0)
+        {
+            return new Response<FinancialInstitutionResponse>(
+                [new Error($"This institution still has {linked} investment(s). Move or delete them before removing the institution.")],
+                HttpStatusCode.Conflict);
+        }
+
+        return await base.DeleteAsync(id);
     }
 
     [HttpGet("export-csv")]

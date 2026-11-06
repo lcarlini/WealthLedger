@@ -17,6 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 
 import { TaskItem, FutureTask } from '../../models/task-item';
 import { TaskService } from '../../shared/services/task.service';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-my-tasks',
@@ -28,6 +29,7 @@ import { TaskService } from '../../shared/services/task.service';
     MatTableModule, MatButtonModule, MatIconModule, MatCardModule,
     MatSnackBarModule, MatProgressSpinnerModule, MatChipsModule,
     MatTooltipModule, MatTabsModule, MatBadgeModule, MatFormFieldModule, MatInputModule,
+    PageHeaderComponent,
   ],
   templateUrl: './my-tasks.component.html',
   styleUrl: './my-tasks.component.scss',

@@ -22,6 +22,7 @@ import {
   BankTransactionResponse,
 } from '../../models/statement-import';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-import',
@@ -42,6 +43,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
     MatExpansionModule,
     MatDialogModule,
     MatTooltipModule,
+    PageHeaderComponent,
   ],
   templateUrl: './import.component.html',
   styleUrl: './import.component.scss',

@@ -22,6 +22,8 @@ import { MarketDataService } from '../../shared/services/market-data.service';
 import { AnalyticsService, SpendingSummaryResponse } from '../../shared/services/analytics.service';
 import { DashboardService } from '../../shared/services/dashboard.service';
 import { AiInsightPayload, BrowserAiService, extractAiErrorMessage } from '../../core/services/browser-ai.service';
+import { LanguageService } from '../../shared/i18n/language.service';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 interface ProjectionRow {
   name: string;
@@ -55,6 +57,7 @@ interface ProjectionRow {
     MatInputModule,
     MatSnackBarModule,
     BaseChartDirective,
+    PageHeaderComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.scss',
@@ -65,6 +68,7 @@ export class AnalyticsComponent implements OnInit {
   private readonly analyticsService = inject(AnalyticsService);
   private readonly dashboardService = inject(DashboardService);
   private readonly browserAi = inject(BrowserAiService);
+  private readonly languageService = inject(LanguageService);
   private readonly snackBar = inject(MatSnackBar);
 
   private readonly monthNames = [
@@ -264,7 +268,7 @@ export class AnalyticsComponent implements OnInit {
     try {
       await this.browserAi.ensureReady();
       const payload = await this.buildAiPayload();
-      const insight = await this.browserAi.generateInsight(payload);
+      const insight = await this.browserAi.generateInsight(payload, this.languageService.isPt() ? 'pt' : 'en');
       this.aiInsight.set(insight);
     } catch (err: unknown) {
       console.error('AI insight generation failed', err);

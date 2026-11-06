@@ -48,16 +48,16 @@
   display: inline-block;
   padding: 0.15rem 0.6rem;
   border-radius: 999px;
-  background: color-mix(in srgb, #10b981 24%, transparent);
-  color: #6ee7b7;
+  background: color-mix(in srgb, var(--wl-gain) 24%, transparent);
+  color: var(--wl-gain);
   font-size: 0.75rem;
   font-weight: 700;
-  border: 1px solid color-mix(in srgb, #10b981 40%, transparent);
+  border: 1px solid color-mix(in srgb, var(--wl-gain) 40%, transparent);
 
   &.archived {
-    background: color-mix(in srgb, #64748b 28%, transparent);
-    color: #cbd5e1;
-    border-color: color-mix(in srgb, #94a3b8 40%, transparent);
+    background: color-mix(in srgb, var(--wl-text-muted) 22%, transparent);
+    color: var(--wl-text-muted);
+    border-color: var(--wl-border-strong);
   }
 }
 
@@ -84,7 +84,7 @@
     letter-spacing: 0.1em;
     font-size: 0.68rem;
     margin: 0 0 0.4rem;
-    color: #67e8f9;
+    color: var(--wl-accent-muted);
     font-weight: 700;
   }
 
@@ -208,7 +208,7 @@
   padding: 1.2rem 1.3rem;
   border-radius: 1rem;
   background: var(--mat-sys-surface-container-lowest);
-  border: 1px solid color-mix(in srgb, #14b8a6 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--wl-accent) 25%, transparent);
 
   h3 {
     margin: 0 0 0.9rem;
@@ -242,9 +242,9 @@
       font-weight: 750;
       padding-top: 0.8rem;
       margin-top: 0.2rem;
-      border-top: 1px solid color-mix(in srgb, #14b8a6 40%, transparent);
+      border-top: 1px solid color-mix(in srgb, var(--wl-accent) 40%, transparent);
       border-bottom: none;
-      .bamount { color: #5eead4; }
+      .bamount { color: var(--wl-accent-muted); }
     }
   }
 
@@ -261,8 +261,8 @@
   > div {
     padding: 0.65rem 0.75rem;
     border-radius: 0.7rem;
-    background: color-mix(in srgb, #0d9488 10%, transparent);
-    border: 1px solid color-mix(in srgb, #14b8a6 20%, transparent);
+    background: color-mix(in srgb, var(--wl-accent-strong) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--wl-accent) 20%, transparent);
   }
 
   .label {

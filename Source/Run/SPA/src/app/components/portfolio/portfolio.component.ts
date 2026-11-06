@@ -34,6 +34,7 @@ import {
   WatchlistApiService,
 } from '../../shared/services/portfolio.service';
 import { InvestmentService } from '../../shared/services/investment.service';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-portfolio',
@@ -57,6 +58,7 @@ import { InvestmentService } from '../../shared/services/investment.service';
     MatTooltipModule,
     MatChipsModule,
     BaseChartDirective,
+    PageHeaderComponent,
   ],
   templateUrl: './portfolio.component.html',
   styleUrl: './portfolio.component.scss',
@@ -285,7 +287,7 @@ export class PortfolioComponent implements OnInit {
   }
 
   private buildCharts(o: PortfolioOverview): void {
-    const palette = ['#1976d2', '#2e7d32', '#f57c00', '#7b1fa2', '#00838f', '#c62828', '#5d4037', '#455a64'];
+    const palette = ['#3b82f6', '#10b981', '#f97316', '#a855f7', '#14b8a6', '#f43f5e', '#6366f1', '#94a3b8'];
     this.allocationChart.set({
       labels: o.allocationByType.map((a) => a.label),
       datasets: [{
@@ -299,8 +301,8 @@ export class PortfolioComponent implements OnInit {
       datasets: [{
         label: 'Net worth (BRL)',
         data: o.timeline.map((t) => t.totalAmountBrl),
-        borderColor: '#1976d2',
-        backgroundColor: 'rgba(25,118,210,0.12)',
+        borderColor: '#14b8a6',
+        backgroundColor: 'rgba(20,184,166,0.12)',
         fill: true,
         tension: 0.25,
       }],
@@ -312,12 +314,12 @@ export class PortfolioComponent implements OnInit {
         {
           label: 'Benchmark % a.a.',
           data: o.benchmarks.map((b) => b.annualRatePercent),
-          backgroundColor: '#90a4ae',
+          backgroundColor: '#94a3b8',
         },
         {
           label: 'Portfolio estimated % a.a.',
           data: o.benchmarks.map((b) => b.portfolioEstimatedAnnualPercent),
-          backgroundColor: '#1976d2',
+          backgroundColor: '#14b8a6',
         },
       ],
     });

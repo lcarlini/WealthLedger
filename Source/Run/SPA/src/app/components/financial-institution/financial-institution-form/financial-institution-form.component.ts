@@ -11,6 +11,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { FinancialInstitutionService } from '../../../shared/services/financial-institution.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-financial-institution-form',
@@ -24,6 +26,8 @@ import { FinancialInstitutionService } from '../../../shared/services/financial-
     MatCardModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
+    PageHeaderComponent,
   ],
   templateUrl: './financial-institution-form.component.html',
   styleUrl: './financial-institution-form.component.scss',

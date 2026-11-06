@@ -7,8 +7,15 @@ using Microsoft.Extensions.Logging;
 
 namespace WealthLedger.Infrastructure.Services;
 
+/// <summary>
+/// Full-fidelity JSON export/import. Every table is written, and the import runs in one transaction
+/// so a bad file can never leave the database half-restored.
+/// </summary>
 public class DataExportService : IDataExportService
 {
+    /// <summary>Bump when the shape changes. Files with a newer version are rejected rather than misread.</summary>
+    public const int FormatVersion = 2;
+
     private readonly IRepository<FinancialInstitution> _institutions;
     private readonly IRepository<Investment> _investments;
     private readonly IRepository<TaskItem> _tasks;
@@ -22,6 +29,9 @@ public class DataExportService : IDataExportService
     private readonly IRepository<InvestmentGoal> _goals;
     private readonly IRepository<PortfolioSnapshot> _snapshots;
     private readonly IRepository<WatchlistItem> _watchlist;
+    private readonly IRepository<BillPaymentAlert> _bills;
+    private readonly IRepository<BillPaymentOccurrence> _billOccurrences;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<DataExportService> _logger;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -46,6 +56,9 @@ public class DataExportService : IDataExportService
         IRepository<InvestmentGoal> goals,
         IRepository<PortfolioSnapshot> snapshots,
         IRepository<WatchlistItem> watchlist,
+        IRepository<BillPaymentAlert> bills,
+        IRepository<BillPaymentOccurrence> billOccurrences,
+        IUnitOfWork unitOfWork,
         ILogger<DataExportService> logger)
     {
         _institutions = institutions;
@@ -61,6 +74,9 @@ public class DataExportService : IDataExportService
         _goals = goals;
         _snapshots = snapshots;
         _watchlist = watchlist;
+        _bills = bills;
+        _billOccurrences = billOccurrences;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -69,7 +85,7 @@ public class DataExportService : IDataExportService
         return new
         {
             exportedAt = DateTime.UtcNow,
-            formatVersion = 1,
+            formatVersion = FormatVersion,
             application = "WealthLedger",
             financialInstitutions = await _institutions.GetAllAsync(),
             investments = await _investments.GetAllAsync(),
@@ -83,7 +99,9 @@ public class DataExportService : IDataExportService
             passiveIncomes = await _passiveIncome.GetAllAsync(),
             investmentGoals = await _goals.GetAllAsync(),
             portfolioSnapshots = await _snapshots.GetAllAsync(),
-            watchlistItems = await _watchlist.GetAllAsync()
+            watchlistItems = await _watchlist.GetAllAsync(),
+            billPaymentAlerts = await _bills.GetAllAsync(),
+            billPaymentOccurrences = await _billOccurrences.GetAllAsync()
         };
     }
 
@@ -92,55 +110,53 @@ public class DataExportService : IDataExportService
         using var doc = await JsonDocument.ParseAsync(jsonStream, cancellationToken: cancellationToken);
         var root = doc.RootElement;
 
-        await UpsertArrayAsync(root, "financialInstitutions", async (e) =>
+        if (root.ValueKind != JsonValueKind.Object)
+            throw new InvalidDataException("The file is not a WealthLedger export.");
+
+        if (root.TryGetProperty("formatVersion", out var versionElement) &&
+            versionElement.ValueKind == JsonValueKind.Number &&
+            versionElement.GetInt32() > FormatVersion)
         {
-            var item = e.Deserialize<FinancialInstitution>(JsonOptions);
-            if (item != null) await _institutions.UpsertAsync(item);
-        });
-        await UpsertArrayAsync(root, "investments", async (e) =>
+            throw new InvalidDataException(
+                $"This export uses format {versionElement.GetInt32()}, but this version of WealthLedger reads up to {FormatVersion}.");
+        }
+
+        // All-or-nothing: either every section is written or the database is left exactly as it was.
+        await _unitOfWork.ExecuteAsync(async () =>
         {
-            var item = e.Deserialize<Investment>(JsonOptions);
-            if (item != null) await _investments.UpsertAsync(item);
-        });
-        await UpsertArrayAsync(root, "passiveIncomes", async (e) =>
-        {
-            var item = e.Deserialize<PassiveIncome>(JsonOptions);
-            if (item != null) await _passiveIncome.UpsertAsync(item);
-        });
-        await UpsertArrayAsync(root, "investmentGoals", async (e) =>
-        {
-            var item = e.Deserialize<InvestmentGoal>(JsonOptions);
-            if (item != null) await _goals.UpsertAsync(item);
-        });
-        await UpsertArrayAsync(root, "portfolioSnapshots", async (e) =>
-        {
-            var item = e.Deserialize<PortfolioSnapshot>(JsonOptions);
-            if (item != null) await _snapshots.UpsertAsync(item);
-        });
-        await UpsertArrayAsync(root, "watchlistItems", async (e) =>
-        {
-            var item = e.Deserialize<WatchlistItem>(JsonOptions);
-            if (item != null) await _watchlist.UpsertAsync(item);
-        });
-        await UpsertArrayAsync(root, "cashFlowScheduleItems", async (e) =>
-        {
-            var item = e.Deserialize<CashFlowScheduleItem>(JsonOptions);
-            if (item != null) await _schedule.UpsertAsync(item);
-        });
-        await UpsertArrayAsync(root, "taskItems", async (e) =>
-        {
-            var item = e.Deserialize<TaskItem>(JsonOptions);
-            if (item != null) await _tasks.UpsertAsync(item);
-        });
+            // Parents first, so references to them are valid when children are written.
+            await UpsertArrayAsync<FinancialInstitution>(root, "financialInstitutions", _institutions, cancellationToken);
+            await UpsertArrayAsync<Investment>(root, "investments", _investments, cancellationToken);
+            await UpsertArrayAsync<StatementImport>(root, "statementImports", _imports, cancellationToken);
+            await UpsertArrayAsync<BillPaymentAlert>(root, "billPaymentAlerts", _bills, cancellationToken);
+            await UpsertArrayAsync<BankTransaction>(root, "bankTransactions", _transactions, cancellationToken);
+            await UpsertArrayAsync<BillPaymentOccurrence>(root, "billPaymentOccurrences", _billOccurrences, cancellationToken);
+            await UpsertArrayAsync<PassiveIncome>(root, "passiveIncomes", _passiveIncome, cancellationToken);
+            await UpsertArrayAsync<InvestmentGoal>(root, "investmentGoals", _goals, cancellationToken);
+            await UpsertArrayAsync<PortfolioSnapshot>(root, "portfolioSnapshots", _snapshots, cancellationToken);
+            await UpsertArrayAsync<WatchlistItem>(root, "watchlistItems", _watchlist, cancellationToken);
+            await UpsertArrayAsync<CashFlowScheduleItem>(root, "cashFlowScheduleItems", _schedule, cancellationToken);
+            await UpsertArrayAsync<TaskItem>(root, "taskItems", _tasks, cancellationToken);
+            await UpsertArrayAsync<IncomeProfile>(root, "incomeProfiles", _incomeProfiles, cancellationToken);
+            await UpsertArrayAsync<ExtraIncome>(root, "extraIncomes", _extraIncome, cancellationToken);
+            await UpsertArrayAsync<BusinessDayOverride>(root, "businessDayOverrides", _overrides, cancellationToken);
+        }, cancellationToken);
 
         _logger.LogInformation("JSON import completed");
     }
 
-    private static async Task UpsertArrayAsync(JsonElement root, string property, Func<JsonElement, Task> upsert)
+    private async Task UpsertArrayAsync<T>(JsonElement root, string property, IRepository<T> repository, CancellationToken ct)
+        where T : class, WealthLedger.Contracts.Domain.Interfaces.IEntity
     {
         if (!root.TryGetProperty(property, out var arr) || arr.ValueKind != JsonValueKind.Array)
             return;
-        foreach (var el in arr.EnumerateArray())
-            await upsert(el);
+
+        foreach (var element in arr.EnumerateArray())
+        {
+            ct.ThrowIfCancellationRequested();
+            var item = element.Deserialize<T>(JsonOptions)
+                       ?? throw new InvalidDataException($"Invalid entry in '{property}'.");
+            await repository.UpsertAsync(item);
+        }
     }
 }

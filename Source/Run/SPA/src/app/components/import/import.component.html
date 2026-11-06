@@ -1,6 +1,11 @@
 <div class="page-container">
-  <h1>Import OFX</h1>
-  <p class="subtitle">Upload card or checking account statements (OFX 1.x SGML / 2.x XML)</p>
+  <app-page-header
+    tag="Import"
+    title="Import OFX"
+    lead="Upload card or checking account statements (OFX 1.x SGML / 2.x XML)"
+    icon="upload_file"
+    iconColor="var(--wl-nav-icon-import)"
+  />
 
   <mat-card>
     <mat-card-header>
@@ -70,6 +75,7 @@
                 }
 
                 @if (transactions().length > 0) {
+                  <div class="table-scroll">
                   <table mat-table [dataSource]="transactions()" class="full-width">
                     <ng-container matColumnDef="date">
                       <th mat-header-cell *matHeaderCellDef>Date</th>
@@ -97,6 +103,7 @@
                     <tr mat-header-row *matHeaderRowDef="['date', 'type', 'amount', 'description']"></tr>
                     <tr mat-row *matRowDef="let row; columns: ['date', 'type', 'amount', 'description']"></tr>
                   </table>
+                  </div>
                 } @else {
                   <p class="empty">No transactions in this import.</p>
                 }

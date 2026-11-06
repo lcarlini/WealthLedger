@@ -1,7 +1,5 @@
 .page-container {
-  padding: 24px;
   max-width: 720px;
-  margin: 0 auto;
 }
 
 .page-header {
@@ -25,10 +23,14 @@
 
 .row-fields {
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
-.half-width { flex: 1; }
+.half-width {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
 
 .toggle-field {
   margin: 8px 0 16px;
@@ -36,7 +38,27 @@
 
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 16px;
+}
+
+@media (max-width: 560px) {
+  .row-fields {
+    flex-direction: column;
+  }
+
+  .half-width {
+    flex: 1 1 100%;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+
+    button {
+      width: 100%;
+    }
+  }
 }

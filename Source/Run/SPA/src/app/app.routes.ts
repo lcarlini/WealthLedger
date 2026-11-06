@@ -96,6 +96,11 @@ export const routes: Routes = [
       import('./components/calculator/calculator.component').then(m => m.CalculatorComponent),
   },
   {
+    path: 'settings',
+    loadComponent: () =>
+      import('./components/settings/settings.component').then(m => m.SettingsComponent),
+  },
+  {
     path: 'about',
     loadComponent: () =>
       import('./components/about/about.component').then(m => m.AboutComponent),

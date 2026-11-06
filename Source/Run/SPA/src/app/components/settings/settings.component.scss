@@ -1,0 +1,224 @@
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wl-space-lg, 1.5rem);
+}
+
+.settings-section {
+  background: var(--wl-bg-card, transparent);
+  border: 1px solid var(--wl-border, rgba(127, 127, 127, 0.25));
+  border-radius: var(--wl-radius, 12px);
+  padding: var(--wl-space, 1rem) var(--wl-space-lg, 1.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wl-space, 1rem);
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--wl-text, inherit);
+  }
+}
+
+.section-lead {
+  margin: 0;
+  color: var(--wl-text-muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--wl-space, 1rem);
+  align-items: start;
+}
+
+.lang-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lang-btn {
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--wl-border, rgba(127, 127, 127, 0.4));
+  background: transparent;
+  color: var(--wl-text, inherit);
+  font: inherit;
+  cursor: pointer;
+
+  &.active {
+    border-color: var(--wl-accent, #3b82f6);
+    background: var(--wl-accent-soft, rgba(59, 130, 246, 0.15));
+    font-weight: 600;
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--wl-accent, #3b82f6);
+    outline-offset: 2px;
+  }
+}
+
+.banner {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--wl-radius-sm, 8px);
+  font-size: 0.9rem;
+
+  &.banner-error {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--wl-loss, #b91c1c);
+  }
+
+  &.banner-warning {
+    background: rgba(245, 158, 11, 0.14);
+    color: var(--wl-text, inherit);
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: var(--wl-space, 1rem);
+  margin: 0;
+
+  div {
+    min-width: 0;
+  }
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+
+  dt {
+    font-size: 0.8rem;
+    color: var(--wl-text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  dd {
+    margin: 0.25rem 0 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .path {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-weight: 400;
+    font-size: 0.85rem;
+  }
+}
+
+.backup-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--wl-space, 1rem);
+
+  .toggle-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    cursor: pointer;
+
+    input {
+      width: 1.25rem;
+      height: 1.25rem;
+      accent-color: var(--wl-accent, #3b82f6);
+    }
+  }
+
+  .num-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--wl-text-muted, #64748b);
+    flex: 1 1 min(100%, 11rem);
+    min-width: 0;
+
+    input {
+      min-height: 44px;
+      padding: 0 0.75rem;
+      border-radius: var(--wl-radius-sm, 8px);
+      border: 1px solid var(--wl-border, rgba(127, 127, 127, 0.4));
+      background: var(--wl-bg-elevated, transparent);
+      color: var(--wl-text, inherit);
+      font: inherit;
+      width: 100%;
+      box-sizing: border-box;
+
+      &:focus-visible {
+        outline: 3px solid var(--wl-accent, #3b82f6);
+        outline-offset: 1px;
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.backup-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 36rem;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid var(--wl-border, rgba(127, 127, 127, 0.2));
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: 0.8rem;
+    color: var(--wl-text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .file-cell {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .actions-col {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--wl-text-muted, #64748b);
+    padding: 1.25rem 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .settings-section {
+    padding: var(--wl-space, 0.875rem);
+  }
+}

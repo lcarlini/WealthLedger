@@ -30,6 +30,7 @@ import {
 } from '../../models/cashflow-schedule';
 import { IncomeProfile, ExtraIncome, IncomeMonthPreview } from '../../models/income';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-control',
@@ -51,6 +52,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
     MatDialogModule,
     MatExpansionModule,
     MatTooltipModule,
+    PageHeaderComponent,
   ],
   templateUrl: './control.component.html',
   styleUrl: './control.component.scss',

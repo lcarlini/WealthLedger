@@ -15,6 +15,7 @@ public class OfxImportService : IOfxImportService
     private readonly IRepository<StatementImport> _importRepository;
     private readonly IRepository<BankTransaction> _transactionRepository;
     private readonly ILogger<OfxImportService> _logger;
+    private readonly IUnitOfWork _unitOfWork;
 
     private static readonly Regex InstallmentRegex =
         new(@"[Pp]arcela\s+(\d+)\s*/\s*(\d+)", RegexOptions.Compiled);
@@ -22,16 +23,30 @@ public class OfxImportService : IOfxImportService
     public OfxImportService(
         IRepository<StatementImport> importRepository,
         IRepository<BankTransaction> transactionRepository,
-        ILogger<OfxImportService> logger)
+        ILogger<OfxImportService> logger,
+        IUnitOfWork unitOfWork)
     {
         _importRepository = importRepository;
         _transactionRepository = transactionRepository;
         _logger = logger;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<StatementImport> ImportOfxAsync(Stream fileContent, string fileName, StatementSource source)
     {
+        // Parse before touching the database: a malformed file must never remove an existing import.
         var transactions = ParseOfx(fileContent);
+
+        StatementImport? result = null;
+        await _unitOfWork.ExecuteAsync(async () =>
+        {
+            result = await SaveImportAsync(transactions, fileName, source);
+        });
+        return result!;
+    }
+
+    private async Task<StatementImport> SaveImportAsync(List<ParsedTransaction> transactions, string fileName, StatementSource source)
+    {
         var now = DateTime.UtcNow;
 
         // Duplicate prevention: if same filename already imported, remove old data and update
@@ -124,13 +139,16 @@ public class OfxImportService : IOfxImportService
         var import = await _importRepository.GetAsync(importId);
         if (import == null) return false;
 
-        var transactions = (await _transactionRepository.GetAllAsync())
-            .Where(t => t.StatementImportId == importId)
-            .ToList();
-        foreach (var tx in transactions)
-            await _transactionRepository.DeleteAsync(tx.Id);
+        await _unitOfWork.ExecuteAsync(async () =>
+        {
+            var transactions = (await _transactionRepository.GetAllAsync())
+                .Where(t => t.StatementImportId == importId)
+                .ToList();
+            foreach (var tx in transactions)
+                await _transactionRepository.DeleteAsync(tx.Id);
 
-        await _importRepository.DeleteAsync(importId);
+            await _importRepository.DeleteAsync(importId);
+        });
         return true;
     }
 

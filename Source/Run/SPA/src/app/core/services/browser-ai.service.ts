@@ -65,17 +65,18 @@ export class BrowserAiService {
     }
   }
 
-  async generateInsight(payload: AiInsightPayload): Promise<string> {
+  async generateInsight(payload: AiInsightPayload, language: 'pt' | 'en' = 'en'): Promise<string> {
     await this.ensureReady();
     if (!this.engine) {
       throw new Error('Local AI engine is not initialized.');
     }
 
     const dataSection = this.formatPayload(payload);
+    const replyLanguage = language === 'pt' ? 'Brazilian Portuguese' : 'English';
     const systemPrompt =
       'You are a concise financial assistant. Use ONLY the numbers and facts provided in the data. ' +
       'Do not invent values, rates, or financial calculations. ' +
-      'Respond in English in 3 to 5 short paragraphs: portfolio overview, comment on investments and rates, ' +
+      `Respond in ${replyLanguage} in 3 to 5 short paragraphs: portfolio overview, comment on investments and rates, ` +
       'and 1 or 2 practical suggestions (e.g. diversification, category spending, emergency fund). ' +
       'Reply with plain text only — no HTML, XML, markdown, or thinking tags.';
 

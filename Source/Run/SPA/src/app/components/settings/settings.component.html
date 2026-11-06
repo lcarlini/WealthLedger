@@ -1,0 +1,181 @@
+<div class="page-container settings-page">
+  <app-page-header
+    tag="Settings"
+    [title]="'settings.title' | t"
+    [lead]="'settings.lead' | t"
+    icon="settings"
+    iconColor="var(--wl-accent)"
+  />
+
+  <section class="settings-section" aria-labelledby="settings-appearance">
+    <h2 id="settings-appearance">{{ 'settings.appearance' | t }}</h2>
+    <div class="settings-grid">
+      <app-appearance-panel />
+      <app-text-size-panel />
+    </div>
+  </section>
+
+  <section class="settings-section" aria-labelledby="settings-language">
+    <h2 id="settings-language">{{ 'settings.language' | t }}</h2>
+    <div class="lang-switch" role="group" [attr.aria-label]="'settings.language' | t">
+      <button
+        type="button"
+        class="lang-btn"
+        [class.active]="lang.lang() === 'pt'"
+        [attr.aria-pressed]="lang.lang() === 'pt'"
+        lang="pt-BR"
+        (click)="setLang('pt')"
+      >Português</button>
+      <button
+        type="button"
+        class="lang-btn"
+        [class.active]="lang.lang() === 'en'"
+        [attr.aria-pressed]="lang.lang() === 'en'"
+        lang="en"
+        (click)="setLang('en')"
+      >English</button>
+    </div>
+  </section>
+
+  <section class="settings-section" aria-labelledby="settings-backup">
+    <h2 id="settings-backup">{{ 'settings.backup.title' | t }}</h2>
+    <p class="section-lead">{{ 'settings.backup.lead' | t }}</p>
+
+    @if (error(); as message) {
+      <p class="banner banner-error" role="alert">{{ message }}</p>
+    }
+
+    @if (loading()) {
+      <div class="loading"><mat-spinner diameter="32" /></div>
+    } @else if (status(); as s) {
+      @if (s.restorePending) {
+        <p class="banner banner-warning" role="status">{{ 'settings.backup.restorePending' | t }}</p>
+      }
+
+      <dl class="status-grid">
+        <div>
+          <dt>{{ 'settings.backup.lastBackup' | t }}</dt>
+          <dd>
+            @if (s.lastBackupUtc) {
+              {{ s.lastBackupUtc | date: 'medium' }}
+            } @else {
+              {{ 'settings.backup.never' | t }}
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>{{ 'settings.backup.next' | t }}</dt>
+          <dd>
+            @if (!s.settings.enabled) {
+              {{ 'settings.backup.disabled' | t }}
+            } @else if (s.nextScheduledBackupUtc) {
+              {{ s.nextScheduledBackupUtc | date: 'medium' }}
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>{{ 'settings.backup.kept' | t }}</dt>
+          <dd>{{ s.backupCount }} / {{ s.settings.maxBackups }}</dd>
+        </div>
+        <div class="wide">
+          <dt>{{ 'settings.backup.folder' | t }}</dt>
+          <dd class="path">{{ s.backupDirectory }}</dd>
+        </div>
+      </dl>
+
+      <form class="backup-form" (ngSubmit)="saveSettings()" #form="ngForm">
+        <label class="toggle-row">
+          <input type="checkbox" name="enabled" [(ngModel)]="enabled" />
+          <span>{{ 'settings.backup.enabled' | t }}</span>
+        </label>
+
+        <label class="num-field">
+          <span>{{ 'settings.backup.interval' | t }}</span>
+          <input
+            type="number"
+            name="intervalDays"
+            required
+            [min]="limits.intervalDaysMin"
+            [max]="limits.intervalDaysMax"
+            [(ngModel)]="intervalDays"
+          />
+        </label>
+
+        <label class="num-field">
+          <span>{{ 'settings.backup.maxBackups' | t }}</span>
+          <input
+            type="number"
+            name="maxBackups"
+            required
+            [min]="limits.maxBackupsMin"
+            [max]="limits.maxBackupsMax"
+            [(ngModel)]="maxBackups"
+          />
+        </label>
+
+        <div class="actions">
+          <button mat-stroked-button type="submit" [disabled]="busy() || !isValid()">
+            {{ 'settings.backup.save' | t }}
+          </button>
+          <button mat-raised-button type="button" [disabled]="busy()" (click)="backupNow()">
+            <mat-icon>backup</mat-icon>
+            {{ 'settings.backup.now' | t }}
+          </button>
+        </div>
+      </form>
+
+      <div class="table-scroll">
+        <table class="backup-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'settings.backup.created' | t }}</th>
+              <th scope="col">{{ 'settings.backup.reason' | t }}</th>
+              <th scope="col">{{ 'settings.backup.size' | t }}</th>
+              <th scope="col">{{ 'settings.backup.file' | t }}</th>
+              <th scope="col" class="actions-col">{{ 'settings.backup.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of list(); track item.fileName) {
+              <tr>
+                <td>{{ item.createdUtc | date: 'medium' }}</td>
+                <td>{{ reasonKey(item.reason) | t }}</td>
+                <td>{{ formatBytes(item.sizeBytes) }}</td>
+                <td class="file-cell">{{ item.fileName }}</td>
+                <td class="actions-col">
+                  <a
+                    mat-icon-button
+                    [href]="backups.downloadUrl(item.fileName)"
+                    [attr.aria-label]="('settings.backup.download' | t) + ' ' + item.fileName"
+                    [matTooltip]="'settings.backup.download' | t"
+                  ><mat-icon>download</mat-icon></a>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [disabled]="busy()"
+                    [attr.aria-label]="('settings.backup.restore' | t) + ' ' + item.fileName"
+                    [matTooltip]="'settings.backup.restore' | t"
+                    (click)="restore(item)"
+                  ><mat-icon>restore</mat-icon></button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    color="warn"
+                    [disabled]="busy()"
+                    [attr.aria-label]="('settings.backup.delete' | t) + ' ' + item.fileName"
+                    [matTooltip]="'settings.backup.delete' | t"
+                    (click)="remove(item)"
+                  ><mat-icon>delete</mat-icon></button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="empty">{{ 'settings.backup.empty' | t }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

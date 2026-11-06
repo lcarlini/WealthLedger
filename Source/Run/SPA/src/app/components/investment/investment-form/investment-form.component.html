@@ -1,10 +1,15 @@
 <div class="page-container">
-  <div class="page-header">
-    <button mat-icon-button (click)="onCancel()">
+  <app-page-header
+    tag="Investments · Form"
+    [title]="(isEdit() ? 'Edit' : 'New') + ' investment'"
+    lead="Fill the details to track yield, principal and maturity"
+    icon="savings"
+    iconColor="var(--wl-nav-icon-savings)"
+  >
+    <button leading mat-icon-button type="button" (click)="onCancel()" matTooltip="Back">
       <mat-icon>arrow_back</mat-icon>
     </button>
-    <h1>{{ isEdit() ? 'Edit' : 'New' }} Investment</h1>
-  </div>
+  </app-page-header>
 
   @if (loading()) {
     <div class="loading-container">

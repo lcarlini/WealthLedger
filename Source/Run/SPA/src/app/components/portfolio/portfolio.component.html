@@ -1,36 +1,42 @@
 <div class="page-container">
-  <div class="page-header">
-    <div>
-      <h1>Portfolio</h1>
-      <p class="subtitle">
-        P&amp;L, allocation, benchmarks, goals, calendar, passive income, health scores — from today through
-        {{ projectionEndDate() | date:'mediumDate' }}
-      </p>
-    </div>
-    <div class="header-actions">
+  <app-page-header
+    tag="Portfolio"
+    title="Portfolio"
+    lead="P&L, allocation, benchmarks, goals, calendar, passive income and health scores"
+    icon="pie_chart"
+    iconColor="var(--wl-nav-icon-portfolio)"
+  >
+    <span meta class="wl-page-lead">From today through {{ projectionEndDate() | date:'mediumDate' }}</span>
       <mat-form-field appearance="outline" class="years-field">
         <mat-label>Projection years</mat-label>
         <input matInput type="number" min="1" [ngModel]="projectionYears()"
                (ngModelChange)="setProjectionYears($event)">
       </mat-form-field>
-      <button mat-stroked-button type="button" (click)="captureSnapshot()">
+      <button mat-stroked-button type="button" class="action-btn" (click)="captureSnapshot()" matTooltip="Capture snapshot">
         <mat-icon>photo_camera</mat-icon>
         Snapshot
       </button>
-      <a mat-stroked-button [href]="exportJsonUrl" download target="_blank" rel="noopener">
+      <a mat-stroked-button class="action-btn" [href]="exportJsonUrl" download target="_blank" rel="noopener" matTooltip="Export JSON">
         <mat-icon>download</mat-icon>
         Export JSON
       </a>
       <input type="file" #jsonInput accept=".json,application/json" hidden (change)="onImportJson($event)">
-      <button mat-stroked-button type="button" (click)="jsonInput.click()">
+      <button mat-stroked-button type="button" class="action-btn" (click)="jsonInput.click()" matTooltip="Import JSON">
         <mat-icon>upload</mat-icon>
         Import JSON
       </button>
-    </div>
-  </div>
+  </app-page-header>
 
   @if (loading()) {
-    <div class="loading-wrap"><mat-spinner diameter="40"></mat-spinner></div>
+    <div class="wl-loading" role="status">
+      <mat-spinner diameter="40"></mat-spinner>
+      <div class="wl-skeleton-grid" aria-hidden="true">
+        <div class="wl-skeleton wl-skeleton-card"></div>
+        <div class="wl-skeleton wl-skeleton-card"></div>
+        <div class="wl-skeleton wl-skeleton-card"></div>
+        <div class="wl-skeleton wl-skeleton-card"></div>
+      </div>
+    </div>
   } @else if (overview(); as o) {
     <div class="score-row">
       <mat-card class="score-card">
@@ -229,7 +235,7 @@
                     <strong>{{ g.name }}</strong>
                     <div class="muted">{{ goalLabels[g.goalType] }}</div>
                   </div>
-                  <button mat-icon-button color="warn" type="button" (click)="deleteGoal(g.id)">
+                  <button mat-icon-button color="warn" type="button" (click)="deleteGoal(g.id)" matTooltip="Delete goal">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
@@ -331,7 +337,7 @@
                   <td>{{ passiveLabels[p.incomeType] }}</td>
                   <td>{{ p.amount | currency:'BRL':'symbol':'1.2-2' }}</td>
                   <td>
-                    <button mat-icon-button color="warn" type="button" (click)="deletePassive(p.id)">
+                    <button mat-icon-button color="warn" type="button" (click)="deletePassive(p.id)" matTooltip="Delete passive income">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </td>
@@ -387,7 +393,7 @@
                   <td>{{ w.lastPrice != null ? (w.lastPrice | number:'1.2-2') : '—' }} {{ w.lastPriceCurrency || '' }}</td>
                   <td>{{ w.alertMessage || '—' }}</td>
                   <td>
-                    <button mat-icon-button color="warn" type="button" (click)="deleteWatch(w.id)">
+                    <button mat-icon-button color="warn" type="button" (click)="deleteWatch(w.id)" matTooltip="Remove from watchlist">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </td>

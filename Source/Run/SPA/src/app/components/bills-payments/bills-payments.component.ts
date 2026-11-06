@@ -26,6 +26,7 @@ import {
 import { BillPaymentAlertService } from '../../shared/services/bill-payment-alert.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { BillAlertDialogComponent } from './bill-alert-dialog.component';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-bills-payments',
@@ -46,6 +47,7 @@ import { BillAlertDialogComponent } from './bill-alert-dialog.component';
     MatInputModule,
     MatDialogModule,
     MatSlideToggleModule,
+    PageHeaderComponent,
   ],
   templateUrl: './bills-payments.component.html',
   styleUrl: './bills-payments.component.scss',

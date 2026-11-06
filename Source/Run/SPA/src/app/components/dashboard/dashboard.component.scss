@@ -212,8 +212,8 @@
   .gain { font-weight: 650; font-size: 0.95rem; }
 }
 
-.pos { color: #1b7f4e; }
-.neg { color: #b3261e; }
+.pos { color: var(--wl-gain); }
+.neg { color: var(--wl-loss); }
 
 @media (max-width: 800px) {
   .portfolio-verdict,
@@ -236,13 +236,13 @@
   height: 36px;
   margin-bottom: 12px;
 
-  &.institutions { color: #1976d2; }
-  &.investments { color: #388e3c; }
-  &.amount { color: #f57c00; }
-  &.debt { color: #d32f2f; }
-  &.month-debit { color: #6a1b9a; }
-  &.card-future { color: #ad1457; }
-  &.tasks { color: #7b1fa2; }
+  &.institutions { color: rgb(var(--wl-accent-rgb)); }
+  &.investments { color: var(--wl-nav-icon-calc); }
+  &.amount { color: var(--wl-accent-orange); }
+  &.debt { color: var(--wl-loss); }
+  &.month-debit { color: var(--wl-accent-purple); }
+  &.card-future { color: var(--wl-accent-pink); }
+  &.tasks { color: var(--wl-nav-icon-tasks); }
 }
 
 .card-value {
@@ -285,13 +285,13 @@
   width: 28px;
   height: 28px;
   margin-bottom: 8px;
-  &.usd { color: #2e7d32; }
-  &.eur { color: #1565c0; }
-  &.btc { color: #f57c00; }
-  &.fed { color: #0d47a1; }
-  &.selic { color: #7b1fa2; }
-  &.ipca { color: #c62828; }
-  &.poupanca { color: #00838f; }
+  &.usd { color: var(--wl-gain); }
+  &.eur { color: var(--wl-accent-blue); }
+  &.btc { color: var(--wl-accent-orange); }
+  &.fed { color: var(--wl-accent-sky); }
+  &.selic { color: var(--wl-accent-purple); }
+  &.ipca { color: var(--wl-loss); }
+  &.poupanca { color: var(--wl-accent-teal); }
 }
 
 .rate-value { font-size: 18px; font-weight: 500; }
@@ -306,7 +306,7 @@
 .gain-header-icon {
   vertical-align: middle;
   margin-right: 8px;
-  color: #2e7d32;
+  color: var(--wl-gain);
 }
 
 .table-scroll {
@@ -365,7 +365,7 @@
   }
 
   .gain-cell {
-    color: #2e7d32;
+    color: var(--wl-gain);
   }
 
   .inv-name {
@@ -394,7 +394,7 @@
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }

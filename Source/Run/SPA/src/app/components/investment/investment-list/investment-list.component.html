@@ -1,36 +1,39 @@
 <div class="page-container">
-  <div class="page-header">
-    <div>
-      <h1>{{ statusFilter() === 'archived' ? ('inv.archivedTitle' | t) : ('inv.title' | t) }}</h1>
-      <p class="page-lead">
-        {{ statusFilter() === 'archived' ? ('inv.leadArchived' | t) : ('inv.leadActive' | t) }}
-      </p>
-    </div>
-    <div class="header-actions">
-      <a mat-stroked-button class="action-btn" [href]="exportCsvUrl" download="investments.csv" target="_blank" rel="noopener">
+  <app-page-header
+    [tag]="statusFilter() === 'archived' ? 'Archived' : 'Investments'"
+    [title]="statusFilter() === 'archived' ? ('inv.archivedTitle' | t) : ('inv.title' | t)"
+    [lead]="statusFilter() === 'archived' ? ('inv.leadArchived' | t) : ('inv.leadActive' | t)"
+    [icon]="statusFilter() === 'archived' ? 'inventory_2' : 'savings'"
+    iconColor="var(--wl-nav-icon-savings)"
+  >
+      <a mat-stroked-button class="action-btn" [href]="exportCsvUrl" download="investments.csv" target="_blank" rel="noopener"
+         [matTooltip]="'inv.exportCsv' | t">
         <mat-icon>download</mat-icon>
         <span>{{ 'inv.exportCsv' | t }}</span>
       </a>
-      <a mat-stroked-button class="action-btn" [href]="importCsvTemplateUrl" download="investments-template.csv" target="_blank" rel="noopener">
+      <a mat-stroked-button class="action-btn" [href]="importCsvTemplateUrl" download="investments-template.csv" target="_blank" rel="noopener"
+         [matTooltip]="'inv.csvTemplate' | t">
         <mat-icon>description</mat-icon>
         <span>{{ 'inv.csvTemplate' | t }}</span>
       </a>
       <input type="file" #invCsvInput accept=".csv,text/csv" hidden (change)="onCsvSelected($event)">
-      <button mat-stroked-button type="button" class="action-btn" (click)="invCsvInput.click()">
+      <button mat-stroked-button type="button" class="action-btn" (click)="invCsvInput.click()"
+              [matTooltip]="'inv.importCsv' | t">
         <mat-icon>upload</mat-icon>
         <span>{{ 'inv.importCsv' | t }}</span>
       </button>
       <button mat-stroked-button type="button" class="action-btn" (click)="refreshPrices()"
-              [disabled]="loading() || refreshingPrices()">
+              [disabled]="loading() || refreshingPrices()"
+              [matTooltip]="refreshingPrices() ? ('inv.refreshing' | t) : ('inv.refreshPrices' | t)">
         <mat-icon>currency_exchange</mat-icon>
         <span>{{ refreshingPrices() ? ('inv.refreshing' | t) : ('inv.refreshPrices' | t) }}</span>
       </button>
-      <button mat-flat-button color="primary" class="action-btn" (click)="navigateToCreate()">
+      <button mat-flat-button color="primary" class="action-btn" (click)="navigateToCreate()"
+              [matTooltip]="'common.new' | t">
         <mat-icon>add</mat-icon>
         <span>{{ 'common.new' | t }}</span>
       </button>
-    </div>
-  </div>
+  </app-page-header>
 
   <aside class="history-callout">
     <mat-icon>info</mat-icon>
@@ -56,11 +59,18 @@
       </div>
 
       @if (loading()) {
-        <div class="loading-container">
+        <div class="wl-loading" role="status" [attr.aria-label]="'common.loading' | t">
           <mat-spinner diameter="40"></mat-spinner>
+          <span>{{ 'common.loading' | t }}</span>
+          <div class="wl-skeleton-grid" aria-hidden="true">
+            <div class="wl-skeleton wl-skeleton-card"></div>
+            <div class="wl-skeleton wl-skeleton-card"></div>
+            <div class="wl-skeleton wl-skeleton-card"></div>
+          </div>
         </div>
       }
 
+      <div class="table-scroll">
       <table mat-table [dataSource]="dataSource()" class="full-width">
 
         <ng-container matColumnDef="institutionName">
@@ -151,6 +161,7 @@
           </tr>
         }
       </table>
+      </div>
 
       <mat-paginator
         [length]="totalCount()"

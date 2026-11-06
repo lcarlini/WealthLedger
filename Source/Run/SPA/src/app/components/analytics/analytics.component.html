@@ -1,12 +1,17 @@
 <div class="page-container">
-  <h1>Analytics</h1>
-  <p class="subtitle">Investments projections and spending analysis</p>
+  <app-page-header
+    tag="Analytics"
+    title="Analytics"
+    lead="Investment projections and spending analysis"
+    icon="insights"
+    iconColor="var(--wl-nav-icon-analytics)"
+  />
 
-  <mat-card class="ai-insights-card">
+  <mat-card class="ai-insights-card wl-card">
     <mat-card-header>
       <mat-card-title>
-        <mat-icon>psychology</mat-icon>
-        AI Insights (local WebLLM)
+        <mat-icon matTooltip="Runs locally in your browser" class="ai-title-icon">psychology</mat-icon>
+        AI insights (local WebLLM)
       </mat-card-title>
       <mat-card-subtitle>
         Summary and suggestions run in your browser via WebGPU — no Ollama or cloud.

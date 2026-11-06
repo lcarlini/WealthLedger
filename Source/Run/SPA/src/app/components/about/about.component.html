@@ -1,23 +1,30 @@
-<main class="about-page">
-  <mat-card class="about-card">
+<div class="page-container">
+  <app-page-header
+    tag="About"
+    title="About"
+    lead="Your personal finances, clearly tracked"
+    icon="info"
+    iconColor="var(--wl-nav-icon-about)"
+  />
+
+  <mat-card class="about-card wl-card">
     <mat-card-content>
       <div class="brand">
         <img src="logo.svg" alt="WealthLedger logo" width="72" height="72" />
         <div>
-          <p class="eyebrow">About</p>
-          <h1>WealthLedger</h1>
-          <p class="tagline">Your personal finances, clearly tracked.</p>
+          <p class="eyebrow">WealthLedger</p>
+          <h2>Personal finance, clearly tracked</h2>
+          <p class="tagline">Free, self-hosted, and private by default.</p>
         </div>
       </div>
 
       <p class="description">
         WealthLedger is a free, self-hosted personal finance application for tracking
-        investments, cash flow, and bank statements. It is private by default: your financial
-        data stays on your own machine.
+        investments, cash flow, and bank statements. Your financial data stays on your own machine.
       </p>
 
       <section class="author">
-        <mat-icon aria-hidden="true">engineering</mat-icon>
+        <mat-icon aria-hidden="true" matTooltip="Author">engineering</mat-icon>
         <div>
           <span>Implemented by Computer Engineer</span>
           <a href="https://lcarlini.github.io/lcarlini/" target="_blank" rel="noopener noreferrer">
@@ -32,6 +39,7 @@
           href="https://lcarlini.github.io/WealthLedger/"
           target="_blank"
           rel="noopener noreferrer"
+          matTooltip="Open project website"
         >
           <mat-icon>language</mat-icon>
           Project website
@@ -41,6 +49,7 @@
           href="https://github.com/lcarlini/WealthLedger"
           target="_blank"
           rel="noopener noreferrer"
+          matTooltip="Open source and documentation"
         >
           <mat-icon>code</mat-icon>
           Source and documentation
@@ -50,6 +59,7 @@
           href="https://lcarlini.github.io/lcarlini/"
           target="_blank"
           rel="noopener noreferrer"
+          matTooltip="About the engineer"
         >
           <mat-icon>person</mat-icon>
           About the engineer
@@ -62,4 +72,4 @@
       </p>
     </mat-card-content>
   </mat-card>
-</main>
+</div>

@@ -1,7 +1,5 @@
 .page-container {
-  padding: 24px;
   max-width: 720px;
-  margin: 0 auto;
 }
 
 .page-header {
@@ -50,14 +48,14 @@
   height: 160px;
   border-radius: 12px;
   object-fit: cover;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--wl-border);
 }
 
 .remove-image-btn {
   position: absolute;
   top: -8px;
   right: -8px;
-  background: white;
+  background: var(--wl-bg-elevated);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
@@ -65,19 +63,19 @@
   width: 160px;
   height: 160px;
   border-radius: 12px;
-  border: 2px dashed #bdbdbd;
+  border: 2px dashed var(--wl-border-strong);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  color: #757575;
+  color: var(--wl-text-muted, #757575);
   transition: border-color 0.2s, color 0.2s;
 
   &:hover {
-    border-color: #1976d2;
-    color: #1976d2;
+    border-color: rgb(var(--wl-accent-rgb));
+    color: rgb(var(--wl-accent-rgb));
   }
 
   mat-icon {
@@ -97,7 +95,26 @@
 
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 16px;
+}
+
+@media (max-width: 560px) {
+  .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .image-preview,
+  .image-upload-placeholder {
+    width: min(160px, 100%);
+    height: auto;
+    aspect-ratio: 1;
+  }
 }

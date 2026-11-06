@@ -1,17 +1,5 @@
 .page-container {
-  padding: 24px;
   max-width: 1200px;
-  margin: 0 auto;
-
-  h1 { 
-    font-weight: 400; 
-    margin-bottom: 24px;
-    background-color: var(--mat-sys-surface-container-high);
-    color: var(--mat-sys-on-surface);
-    padding: 12px 16px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.06);
-  }
 }
 
 .loading-container { display: flex; justify-content: center; padding: 32px; }
@@ -23,18 +11,36 @@
   gap: 12px;
   margin-bottom: 12px;
 
-  mat-form-field { width: 180px; }
+  mat-form-field {
+    width: 180px;
+    max-width: 100%;
+  }
 }
 .status-column { width: 48px; }
 .actions-column { width: 120px; text-align: center; }
-.no-data-row td { text-align: center; padding: 32px; color: #757575; }
 
-.overdue-icon { color: #d32f2f; }
-.current-icon { color: #1976d2; }
-.upcoming-icon { color: #757575; }
-.overdue-text { color: #d32f2f; font-weight: 500; }
+.mat-mdc-card-content {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
-.due-soon { color: #ffb300; font-weight: 600; }
+@media (max-width: 720px) {
+  .future-period mat-form-field {
+    width: 100%;
+  }
+
+  .actions-column {
+    width: auto;
+  }
+}
+.no-data-row td { text-align: center; padding: 32px; color: var(--wl-text-muted, #757575); }
+
+.overdue-icon { color: var(--wl-loss); }
+.current-icon { color: rgb(var(--wl-accent-rgb)); }
+.upcoming-icon { color: var(--wl-text-muted, #757575); }
+.overdue-text { color: var(--wl-loss); font-weight: 500; }
+
+.due-soon { color: var(--wl-accent-amber); font-weight: 600; }
 
 // Tab badge
 .tab-badge {
@@ -44,7 +50,7 @@
   min-width: 20px;
   height: 20px;
   border-radius: 10px;
-  background: #1976d2;
+  background: rgb(var(--wl-accent-rgb));
   color: #fff;
   font-size: 11px;
   font-weight: 500;
@@ -58,8 +64,8 @@
   width: 22px;
   height: 22px;
 
-  &.maturity { color: #f57c00; }
-  &.monthlymovement { color: #1976d2; }
+  &.maturity { color: var(--wl-accent-orange); }
+  &.monthlymovement { color: rgb(var(--wl-accent-rgb)); }
 }
 
 .future-title {
@@ -68,7 +74,7 @@
 
 .future-desc {
   font-size: 12px;
-  color: #757575;
+  color: var(--wl-text-muted, #757575);
   margin-top: 2px;
 }
 
@@ -80,13 +86,13 @@
   font-weight: 500;
 
   &.chip-maturity {
-    background: #fff3e0;
-    color: #e65100;
+    background: color-mix(in srgb, var(--wl-accent-orange) 18%, transparent);
+    color: var(--wl-accent-orange);
   }
 
   &.chip-monthlymovement {
-    background: #e3f2fd;
-    color: #1565c0;
+    background: color-mix(in srgb, rgba(var(--wl-accent-rgb), 0.18) 100%, transparent);
+    color: rgb(var(--wl-accent-rgb));
   }
 }
 

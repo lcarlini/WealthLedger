@@ -1,7 +1,5 @@
 .page-container {
-  padding: 24px;
   max-width: 1200px;
-  margin: 0 auto;
 }
 
 .page-header {
@@ -72,6 +70,22 @@
 .actions-column {
   width: 100px;
   text-align: center;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 720px) {
+  .actions-column {
+    width: auto;
+  }
+
+  .page-header {
+    align-items: stretch;
+  }
 }
 
 .no-data-row td {

@@ -1,17 +1,5 @@
 .page-container {
-  padding: 24px;
   max-width: 1200px;
-  margin: 0 auto;
-
-  h1 {
-    font-weight: 400;
-    margin: 0;
-    background-color: var(--mat-sys-surface-container-high);
-    color: var(--mat-sys-on-surface);
-    padding: 12px 16px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
 }
 
 .page-header {
@@ -42,6 +30,22 @@
 
   mat-form-field {
     width: 180px;
+    max-width: 100%;
+  }
+}
+
+.mat-mdc-card-content {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 720px) {
+  .future-period mat-form-field {
+    width: 100%;
+  }
+
+  .actions-column {
+    white-space: normal;
   }
 }
 
@@ -57,28 +61,28 @@
 .no-data-row td {
   text-align: center;
   padding: 32px;
-  color: #757575;
+  color: var(--wl-text-muted, #757575);
 }
 
 .overdue-icon {
-  color: #d32f2f;
+  color: var(--wl-loss);
 }
 
 .current-icon {
-  color: #1976d2;
+  color: rgb(var(--wl-accent-rgb));
 }
 
 .upcoming-icon {
-  color: #757575;
+  color: var(--wl-text-muted, #757575);
 }
 
 .overdue-text {
-  color: #d32f2f;
+  color: var(--wl-loss);
   font-weight: 500;
 }
 
 .due-soon {
-  color: #ffb300;
+  color: var(--wl-accent-amber);
   font-weight: 600;
 }
 
@@ -88,7 +92,7 @@
 
 .secondary-text {
   font-size: 12px;
-  color: #757575;
+  color: var(--wl-text-muted, #757575);
   margin-top: 2px;
 }
 
@@ -99,7 +103,7 @@
   min-width: 20px;
   height: 20px;
   border-radius: 10px;
-  background: #1976d2;
+  background: rgb(var(--wl-accent-rgb));
   color: #fff;
   font-size: 11px;
   font-weight: 500;
@@ -116,8 +120,8 @@
 }
 
 .chip-recurrence {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: color-mix(in srgb, rgba(var(--wl-accent-rgb), 0.18) 100%, transparent);
+  color: rgb(var(--wl-accent-rgb));
 }
 
 mat-header-cell {

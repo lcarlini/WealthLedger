@@ -9,6 +9,7 @@ using WealthLedger.Application.Validators;
 using WealthLedger.Contracts.Api.Requests;
 using WealthLedger.Contracts.Api.Responses;
 using WealthLedger.Contracts.Domain;
+using WealthLedger.Infrastructure.Backup;
 using WealthLedger.WebApp.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,6 +22,7 @@ public class PortfolioController : ControllerBase
 {
     private readonly IPortfolioService _portfolioService;
     private readonly IDataExportService _dataExportService;
+    private readonly IBackupService _backupService;
     private readonly IMapper _mapper;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -34,10 +36,12 @@ public class PortfolioController : ControllerBase
     public PortfolioController(
         IPortfolioService portfolioService,
         IDataExportService dataExportService,
+        IBackupService backupService,
         IMapper mapper)
     {
         _portfolioService = portfolioService;
         _dataExportService = dataExportService;
+        _backupService = backupService;
         _mapper = mapper;
     }
 
@@ -97,8 +101,19 @@ public class PortfolioController : ControllerBase
         if (file == null || file.Length == 0)
             return new Response<object>([new Error("No file uploaded.")], HttpStatusCode.BadRequest);
 
-        await using var stream = file.OpenReadStream();
-        await _dataExportService.ImportJsonAsync(stream, cancellationToken);
+        // Safety net before an import can overwrite existing rows.
+        await _backupService.CreateAsync(BackupService.ReasonPreImport, cancellationToken);
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            await _dataExportService.ImportJsonAsync(stream, cancellationToken);
+        }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidDataException)
+        {
+            return new Response<object>([new Error(ex.Message)], HttpStatusCode.BadRequest);
+        }
+
         return new Response<object>(new { imported = true, fileName = file.FileName });
     }
 }

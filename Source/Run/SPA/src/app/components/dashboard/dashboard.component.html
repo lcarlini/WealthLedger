@@ -1,26 +1,36 @@
 <div class="page-container">
-  <div class="dash-top">
-    <div>
-      <p class="feature-tag">{{ 'dash.tag' | t }}</p>
-      <h1>{{ 'dash.title' | t }}</h1>
-      <p class="dash-lead">{{ 'dash.lead' | t }}</p>
-    </div>
+  <app-page-header
+    [tag]="'dash.tag' | t"
+    [title]="'dash.title' | t"
+    [lead]="'dash.lead' | t"
+    icon="dashboard"
+    iconColor="var(--wl-nav-icon-dashboard)"
+  >
     <div class="projection-controls">
       <mat-form-field appearance="outline">
         <mat-label>{{ 'dash.projectionYears' | t }}</mat-label>
         <input matInput type="number" min="1" step="1"
                [ngModel]="projectionYears()"
-               (ngModelChange)="setProjectionYears($event)">
+               (ngModelChange)="setProjectionYears($event)"
+               [matTooltip]="'dash.projectionYears' | t">
       </mat-form-field>
       <span>{{ 'dash.fromToday' | t }} {{ projectionEndDate() | date:'mediumDate' }}</span>
     </div>
-  </div>
+  </app-page-header>
 
   @if (loading()) {
-    <div class="loading-container">
+    <div class="wl-loading" role="status" [attr.aria-label]="'common.loading' | t">
       <mat-spinner diameter="40"></mat-spinner>
+      <span>{{ 'common.loading' | t }}</span>
+      <div class="wl-skeleton-grid" aria-hidden="true">
+        <div class="wl-skeleton wl-skeleton-card"></div>
+        <div class="wl-skeleton wl-skeleton-card"></div>
+        <div class="wl-skeleton wl-skeleton-card"></div>
+        <div class="wl-skeleton wl-skeleton-card"></div>
+      </div>
     </div>
   } @else if (data(); as d) {
+    <div class="wl-stagger">
     <section class="portfolio-verdict" [ngClass]="{
       'good': (d.excessOverCdiPercent ?? 0) >= 0.5,
       'warn': (d.excessOverCdiPercent ?? 0) < -0.5 && (d.excessOverIpcaPercent ?? 0) >= 0,
@@ -95,8 +105,8 @@
       </aside>
     }
 
-    <div class="summary-cards">
-      <mat-card class="summary-card">
+    <div class="summary-cards wl-stagger">
+      <mat-card class="summary-card" [matTooltip]="'dash.institutions' | t">
         <mat-card-content>
           <mat-icon class="card-icon institutions">account_balance</mat-icon>
           <div class="card-value">{{ d.institutionCount }}</div>
@@ -104,7 +114,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="summary-card">
+      <mat-card class="summary-card" [matTooltip]="'dash.investments' | t">
         <mat-card-content>
           <mat-icon class="card-icon investments">savings</mat-icon>
           <div class="card-value">{{ d.investmentCount }}</div>
@@ -112,7 +122,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="summary-card">
+      <mat-card class="summary-card" [matTooltip]="'dash.totalAmount' | t">
         <mat-card-content>
           <mat-icon class="card-icon amount">attach_money</mat-icon>
           <div class="card-value">{{ d.totalAmount | currency:'BRL':'symbol':'1.2-2' }}</div>
@@ -120,15 +130,15 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="summary-card">
+      <mat-card class="summary-card" matTooltip="Planned debits for the projection window">
         <mat-card-content>
           <mat-icon class="card-icon debt">credit_card</mat-icon>
           <div class="card-value">{{ d.plannedDebitsProjection | currency:'BRL':'symbol':'1.2-2' }}</div>
-          <div class="card-label">Planned Debits (next {{ d.projectionYears }} years)</div>
+          <div class="card-label">Planned debits (next {{ d.projectionYears }} years)</div>
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="summary-card">
+      <mat-card class="summary-card" matTooltip="Debits expected next month">
         <mat-card-content>
           <mat-icon class="card-icon month-debit">calendar_month</mat-icon>
           <div class="card-value">{{ d.debitsNextMonth | currency:'BRL':'symbol':'1.2-2' }}</div>
@@ -136,19 +146,19 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="summary-card">
+      <mat-card class="summary-card" matTooltip="Future card installment debits">
         <mat-card-content>
           <mat-icon class="card-icon card-future">payments</mat-icon>
           <div class="card-value">{{ d.futureCardDebits | currency:'BRL':'symbol':'1.2-2' }}</div>
-          <div class="card-label">Future Card Debits</div>
+          <div class="card-label">Future card debits</div>
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="summary-card">
+      <mat-card class="summary-card" matTooltip="Open tasks waiting for action">
         <mat-card-content>
           <mat-icon class="card-icon tasks">task_alt</mat-icon>
           <div class="card-value">{{ d.pendingTaskCount }}</div>
-          <div class="card-label">Pending Tasks</div>
+          <div class="card-label">Pending tasks</div>
         </mat-card-content>
       </mat-card>
     </div>
@@ -428,5 +438,6 @@
         </div>
       </section>
     }
+    </div>
   }
 </div>

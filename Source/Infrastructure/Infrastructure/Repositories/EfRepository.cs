@@ -14,6 +14,8 @@ namespace WealthLedger.Infrastructure.Repositories;
 
 public class EfRepository<T> : IRepository<T> where T : BaseEntity
 {
+    public const int MaxPageSize = 200;
+
     private readonly WealthLedgerDbContext _context;
     private readonly DbSet<T> _dbSet;
 
@@ -48,12 +50,16 @@ public class EfRepository<T> : IRepository<T> where T : BaseEntity
             ? items.OrderByDescending(e => e.CreatedDate)
             : items.OrderBy(e => e.CreatedDate);
 
+        // Clamp client input so a bad page or size can never produce a negative Skip or an unbounded Take.
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
+
         var result = await items
-            .Skip((query.Page - 1) * query.PageSize)
-            .Take(query.PageSize)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        return new PagedResponse<T>(query.Page, query.PageSize, totalCount, result);
+        return new PagedResponse<T>(page, pageSize, totalCount, result);
     }
 
     public async Task<T?> GetAsync(Guid id)

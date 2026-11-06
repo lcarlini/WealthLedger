@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 
@@ -21,6 +22,7 @@ import { SimulationMatrixResponse } from '../../models/cashflow-schedule';
 import { Investment, Currency, hasDeterministicYield, InvestmentStatus } from '../../models/investment';
 import { TranslatePipe } from '../../shared/i18n/translate.pipe';
 import { LanguageService } from '../../shared/i18n/language.service';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 interface InvestmentGainRow {
   name: string;
@@ -48,8 +50,10 @@ interface InvestmentGainRow {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatTooltipModule,
     BaseChartDirective,
     TranslatePipe,
+    PageHeaderComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',

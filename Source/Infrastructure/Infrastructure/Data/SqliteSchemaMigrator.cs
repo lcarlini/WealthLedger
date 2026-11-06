@@ -9,11 +9,23 @@ namespace WealthLedger.Infrastructure.Data;
 /// </summary>
 public static class SqliteSchemaMigrator
 {
+    /// <summary>
+    /// Schema version stored in PRAGMA user_version. Bump this whenever a step below is added,
+    /// so the pre-upgrade backup is taken and the new step runs exactly once per database.
+    /// </summary>
+    public const int CurrentVersion = 1;
+
     public static async Task ApplyAsync(WealthLedgerDbContext db, ILogger? logger = null)
     {
         await db.Database.OpenConnectionAsync();
         try
         {
+            if (await GetUserVersionAsync(db) >= CurrentVersion)
+                return;
+
+            // All steps succeed or none do, so a crash mid-upgrade never leaves a half-migrated schema.
+            await using var transaction = await db.Database.BeginTransactionAsync();
+
             await EnsureInvestmentColumnAsync(db, "Ticker", """ALTER TABLE "Investments" ADD COLUMN "Ticker" TEXT""", logger);
             await EnsureInvestmentColumnAsync(db, "Quantity", """ALTER TABLE "Investments" ADD COLUMN "Quantity" REAL""", logger);
             await EnsureInvestmentColumnAsync(db, "AveragePrice", """ALTER TABLE "Investments" ADD COLUMN "AveragePrice" REAL""", logger);
@@ -150,11 +162,24 @@ public static class SqliteSchemaMigrator
                 CREATE INDEX IF NOT EXISTS "IX_BillPaymentOccurrences_DueYearMonth"
                     ON "BillPaymentOccurrences" ("DueYear", "DueMonth");
                 """, logger);
+
+            await db.Database.ExecuteSqlRawAsync($"PRAGMA user_version = {CurrentVersion}");
+            await transaction.CommitAsync();
+            logger?.LogInformation("Database schema upgraded to version {Version}.", CurrentVersion);
         }
         finally
         {
             await db.Database.CloseConnectionAsync();
         }
+    }
+
+    private static async Task<int> GetUserVersionAsync(WealthLedgerDbContext db)
+    {
+        var connection = db.Database.GetDbConnection();
+        await using var cmd = connection.CreateCommand();
+        cmd.CommandText = "PRAGMA user_version";
+        var value = await cmd.ExecuteScalarAsync();
+        return value is long version ? (int)version : 0;
     }
 
     private static async Task EnsureInvestmentColumnAsync(

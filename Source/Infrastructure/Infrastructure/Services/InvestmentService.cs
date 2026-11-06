@@ -105,6 +105,18 @@ public class InvestmentService : IInvestmentService
         return all.Where(i => i.FinancialInstitutionId == institutionId);
     }
 
+    /// <summary>Explains why a holding could not be priced, so the user knows whether to fix the ticker or wait.</summary>
+    public static string QuoteUnavailableMessage(AccountType accountType, string ticker)
+    {
+        if (accountType == AccountType.Crypto)
+            return $"No CoinGecko price for '{ticker}'. Use a common symbol such as BTC or ETH.";
+
+        if (!StockQuoteService.IsB3Ticker(ticker))
+            return $"'{ticker}' is not a B3 code. Automatic prices currently cover B3 stocks, ETFs, FIIs and BDRs (e.g. PETR4, BOVA11); US-listed tickers are not supported yet.";
+
+        return "No quote returned for this B3 ticker right now. Check the code or try again later.";
+    }
+
     public async Task<RefreshPricesResult> RefreshPricesAsync(CancellationToken cancellationToken = default)
     {
         var result = new RefreshPricesResult();
@@ -146,7 +158,7 @@ public class InvestmentService : IInvestmentService
                 if (quote == null || quote.Price <= 0)
                 {
                     item.Status = "Failed";
-                    item.Message = "Quote not found.";
+                    item.Message = QuoteUnavailableMessage(inv.AccountType, inv.Ticker!);
                     result.Failed++;
                     result.Items.Add(item);
                     continue;

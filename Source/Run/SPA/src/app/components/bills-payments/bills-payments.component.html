@@ -1,11 +1,16 @@
 <div class="page-container">
-  <div class="page-header">
-    <h1>Bills &amp; Payments</h1>
-    <button mat-raised-button color="primary" type="button" (click)="openCreateDialog()">
+  <app-page-header
+    tag="Bills"
+    title="Bills & payments"
+    lead="Recurring alerts, due dates and payment tracking"
+    icon="payments"
+    iconColor="var(--wl-nav-icon-bills)"
+  >
+    <button mat-flat-button color="primary" type="button" class="action-btn" (click)="openCreateDialog()" matTooltip="Create a new bill alert">
       <mat-icon>add</mat-icon>
-      New Alert
+      New alert
     </button>
-  </div>
+  </app-page-header>
 
   <mat-tab-group>
     <mat-tab>

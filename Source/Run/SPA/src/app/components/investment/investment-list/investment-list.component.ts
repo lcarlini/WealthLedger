@@ -28,6 +28,7 @@ import { CsvImportResultDialogComponent } from '../../../shared/components/csv-i
 import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import { LanguageService } from '../../../shared/i18n/language.service';
 import { TranslationKey } from '../../../shared/i18n/translations';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-investment-list',
@@ -38,7 +39,7 @@ import { TranslationKey } from '../../../shared/i18n/translations';
     MatFormFieldModule, MatPaginatorModule, MatCardModule, MatSnackBarModule,
     MatDialogModule, MatTooltipModule, MatProgressSpinnerModule,
     MatChipsModule, MatSelectModule, MatButtonToggleModule,
-    TranslatePipe,
+    TranslatePipe, PageHeaderComponent,
   ],
   templateUrl: './investment-list.component.html',
   styleUrl: './investment-list.component.scss',

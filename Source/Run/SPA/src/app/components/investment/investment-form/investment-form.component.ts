@@ -25,6 +25,8 @@ import {
 } from '../../../models/investment';
 import { InvestmentService } from '../../../shared/services/investment.service';
 import { FinancialInstitutionService } from '../../../shared/services/financial-institution.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-investment-form',
@@ -34,7 +36,7 @@ import { FinancialInstitutionService } from '../../../shared/services/financial-
     MatButtonModule, MatIconModule, MatInputModule, MatFormFieldModule,
     MatCardModule, MatSnackBarModule, MatProgressSpinnerModule,
     MatSelectModule, MatDatepickerModule, MatNativeDateModule,
-    MatSlideToggleModule,
+    MatSlideToggleModule, MatTooltipModule, PageHeaderComponent,
   ],
   templateUrl: './investment-form.component.html',
   styleUrl: './investment-form.component.scss',

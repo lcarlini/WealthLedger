@@ -20,6 +20,7 @@ import { FinancialInstitution } from '../../../models/financial-institution';
 import { FinancialInstitutionService } from '../../../shared/services/financial-institution.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { CsvImportResultDialogComponent } from '../../../shared/components/csv-import-result-dialog/csv-import-result-dialog.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-financial-institution-list',
@@ -39,6 +40,7 @@ import { CsvImportResultDialogComponent } from '../../../shared/components/csv-i
     MatTooltipModule,
     MatProgressSpinnerModule,
     DatePipe,
+    PageHeaderComponent,
   ],
   templateUrl: './financial-institution-list.component.html',
   styleUrl: './financial-institution-list.component.scss',

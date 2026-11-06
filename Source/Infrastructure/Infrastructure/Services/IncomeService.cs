@@ -9,15 +9,18 @@ public class IncomeService : IIncomeService
     private readonly IRepository<IncomeProfile> _profileRepo;
     private readonly IRepository<ExtraIncome> _extraRepo;
     private readonly IRepository<BusinessDayOverride> _overrideRepo;
+    private readonly IUnitOfWork _unitOfWork;
 
     public IncomeService(
         IRepository<IncomeProfile> profileRepo,
         IRepository<ExtraIncome> extraRepo,
-        IRepository<BusinessDayOverride> overrideRepo)
+        IRepository<BusinessDayOverride> overrideRepo,
+        IUnitOfWork unitOfWork)
     {
         _profileRepo = profileRepo;
         _extraRepo = extraRepo;
         _overrideRepo = overrideRepo;
+        _unitOfWork = unitOfWork;
     }
 
     // ─── Profile ─────────────────────────────────────────────────
@@ -30,13 +33,19 @@ public class IncomeService : IIncomeService
 
     public async Task<IncomeProfile> SaveProfileAsync(IncomeProfile profile)
     {
-        var existing = await _profileRepo.GetAllAsync();
-        foreach (var old in existing)
-            await _profileRepo.DeleteAsync(old.Id);
+        // Replacing the profile is delete + insert: do both or neither, so a failure never leaves no profile.
+        IncomeProfile? saved = null;
+        await _unitOfWork.ExecuteAsync(async () =>
+        {
+            var existing = await _profileRepo.GetAllAsync();
+            foreach (var old in existing)
+                await _profileRepo.DeleteAsync(old.Id);
 
-        profile.Id = Guid.NewGuid();
-        profile.CreatedDate = profile.UpdatedDate = DateTime.UtcNow;
-        return await _profileRepo.UpsertAsync(profile);
+            profile.Id = Guid.NewGuid();
+            profile.CreatedDate = profile.UpdatedDate = DateTime.UtcNow;
+            saved = await _profileRepo.UpsertAsync(profile);
+        });
+        return saved!;
     }
 
     // ─── Extra income ────────────────────────────────────────────

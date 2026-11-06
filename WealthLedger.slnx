@@ -2,6 +2,7 @@
   <Folder Name="/Source/_Core/">
     <Project Path="Source\_Core\Contracts\WealthLedger.Contracts.csproj" />
   </Folder>
+  <Folder Name="/Source/" />
   <Folder Name="/Source/Application/">
     <Project Path="Source\Application\Application\WealthLedger.Application.csproj" />
   </Folder>
@@ -10,5 +11,8 @@
   </Folder>
   <Folder Name="/Source/Run/">
     <Project Path="Source\Run\WebApp\WealthLedger.WebApp.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Source/Tests/WealthLedger.Infrastructure.Tests/WealthLedger.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

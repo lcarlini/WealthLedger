@@ -3,6 +3,7 @@ using WealthLedger.Application.Services;
 using WealthLedger.Application.Validators;
 using WealthLedger.Contracts.Api.Requests;
 using WealthLedger.Contracts.Domain;
+using WealthLedger.Infrastructure.Backup;
 using WealthLedger.Infrastructure.Repositories;
 using WealthLedger.Infrastructure.Services;
 using WealthLedger.Infrastructure.Validators;
@@ -83,6 +84,11 @@ public static class ServiceRegistration
         services.AddTransient<IPayloadValidator<BillPaymentAlertRequestBody>, BillPaymentAlertValidator>();
 
         services.AddTransient<IIncomeService, IncomeService>();
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // Singleton: owns the single-writer gate that serializes backup create/restore/prune.
+        services.AddSingleton<IBackupService, BackupService>();
 
         services.AddAutoMapper(typeof(ServiceRegistration).Assembly);
 

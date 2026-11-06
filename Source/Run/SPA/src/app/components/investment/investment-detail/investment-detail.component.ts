@@ -31,6 +31,7 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { TranslatePipe } from '../../../shared/i18n/translate.pipe';
 import { LanguageService } from '../../../shared/i18n/language.service';
 import { TranslationKey } from '../../../shared/i18n/translations';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 
 function classifyRedemption(
   redeemed: number,
@@ -97,6 +98,7 @@ function buildRedemptionPreview(
     MatProgressSpinnerModule, MatDialogModule, MatTooltipModule,
     MatFormFieldModule, MatInputModule, MatChipsModule,
     TranslatePipe,
+    PageHeaderComponent,
   ],
   templateUrl: './investment-detail.component.html',
   styleUrl: './investment-detail.component.scss',
