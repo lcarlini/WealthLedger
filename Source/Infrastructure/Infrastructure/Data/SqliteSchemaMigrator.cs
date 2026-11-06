@@ -13,7 +13,7 @@ public static class SqliteSchemaMigrator
     /// Schema version stored in PRAGMA user_version. Bump this whenever a step below is added,
     /// so the pre-upgrade backup is taken and the new step runs exactly once per database.
     /// </summary>
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     public static async Task ApplyAsync(WealthLedgerDbContext db, ILogger? logger = null)
     {
@@ -161,6 +161,27 @@ public static class SqliteSchemaMigrator
             await EnsureIndexAsync(db, "IX_BillPaymentOccurrences_DueYearMonth", """
                 CREATE INDEX IF NOT EXISTS "IX_BillPaymentOccurrences_DueYearMonth"
                     ON "BillPaymentOccurrences" ("DueYear", "DueMonth");
+                """, logger);
+
+            // Version 2: trade ledger. Decimal columns are TEXT, matching EF's default SQLite mapping.
+            await EnsureTableAsync(db, "TradeTransactions", """
+                CREATE TABLE IF NOT EXISTS "TradeTransactions" (
+                    "Id" TEXT NOT NULL CONSTRAINT "PK_TradeTransactions" PRIMARY KEY,
+                    "InvestmentId" TEXT NOT NULL,
+                    "Side" INTEGER NOT NULL,
+                    "TradeDate" TEXT NOT NULL,
+                    "Quantity" TEXT NOT NULL,
+                    "UnitPrice" TEXT NOT NULL,
+                    "Fees" TEXT NOT NULL,
+                    "Notes" TEXT NULL,
+                    "CreatedDate" TEXT NOT NULL,
+                    "UpdatedDate" TEXT NOT NULL
+                );
+                """, logger);
+
+            await EnsureIndexAsync(db, "IX_TradeTransactions_InvestmentId", """
+                CREATE INDEX IF NOT EXISTS "IX_TradeTransactions_InvestmentId"
+                    ON "TradeTransactions" ("InvestmentId");
                 """, logger);
 
             await db.Database.ExecuteSqlRawAsync($"PRAGMA user_version = {CurrentVersion}");

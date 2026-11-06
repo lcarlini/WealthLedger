@@ -86,6 +86,8 @@ public static class ServiceRegistration
         services.AddTransient<IIncomeService, IncomeService>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IRepository<TradeTransaction>, EfRepository<TradeTransaction>>();
+        services.AddTransient<ITradeLedgerService, TradeLedgerService>();
 
         // Singleton: owns the single-writer gate that serializes backup create/restore/prune.
         services.AddSingleton<IBackupService, BackupService>();

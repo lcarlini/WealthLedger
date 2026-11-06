@@ -1,0 +1,230 @@
+.trades-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wl-space-lg, 1.25rem);
+}
+
+.panel {
+  background: var(--wl-bg-card, transparent);
+  border: 1px solid var(--wl-border, rgba(127, 127, 127, 0.25));
+  border-radius: var(--wl-radius, 12px);
+  padding: var(--wl-space, 1rem) var(--wl-space-lg, 1.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wl-space, 1rem);
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--wl-text, inherit);
+  }
+}
+
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--wl-text-muted, #64748b);
+  flex: 1 1 min(100%, 11rem);
+  min-width: 0;
+
+  &.wide {
+    flex-basis: 100%;
+  }
+
+  &.inline {
+    flex-direction: row;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 0.5rem;
+  }
+
+  input,
+  select {
+    min-height: 44px;
+    padding: 0 0.75rem;
+    border-radius: var(--wl-radius-sm, 8px);
+    border: 1px solid var(--wl-border, rgba(127, 127, 127, 0.4));
+    background: var(--wl-bg-elevated, transparent);
+    color: var(--wl-text, inherit);
+    font: inherit;
+    width: 100%;
+    box-sizing: border-box;
+
+    &:focus-visible {
+      outline: 3px solid var(--wl-accent, #3b82f6);
+      outline-offset: 1px;
+    }
+  }
+}
+
+.trade-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--wl-space, 1rem);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.method {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  min-height: 40px;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--wl-border, rgba(127, 127, 127, 0.4));
+  background: transparent;
+  color: var(--wl-text, inherit);
+  font: inherit;
+  cursor: pointer;
+
+  &.active {
+    border-color: var(--wl-accent, #3b82f6);
+    background: var(--wl-accent-soft, rgba(59, 130, 246, 0.15));
+    font-weight: 600;
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--wl-accent, #3b82f6);
+    outline-offset: 2px;
+  }
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: var(--wl-space, 1rem);
+  margin: 0;
+
+  div {
+    min-width: 0;
+  }
+
+  dt {
+    font-size: 0.78rem;
+    color: var(--wl-text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  dd {
+    margin: 0.25rem 0 0;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+}
+
+.pos {
+  color: var(--wl-gain, #15803d);
+}
+
+.neg {
+  color: var(--wl-loss, #b91c1c);
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--wl-text-muted, #64748b);
+}
+
+.banner {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--wl-radius-sm, 8px);
+  font-size: 0.9rem;
+
+  &.banner-error {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--wl-loss, #b91c1c);
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.empty {
+  text-align: center;
+  color: var(--wl-text-muted, #64748b);
+  padding: 1rem 0;
+  margin: 0;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.trades-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 40rem;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.55rem 0.5rem;
+    border-bottom: 1px solid var(--wl-border, rgba(127, 127, 127, 0.2));
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: 0.78rem;
+    color: var(--wl-text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .notes {
+    white-space: normal;
+    max-width: 16rem;
+    overflow-wrap: anywhere;
+  }
+
+  .actions-col {
+    text-align: right;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .trades-page .panel {
+    padding: var(--wl-space, 0.875rem);
+  }
+}

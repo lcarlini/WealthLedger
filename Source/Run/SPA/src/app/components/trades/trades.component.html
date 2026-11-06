@@ -1,0 +1,227 @@
+<div class="page-container trades-page">
+  <app-page-header
+    tag="Trades"
+    [title]="'trades.title' | t"
+    [lead]="'trades.lead' | t"
+    icon="swap_horiz"
+    iconColor="var(--wl-nav-icon-portfolio)"
+  />
+
+  @if (error(); as message) {
+    <p class="banner banner-error" role="alert">{{ message }}</p>
+  }
+
+  <section class="panel" aria-labelledby="holding-title">
+    <div class="panel-head">
+      <h2 id="holding-title">{{ 'trades.holding' | t }}</h2>
+      <div class="method" role="group" [attr.aria-label]="'trades.method' | t">
+        <button type="button" class="chip" [class.active]="method() === 'weighted'"
+                [attr.aria-pressed]="method() === 'weighted'" (click)="setMethod('weighted')">
+          {{ 'trades.method.weighted' | t }}
+        </button>
+        <button type="button" class="chip" [class.active]="method() === 'fifo'"
+                [attr.aria-pressed]="method() === 'fifo'" (click)="setMethod('fifo')">
+          {{ 'trades.method.fifo' | t }}
+        </button>
+      </div>
+    </div>
+
+    @if (holdings().length === 0) {
+      <p class="empty">{{ 'trades.noHoldings' | t }}</p>
+    } @else {
+      <label class="field">
+        <span>{{ 'trades.holding' | t }}</span>
+        <select [ngModel]="selectedId()" (ngModelChange)="select($event)" name="holding">
+          @for (h of holdings(); track h.id) {
+            <option [ngValue]="h.id">{{ h.ticker || h.name }} — {{ h.name }}</option>
+          }
+        </select>
+      </label>
+
+      @if (loading()) {
+        <div class="loading"><mat-spinner diameter="28" /></div>
+      }
+
+      @if (position(); as p) {
+        <dl class="stats">
+          <div><dt>{{ 'trades.stat.quantity' | t }}</dt><dd>{{ p.quantity | number: '1.0-6' }}</dd></div>
+          <div><dt>{{ 'trades.stat.averagePrice' | t }}</dt><dd>{{ p.averagePrice | currency: currencyCode() }}</dd></div>
+          <div><dt>{{ 'trades.stat.costBasis' | t }}</dt><dd>{{ p.costBasis | currency: currencyCode() }}</dd></div>
+          <div><dt>{{ 'trades.stat.realized' | t }}</dt><dd [class.pos]="p.realizedPnl > 0" [class.neg]="p.realizedPnl < 0">{{ p.realizedPnl | currency: currencyCode() }}</dd></div>
+          <div><dt>{{ 'trades.stat.dividends' | t }}</dt><dd>{{ p.dividendIncome | currency: currencyCode() }}</dd></div>
+        </dl>
+      }
+
+      @if (performance(); as perf) {
+        <dl class="stats">
+          <div><dt>{{ 'trades.stat.marketValue' | t }}</dt><dd>{{ perf.marketValue | currency: currencyCode() }}</dd></div>
+          <div><dt>{{ 'trades.stat.unrealized' | t }}</dt><dd [class.pos]="perf.unrealizedPnl > 0" [class.neg]="perf.unrealizedPnl < 0">{{ perf.unrealizedPnl | currency: currencyCode() }}</dd></div>
+          <div><dt>{{ 'trades.stat.xirr' | t }}</dt><dd>{{ formatXirr(perf.xirrAnnualPercent) }}</dd></div>
+        </dl>
+        <p class="hint">{{ 'trades.marketValueHint' | t }}</p>
+      }
+    }
+  </section>
+
+  @if (holdings().length > 0) {
+    <section class="panel" aria-labelledby="new-trade-title">
+      <h2 id="new-trade-title">{{ 'trades.newTrade' | t }}</h2>
+      <form class="trade-form" (ngSubmit)="addTrade()">
+        <label class="field">
+          <span>{{ 'trades.type' | t }}</span>
+          <select [(ngModel)]="form.side" name="side">
+            <option [ngValue]="TradeSide.Buy">{{ 'trades.side.buy' | t }}</option>
+            <option [ngValue]="TradeSide.Sell">{{ 'trades.side.sell' | t }}</option>
+            <option [ngValue]="TradeSide.Dividend">{{ 'trades.side.dividend' | t }}</option>
+            <option [ngValue]="TradeSide.Bonus">{{ 'trades.side.bonus' | t }}</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>{{ 'trades.date' | t }}</span>
+          <input type="date" name="tradeDate" required [(ngModel)]="form.tradeDate" />
+        </label>
+
+        @if (!isDividend()) {
+          <label class="field">
+            <span>{{ (isBonus() ? 'trades.bonusQuantity' : 'trades.quantity') | t }}</span>
+            <input type="number" name="quantity" min="0" step="any" [(ngModel)]="form.quantity" />
+          </label>
+        }
+
+        @if (!isBonus()) {
+          <label class="field">
+            <span>{{ (isDividend() ? 'trades.dividendPerShare' : 'trades.unitPrice') | t }}</span>
+            <input type="number" name="unitPrice" min="0" step="any" [(ngModel)]="form.unitPrice" />
+          </label>
+        }
+
+        @if (!isDividend() && !isBonus()) {
+          <label class="field">
+            <span>{{ 'trades.fees' | t }}</span>
+            <input type="number" name="fees" min="0" step="any" [(ngModel)]="form.fees" />
+          </label>
+        }
+
+        <label class="field wide">
+          <span>{{ 'trades.notes' | t }}</span>
+          <input type="text" name="notes" maxlength="500" [(ngModel)]="form.notes" />
+        </label>
+
+        <div class="actions">
+          <button mat-raised-button type="submit" [disabled]="busy()">
+            <mat-icon>add</mat-icon>
+            {{ 'trades.add' | t }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" aria-labelledby="history-title">
+      <h2 id="history-title">{{ 'trades.history' | t }}</h2>
+      <div class="table-scroll">
+        <table class="trades-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'trades.col.date' | t }}</th>
+              <th scope="col">{{ 'trades.col.type' | t }}</th>
+              <th scope="col" class="num">{{ 'trades.col.quantity' | t }}</th>
+              <th scope="col" class="num">{{ 'trades.col.price' | t }}</th>
+              <th scope="col" class="num">{{ 'trades.col.fees' | t }}</th>
+              <th scope="col">{{ 'trades.col.notes' | t }}</th>
+              <th scope="col" class="actions-col"><span class="visually-hidden">{{ 'trades.col.actions' | t }}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of tradeList(); track t.id) {
+              <tr>
+                <td>{{ t.tradeDate | date: 'mediumDate' }}</td>
+                <td>{{ sideLabel(t.side) }}</td>
+                <td class="num">{{ t.quantity | number: '1.0-6' }}</td>
+                <td class="num">{{ t.unitPrice | currency: currencyCode() }}</td>
+                <td class="num">{{ t.fees | currency: currencyCode() }}</td>
+                <td class="notes">{{ t.notes }}</td>
+                <td class="actions-col">
+                  <button mat-icon-button type="button" color="warn" [disabled]="busy()"
+                          [attr.aria-label]="('trades.delete' | t) + ' ' + (t.tradeDate | date: 'mediumDate')"
+                          (click)="removeTrade(t)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="empty">{{ 'trades.noTrades' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  <section class="panel" aria-labelledby="tax-title">
+    <div class="panel-head">
+      <h2 id="tax-title">{{ 'trades.tax.title' | t }}</h2>
+      <label class="field inline">
+        <span>{{ 'trades.tax.year' | t }}</span>
+        <select [ngModel]="taxYear()" (ngModelChange)="setTaxYear($event)" name="taxYear">
+          @for (y of years; track y) {
+            <option [ngValue]="y">{{ y }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    @if (taxReport(); as report) {
+      <p class="hint">{{ report.disclaimer }}</p>
+      <div class="table-scroll">
+        <table class="trades-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'trades.tax.month' | t }}</th>
+              <th scope="col">{{ 'trades.tax.category' | t }}</th>
+              <th scope="col" class="num">{{ 'trades.tax.sales' | t }}</th>
+              <th scope="col" class="num">{{ 'trades.tax.gain' | t }}</th>
+              <th scope="col" class="num">{{ 'trades.tax.carry' | t }}</th>
+              <th scope="col">{{ 'trades.tax.status' | t }}</th>
+              <th scope="col" class="num">{{ 'trades.tax.due' | t }}</th>
+              <th scope="col">{{ 'trades.tax.darf' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of report.months; track m.category + m.month) {
+              <tr>
+                <td>{{ m.month }}</td>
+                <td>{{ categoryLabel(m.category) }}</td>
+                <td class="num">{{ m.salesVolume | currency: 'BRL' }}</td>
+                <td class="num" [class.pos]="m.netGain > 0" [class.neg]="m.netGain < 0">{{ m.netGain | currency: 'BRL' }}</td>
+                <td class="num">{{ m.lossCarriedOut | currency: 'BRL' }}</td>
+                <td>
+                  @if (m.ratePercent === null) {
+                    {{ 'trades.tax.notComputed' | t }}
+                  } @else if (m.exemptByThreshold) {
+                    {{ 'trades.tax.exempt' | t }}
+                  } @else {
+                    {{ m.ratePercent }}%
+                  }
+                </td>
+                <td class="num">{{ m.taxDue | currency: 'BRL' }}</td>
+                <td>{{ m.darfDueDate ? (m.darfDueDate | date: 'mediumDate') : '—' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="empty">{{ 'trades.tax.empty' | t }}</td></tr>
+            }
+          </tbody>
+          @if (report.months.length > 0) {
+            <tfoot>
+              <tr>
+                <th colspan="6" scope="row">{{ 'trades.tax.total' | t }}</th>
+                <td class="num"><strong>{{ report.totalTaxDue | currency: 'BRL' }}</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </div>
+    }
+  </section>
+</div>

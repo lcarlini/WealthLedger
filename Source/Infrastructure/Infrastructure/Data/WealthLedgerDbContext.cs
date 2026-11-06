@@ -22,10 +22,19 @@ public class WealthLedgerDbContext : DbContext
     public DbSet<WatchlistItem> WatchlistItems => Set<WatchlistItem>();
     public DbSet<BillPaymentAlert> BillPaymentAlerts => Set<BillPaymentAlert>();
     public DbSet<BillPaymentOccurrence> BillPaymentOccurrences => Set<BillPaymentOccurrence>();
+    public DbSet<TradeTransaction> TradeTransactions => Set<TradeTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<TradeTransaction>(e =>
+        {
+            e.ToTable("TradeTransactions");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Notes).HasMaxLength(500);
+            e.HasIndex(x => x.InvestmentId);
+        });
 
         modelBuilder.Entity<FinancialInstitution>(e =>
         {

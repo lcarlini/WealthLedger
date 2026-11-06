@@ -96,6 +96,11 @@ export const routes: Routes = [
       import('./components/calculator/calculator.component').then(m => m.CalculatorComponent),
   },
   {
+    path: 'trades',
+    loadComponent: () =>
+      import('./components/trades/trades.component').then(m => m.TradesComponent),
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./components/settings/settings.component').then(m => m.SettingsComponent),

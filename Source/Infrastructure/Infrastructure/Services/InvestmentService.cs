@@ -131,6 +131,10 @@ public class InvestmentService : IInvestmentService
         if (candidates.Count == 0)
             return result;
 
+        // Fetch every quote up front so brapi can batch B3 tickers into a few requests.
+        var quotes = await _stockQuoteService.GetQuotesAsync(
+            candidates.Select(c => (c.Ticker!, c.AccountType)), cancellationToken);
+
         MarketDataResponse? market = null;
         try
         {
@@ -154,7 +158,9 @@ public class InvestmentService : IInvestmentService
 
             try
             {
-                var quote = await _stockQuoteService.GetQuoteAsync(inv.Ticker!, inv.AccountType, cancellationToken);
+                var quote = quotes.TryGetValue(StockQuoteService.NormalizeTicker(inv.Ticker!), out var batched)
+                    ? batched
+                    : await _stockQuoteService.GetQuoteAsync(inv.Ticker!, inv.AccountType, cancellationToken);
                 if (quote == null || quote.Price <= 0)
                 {
                     item.Status = "Failed";

@@ -666,6 +666,7 @@ export class App implements OnInit, OnDestroy {
     { path: '/investments', exact: true, icon: 'savings', labelKey: 'nav.investments', colorVar: '--wl-nav-icon-savings' },
     { path: '/investments/archived', icon: 'inventory_2', labelKey: 'nav.archived', colorVar: '--wl-nav-icon-archive' },
     { path: '/portfolio', icon: 'pie_chart', labelKey: 'nav.portfolio', colorVar: '--wl-nav-icon-portfolio' },
+    { path: '/trades', icon: 'swap_horiz', labelKey: 'nav.trades', colorVar: '--wl-nav-icon-portfolio' },
     { path: '/my-tasks', icon: 'task_alt', labelKey: 'nav.tasks', colorVar: '--wl-nav-icon-tasks', badge: 'tasks' },
     { path: '/bills-payments', icon: 'payments', labelKey: 'nav.bills', colorVar: '--wl-nav-icon-bills', badge: 'bills' },
     { path: '/control', icon: 'table_chart', labelKey: 'nav.control', colorVar: '--wl-nav-icon-control' },
