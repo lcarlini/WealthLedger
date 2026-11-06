@@ -43,6 +43,7 @@ public sealed class DataSafetyTests : IDisposable
         new EfRepository<BillPaymentAlert>(db),
         new EfRepository<BillPaymentOccurrence>(db),
         new EfRepository<TradeTransaction>(db),
+        new EfRepository<Budget>(db),
         new UnitOfWork(db),
         NullLogger<DataExportService>.Instance);
 

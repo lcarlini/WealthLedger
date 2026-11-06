@@ -99,6 +99,10 @@ public static class ServiceRegistration
         services.AddTransient<WealthLedger.Infrastructure.Advisor.AdvisorContextBuilder>();
         services.AddTransient<IAiAdvisorService, WealthLedger.Infrastructure.Advisor.AiAdvisorService>();
 
+        services.AddTransient<IMarketToolsService, MarketToolsService>();
+        services.AddScoped<IRepository<Budget>, EfRepository<Budget>>();
+        services.AddTransient<IBudgetService, BudgetService>();
+
         services.AddAutoMapper(typeof(ServiceRegistration).Assembly);
 
         return services;

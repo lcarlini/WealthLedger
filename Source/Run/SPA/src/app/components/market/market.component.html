@@ -1,0 +1,116 @@
+<div class="page-container market-page">
+  <app-page-header
+    tag="Market"
+    [title]="'market.title' | t"
+    [lead]="'market.lead' | t"
+    icon="show_chart"
+    iconColor="var(--wl-nav-icon-analytics)"
+  />
+
+  <div class="toolbar">
+    <button mat-stroked-button type="button" [disabled]="loading()" (click)="refresh()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'market.refresh' | t }}
+    </button>
+  </div>
+
+  <section class="panel" aria-labelledby="market-indices">
+    <h2 id="market-indices">{{ 'market.indices' | t }}</h2>
+
+    @if (indicesError(); as message) {
+      <p class="banner banner-error" role="alert">{{ message }}</p>
+    }
+
+    @if (loading() && !indices()) {
+      <div class="loading"><mat-spinner diameter="32" /></div>
+    } @else if (indices(); as snap) {
+      <ul class="cards">
+        @for (i of snap.indices; track i.symbol) {
+          <li class="card">
+            <h3>{{ i.name }}</h3>
+            <p class="price">{{ number(i.price) }} <span class="unit">{{ i.currency }}</span></p>
+            <p class="change" [class]="'change ' + direction(i.dayChangePercent)">
+              {{ change(i.dayChangePercent) }} <span class="label">{{ 'market.today' | t }}</span>
+            </p>
+            <p class="change" [class]="'change ' + direction(i.periodChangePercent)">
+              {{ change(i.periodChangePercent) }} <span class="label">{{ 'market.month' | t }}</span>
+            </p>
+            @if (spark(i); as pts) {
+              <svg
+                class="spark"
+                [class]="'spark ' + direction(i.periodChangePercent)"
+                [attr.viewBox]="'0 0 ' + sparkWidth + ' ' + sparkHeight"
+                role="img"
+                [attr.aria-label]="i.name + ': ' + change(i.periodChangePercent) + ' ' + ('market.month' | t)"
+              >
+                <polyline [attr.points]="pts" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+              </svg>
+            }
+          </li>
+        }
+      </ul>
+      <p class="source">
+        {{ 'market.indicesSource' | t }} · {{ snap.fetchedAtUtc | date: 'short' }}
+        @if (snap.fromCache) { · {{ 'market.cached' | t }} }
+      </p>
+    }
+  </section>
+
+  <section class="panel" aria-labelledby="market-treasury">
+    <div class="panel-head">
+      <h2 id="market-treasury">{{ 'market.treasury' | t }}</h2>
+      @if (treasury()) {
+        <label class="filter">
+          <span>{{ 'market.type' | t }}</span>
+          <select [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">
+            <option value="">{{ 'market.allTypes' | t }}</option>
+            @for (t of bondTypes(); track t) {
+              <option [value]="t">{{ t }}</option>
+            }
+          </select>
+        </label>
+      }
+    </div>
+
+    @if (treasuryError(); as message) {
+      <p class="banner banner-error" role="alert">{{ message }}</p>
+    }
+
+    @if (loading() && !treasury()) {
+      <div class="loading"><mat-spinner diameter="32" /></div>
+    } @else if (treasury(); as t) {
+      <div class="table-scroll">
+        <table>
+          <caption class="visually-hidden">{{ 'market.treasury' | t }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'market.bond' | t }}</th>
+              <th scope="col">{{ 'market.maturity' | t }}</th>
+              <th scope="col" class="num">{{ 'market.buyRate' | t }}</th>
+              <th scope="col" class="num">{{ 'market.buyPrice' | t }}</th>
+              <th scope="col" class="num">{{ 'market.sellPrice' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of visibleBonds(); track b.type + b.maturity) {
+              <tr>
+                <td>{{ b.type }}</td>
+                <td>{{ b.maturity | date: 'MM/yyyy' }}</td>
+                <td class="num">{{ number(b.buyRatePercent) }}%</td>
+                <td class="num">{{ brl(b.buyPrice) }}</td>
+                <td class="num">{{ brl(b.sellPrice) }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="empty">{{ 'market.noBonds' | t }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="source">
+        {{ 'market.treasurySource' | t }} · {{ 'market.baseDate' | t }} {{ t.baseDate | date: 'dd/MM/yyyy' }}
+        @if (t.fromCache) { · {{ 'market.cached' | t }} }
+      </p>
+      <p class="hint">{{ 'market.selicHint' | t }}</p>
+    }
+  </section>
+</div>

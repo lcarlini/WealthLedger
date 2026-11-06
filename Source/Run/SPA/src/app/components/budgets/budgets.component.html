@@ -1,0 +1,140 @@
+<div class="page-container budgets-page">
+  <app-page-header
+    tag="Budgets"
+    [title]="'budgets.title' | t"
+    [lead]="'budgets.lead' | t"
+    icon="account_balance_wallet"
+    iconColor="var(--wl-nav-icon-control)"
+  />
+
+  @if (error(); as message) {
+    <p class="banner banner-error" role="alert">{{ message }}</p>
+  }
+
+  <section class="panel" aria-labelledby="budgets-month">
+    <h2 id="budgets-month" class="visually-hidden">{{ 'budgets.month' | t }}</h2>
+    <label class="field month-field">
+      <span>{{ 'budgets.month' | t }}</span>
+      <input type="month" name="month" [(ngModel)]="month" (ngModelChange)="refresh()" />
+    </label>
+
+    @if (status(); as s) {
+      <div class="summary" role="group" [attr.aria-label]="'budgets.summary' | t">
+        <p class="big">{{ brl(s.totalSpent) }}</p>
+        <p class="sub">
+          @if (s.totalLimit > 0) {
+            {{ 'budgets.of' | t }} {{ brl(s.totalLimit) }} {{ 'budgets.budgeted' | t }} ({{ totalPercent() }}%)
+          } @else {
+            {{ 'budgets.spentNoBudget' | t }}
+          }
+        </p>
+      </div>
+    }
+  </section>
+
+  <section class="panel" aria-labelledby="budgets-list">
+    <h2 id="budgets-list">{{ 'budgets.yourBudgets' | t }}</h2>
+
+    @if (loading() && !status()) {
+      <div class="loading"><mat-spinner diameter="32" /></div>
+    } @else if (status(); as s) {
+      @if (s.items.length === 0) {
+        <p class="empty">{{ 'budgets.empty' | t }}</p>
+      }
+
+      <ul class="budget-list">
+        @for (item of s.items; track item.id) {
+          <li class="budget" [class]="'budget ' + item.level">
+            <div class="row">
+              <h3>{{ item.category }}</h3>
+              <span class="badge">{{ levelKey(item.level) | t }}</span>
+            </div>
+            <div
+              class="bar"
+              role="progressbar"
+              [attr.aria-valuenow]="item.percentUsed > 100 ? 100 : item.percentUsed"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-label]="item.category + ' ' + item.percentUsed + '%'"
+            >
+              <span class="fill" [style.width.%]="item.percentUsed > 100 ? 100 : item.percentUsed"></span>
+            </div>
+            <div class="row numbers">
+              <span>{{ brl(item.spent) }} / {{ brl(item.monthlyLimit) }} ({{ item.percentUsed }}%)</span>
+              <span>
+                @if (item.remaining >= 0) {
+                  {{ brl(item.remaining) }} {{ 'budgets.left' | t }}
+                } @else {
+                  {{ brl(-item.remaining) }} {{ 'budgets.over' | t }}
+                }
+              </span>
+            </div>
+            <div class="actions">
+              <button mat-button type="button" [disabled]="busy()" (click)="edit(item)">
+                <mat-icon>edit</mat-icon>{{ 'budgets.edit' | t }}
+              </button>
+              <button mat-button type="button" color="warn" [disabled]="busy()" (click)="remove(item)">
+                <mat-icon>delete</mat-icon>{{ 'budgets.delete' | t }}
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <form class="add-form" (ngSubmit)="save()">
+      <label class="field">
+        <span>{{ 'budgets.category' | t }}</span>
+        <input
+          id="budget-category"
+          name="category"
+          list="budget-categories"
+          autocomplete="off"
+          [maxlength]="limits.categoryMaxLength"
+          [(ngModel)]="category"
+        />
+        <datalist id="budget-categories">
+          @for (c of categories(); track c) {
+            <option [value]="c"></option>
+          }
+        </datalist>
+      </label>
+      <label class="field">
+        <span>{{ 'budgets.limit' | t }}</span>
+        <input
+          id="budget-limit"
+          name="monthlyLimit"
+          type="number"
+          inputmode="decimal"
+          min="0.01"
+          step="0.01"
+          [max]="limits.limitMax"
+          [(ngModel)]="monthlyLimit"
+        />
+      </label>
+      <button mat-raised-button type="submit" [disabled]="busy() || !isValid()">
+        <mat-icon>save</mat-icon>{{ 'budgets.save' | t }}
+      </button>
+    </form>
+    <p class="hint">{{ 'budgets.hint' | t }}</p>
+  </section>
+
+  @if (status(); as s) {
+    @if (s.unbudgeted.length > 0) {
+      <section class="panel" aria-labelledby="budgets-unbudgeted">
+        <h2 id="budgets-unbudgeted">{{ 'budgets.unbudgeted' | t }}</h2>
+        <ul class="unbudgeted">
+          @for (u of s.unbudgeted; track u.category) {
+            <li>
+              <span>{{ u.category }}</span>
+              <span class="amount">{{ brl(u.amount) }}</span>
+              <button mat-button type="button" (click)="suggest(u.category, u.amount)">
+                {{ 'budgets.setBudget' | t }}
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</div>

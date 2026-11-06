@@ -672,6 +672,8 @@ export class App implements OnInit, OnDestroy {
     { path: '/control', icon: 'table_chart', labelKey: 'nav.control', colorVar: '--wl-nav-icon-control' },
     { path: '/import', icon: 'upload_file', labelKey: 'nav.import', colorVar: '--wl-nav-icon-import' },
     { path: '/analytics', icon: 'insights', labelKey: 'nav.analytics', colorVar: '--wl-nav-icon-analytics' },
+    { path: '/budgets', icon: 'account_balance_wallet', labelKey: 'nav.budgets', colorVar: '--wl-nav-icon-control' },
+    { path: '/market', icon: 'show_chart', labelKey: 'nav.market', colorVar: '--wl-nav-icon-analytics' },
     { path: '/advisor', icon: 'psychology', labelKey: 'nav.advisor', colorVar: '--wl-nav-icon-analytics' },
     { path: '/calculator', icon: 'calculate', labelKey: 'nav.calculator', colorVar: '--wl-nav-icon-calc' },
   ];

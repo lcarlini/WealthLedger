@@ -13,7 +13,7 @@ public static class SqliteSchemaMigrator
     /// Schema version stored in PRAGMA user_version. Bump this whenever a step below is added,
     /// so the pre-upgrade backup is taken and the new step runs exactly once per database.
     /// </summary>
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
 
     public static async Task ApplyAsync(WealthLedgerDbContext db, ILogger? logger = null)
     {
@@ -182,6 +182,21 @@ public static class SqliteSchemaMigrator
             await EnsureIndexAsync(db, "IX_TradeTransactions_InvestmentId", """
                 CREATE INDEX IF NOT EXISTS "IX_TradeTransactions_InvestmentId"
                     ON "TradeTransactions" ("InvestmentId");
+                """, logger);
+
+            // Version 3: monthly budgets per category.
+            await EnsureTableAsync(db, "Budgets", """
+                CREATE TABLE IF NOT EXISTS "Budgets" (
+                    "Id" TEXT NOT NULL CONSTRAINT "PK_Budgets" PRIMARY KEY,
+                    "Category" TEXT NOT NULL COLLATE NOCASE,
+                    "MonthlyLimit" TEXT NOT NULL,
+                    "CreatedDate" TEXT NOT NULL,
+                    "UpdatedDate" TEXT NOT NULL
+                );
+                """, logger);
+
+            await EnsureIndexAsync(db, "IX_Budgets_Category", """
+                CREATE UNIQUE INDEX IF NOT EXISTS "IX_Budgets_Category" ON "Budgets" ("Category");
                 """, logger);
 
             await db.Database.ExecuteSqlRawAsync($"PRAGMA user_version = {CurrentVersion}");

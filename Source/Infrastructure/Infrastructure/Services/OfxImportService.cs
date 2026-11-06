@@ -450,6 +450,10 @@ public class OfxImportService : IOfxImportService
         ("JUROS", "Fees"),
     ];
 
+    /// <summary>Every category the keyword rules can assign, plus the fallback.</summary>
+    public static IEnumerable<string> KnownCategories =>
+        CategoryRules.Select(r => r.category).Append("Other").Distinct(StringComparer.OrdinalIgnoreCase);
+
     public static string? CategorizeTransaction(string description)
     {
         if (string.IsNullOrWhiteSpace(description)) return null;

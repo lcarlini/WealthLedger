@@ -32,6 +32,7 @@ public class DataExportService : IDataExportService
     private readonly IRepository<BillPaymentAlert> _bills;
     private readonly IRepository<BillPaymentOccurrence> _billOccurrences;
     private readonly IRepository<TradeTransaction> _trades;
+    private readonly IRepository<Budget> _budgets;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<DataExportService> _logger;
 
@@ -60,6 +61,7 @@ public class DataExportService : IDataExportService
         IRepository<BillPaymentAlert> bills,
         IRepository<BillPaymentOccurrence> billOccurrences,
         IRepository<TradeTransaction> trades,
+        IRepository<Budget> budgets,
         IUnitOfWork unitOfWork,
         ILogger<DataExportService> logger)
     {
@@ -79,6 +81,7 @@ public class DataExportService : IDataExportService
         _bills = bills;
         _billOccurrences = billOccurrences;
         _trades = trades;
+        _budgets = budgets;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -105,7 +108,8 @@ public class DataExportService : IDataExportService
             watchlistItems = await _watchlist.GetAllAsync(),
             billPaymentAlerts = await _bills.GetAllAsync(),
             billPaymentOccurrences = await _billOccurrences.GetAllAsync(),
-            tradeTransactions = await _trades.GetAllAsync()
+            tradeTransactions = await _trades.GetAllAsync(),
+            budgets = await _budgets.GetAllAsync()
         };
     }
 
@@ -134,6 +138,7 @@ public class DataExportService : IDataExportService
             await UpsertArrayAsync<StatementImport>(root, "statementImports", _imports, cancellationToken);
             await UpsertArrayAsync<BillPaymentAlert>(root, "billPaymentAlerts", _bills, cancellationToken);
             await UpsertArrayAsync<TradeTransaction>(root, "tradeTransactions", _trades, cancellationToken);
+            await UpsertArrayAsync<Budget>(root, "budgets", _budgets, cancellationToken);
             await UpsertArrayAsync<BankTransaction>(root, "bankTransactions", _transactions, cancellationToken);
             await UpsertArrayAsync<BillPaymentOccurrence>(root, "billPaymentOccurrences", _billOccurrences, cancellationToken);
             await UpsertArrayAsync<PassiveIncome>(root, "passiveIncomes", _passiveIncome, cancellationToken);
