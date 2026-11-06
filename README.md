@@ -56,8 +56,9 @@ Multi-month cash flow simulations, income planning, and financial calculators.
 WealthLedger is designed to be **private by default**:
 
 - Your data lives in a local **SQLite** file on your machine — never in a hosted service.
-- **AI insights** (optional) run entirely in your browser via [WebLLM](https://webllm.mlc.ai/) + WebGPU. No Ollama, no cloud LLM, no API keys.
-- The only outbound calls are to **public** market-data endpoints (FX rates and economic indices) for read-only quotes.
+- **AI insights and the AI Advisor** run entirely in your browser by default via [WebLLM](https://webllm.mlc.ai/) + WebGPU. No Ollama, no cloud LLM, no API keys needed.
+- **Optional cloud AI** (Anthropic Claude or OpenAI) is off until you pick it in **Settings** and save your own API key. Keys are encrypted on your machine (Windows DPAPI) and never sent back to the browser. Even then, your portfolio and spending figures are attached to a question **only if you tick the opt-in box**, and only as aggregates (totals, percentages, categories): never holding or institution names, account numbers or transaction descriptions.
+- The other outbound calls are to **public** market-data endpoints (FX rates, economic indices, Tesouro Direto, benchmark indices) for read-only data, plus the optional Brapi/FRED tokens you may add in Settings.
 - This repository ships with **synthetic sample data only** — no real credentials, connection strings, or personal statements are included.
 
 ---
