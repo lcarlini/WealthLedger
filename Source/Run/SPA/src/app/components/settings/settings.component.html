@@ -80,6 +80,10 @@
         <div class="wide">
           <dt>{{ 'settings.backup.folder' | t }}</dt>
           <dd class="path">{{ s.backupDirectory }}</dd>
+          <button mat-stroked-button type="button" class="open-folder" [disabled]="busy()" (click)="openBackupFolder()">
+            <mat-icon>folder_open</mat-icon>
+            {{ 'settings.backup.openFolder' | t }}
+          </button>
         </div>
       </dl>
 
@@ -176,6 +180,131 @@
           </tbody>
         </table>
       </div>
+    }
+  </section>
+
+  <section class="settings-section" aria-labelledby="settings-ai">
+    <h2 id="settings-ai">{{ 'settings.ai.title' | t }}</h2>
+    <p class="section-lead">{{ 'settings.ai.lead' | t }}</p>
+
+    @if (appSettings(); as a) {
+      <form class="backup-form" (ngSubmit)="saveAppSettings()">
+        <div class="num-field">
+          <label for="ai-provider">{{ 'settings.ai.provider' | t }}</label>
+          <select id="ai-provider" name="aiProvider" [(ngModel)]="aiProvider">
+            @for (p of providers; track p) {
+              <option [value]="p">{{ providerKey(p) | t }}</option>
+            }
+          </select>
+        </div>
+
+        @if (aiProvider !== 'local') {
+          <div class="num-field">
+            <label for="ai-model">{{ 'settings.ai.model' | t }}</label>
+            <input id="ai-model" type="text" name="aiModel" autocomplete="off" spellcheck="false" [(ngModel)]="aiModel" />
+          </div>
+
+          <div class="num-field secret-field">
+            <label for="anthropic-key">{{ 'settings.ai.anthropicKey' | t }}</label>
+            <input
+              id="anthropic-key"
+              type="password"
+              name="anthropicKey"
+              autocomplete="off"
+              spellcheck="false"
+              [placeholder]="(a.anthropicKeyConfigured ? 'settings.keys.savedPlaceholder' : 'settings.keys.notSet') | t"
+              [(ngModel)]="anthropicKey"
+            />
+            @if (a.anthropicKeyConfigured) {
+              <button mat-button type="button" color="warn" [disabled]="busy()" (click)="clearSecret('anthropicApiKey')">
+                {{ 'settings.keys.clear' | t }}
+              </button>
+            }
+          </div>
+
+          <div class="num-field secret-field">
+            <label for="openai-key">{{ 'settings.ai.openAiKey' | t }}</label>
+            <input
+              id="openai-key"
+              type="password"
+              name="openAiKey"
+              autocomplete="off"
+              spellcheck="false"
+              [placeholder]="(a.openAiKeyConfigured ? 'settings.keys.savedPlaceholder' : 'settings.keys.notSet') | t"
+              [(ngModel)]="openAiKey"
+            />
+            @if (a.openAiKeyConfigured) {
+              <button mat-button type="button" color="warn" [disabled]="busy()" (click)="clearSecret('openAiApiKey')">
+                {{ 'settings.keys.clear' | t }}
+              </button>
+            }
+          </div>
+
+          <label class="toggle-row wide-row">
+            <input type="checkbox" name="allowCloudData" [(ngModel)]="allowCloudData" />
+            <span>{{ 'settings.ai.allowCloud' | t }}</span>
+          </label>
+          <p class="hint">{{ 'settings.ai.cloudNote' | t }}</p>
+          @if (missingCloudKey()) {
+            <p class="banner banner-warning" role="status">{{ 'settings.ai.missingKey' | t }}</p>
+          }
+        }
+
+        <div class="actions">
+          <button mat-raised-button type="submit" [disabled]="busy()">{{ 'settings.app.save' | t }}</button>
+        </div>
+      </form>
+    } @else {
+      <div class="loading"><mat-spinner diameter="32" /></div>
+    }
+  </section>
+
+  <section class="settings-section" aria-labelledby="settings-keys">
+    <h2 id="settings-keys">{{ 'settings.keys.title' | t }}</h2>
+    <p class="section-lead">{{ 'settings.keys.lead' | t }}</p>
+
+    @if (appSettings(); as a) {
+      <form class="backup-form" (ngSubmit)="saveAppSettings()">
+        <div class="num-field secret-field">
+          <label for="brapi-token">{{ 'settings.keys.brapi' | t }}</label>
+          <input
+            id="brapi-token"
+            type="password"
+            name="brapiToken"
+            autocomplete="off"
+            spellcheck="false"
+            [placeholder]="(a.brapiTokenConfigured ? 'settings.keys.savedPlaceholder' : 'settings.keys.notSet') | t"
+            [(ngModel)]="brapiToken"
+          />
+          @if (a.brapiTokenConfigured) {
+            <button mat-button type="button" color="warn" [disabled]="busy()" (click)="clearSecret('brapiToken')">
+              {{ 'settings.keys.clear' | t }}
+            </button>
+          }
+        </div>
+
+        <div class="num-field secret-field">
+          <label for="fred-key">{{ 'settings.keys.fred' | t }}</label>
+          <input
+            id="fred-key"
+            type="password"
+            name="fredKey"
+            autocomplete="off"
+            spellcheck="false"
+            [placeholder]="(a.fredKeyConfigured ? 'settings.keys.savedPlaceholder' : 'settings.keys.notSet') | t"
+            [(ngModel)]="fredKey"
+          />
+          @if (a.fredKeyConfigured) {
+            <button mat-button type="button" color="warn" [disabled]="busy()" (click)="clearSecret('fredApiKey')">
+              {{ 'settings.keys.clear' | t }}
+            </button>
+          }
+        </div>
+
+        <div class="actions">
+          <button mat-raised-button type="submit" [disabled]="busy()">{{ 'settings.app.save' | t }}</button>
+        </div>
+      </form>
     }
   </section>
 </div>

@@ -21,12 +21,16 @@ public class MarketDataService : IMarketDataService
     public MarketDataService(
         IHttpClientFactory httpClientFactory,
         ILogger<MarketDataService> logger,
-        IConfiguration? configuration = null)
+        IConfiguration? configuration = null,
+        IAppSettingsService? settings = null)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _configuration = configuration;
+        _settings = settings;
     }
+
+    private readonly IAppSettingsService? _settings;
 
     public async Task<MarketDataResponse> GetMarketDataAsync()
     {
@@ -292,7 +296,9 @@ public class MarketDataService : IMarketDataService
         }
 
         // FRED requires a personal API key (free); "DEMO_KEY" is not valid there. Skip the call when none is set.
-        var fredKey = _configuration?["MarketData:FredApiKey"];
+        var fredKey = _settings is null ? null : await _settings.GetSecretAsync(AppSecret.FredApiKey);
+        if (string.IsNullOrWhiteSpace(fredKey))
+            fredKey = _configuration?["MarketData:FredApiKey"];
         if (!string.IsNullOrWhiteSpace(fredKey))
         {
             try

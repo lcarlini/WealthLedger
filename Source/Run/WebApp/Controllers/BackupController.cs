@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using WealthLedger.Application.Services;
 using WealthLedger.Contracts.Api.Backups;
@@ -71,6 +72,36 @@ public class BackupController(IBackupService backups) : ControllerBase
         catch (Exception ex) when (ex is ArgumentException or FileNotFoundException)
         {
             return ToResult<BackupStatus>(ex);
+        }
+    }
+
+    /// <summary>
+    /// Opens the backup folder in the OS file manager. This only makes sense when the app runs on the
+    /// user's own machine, so requests that do not come from the loopback interface are refused.
+    /// </summary>
+    [HttpPost("open-folder")]
+    public async Task<Response<BackupStatus>> OpenFolderAsync(CancellationToken ct)
+    {
+        var remote = HttpContext.Connection.RemoteIpAddress;
+        if (remote is null || !IPAddress.IsLoopback(remote))
+            return new Response<BackupStatus>([new Error("The folder can only be opened from the machine running WealthLedger.")], HttpStatusCode.Forbidden);
+
+        try
+        {
+            var status = await backups.GetStatusAsync(ct);
+            Directory.CreateDirectory(status.BackupDirectory);
+
+            var info = OperatingSystem.IsWindows()
+                ? new ProcessStartInfo("explorer.exe")
+                : OperatingSystem.IsMacOS() ? new ProcessStartInfo("open") : new ProcessStartInfo("xdg-open");
+            info.ArgumentList.Add(status.BackupDirectory);
+            info.UseShellExecute = false;
+            Process.Start(info)?.Dispose();
+            return status;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or UnauthorizedAccessException)
+        {
+            return new Response<BackupStatus>([new Error($"Could not open the folder: {ex.Message}")], HttpStatusCode.InternalServerError);
         }
     }
 

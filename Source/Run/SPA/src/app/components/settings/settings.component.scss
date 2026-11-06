@@ -148,7 +148,8 @@
     flex: 1 1 min(100%, 11rem);
     min-width: 0;
 
-    input {
+    input,
+    select {
       min-height: 44px;
       padding: 0 0.75rem;
       border-radius: var(--wl-radius-sm, 8px);
@@ -220,5 +221,27 @@
 @media (max-width: 600px) {
   .settings-section {
     padding: var(--wl-space, 0.875rem);
+  }
+}
+
+.open-folder {
+  margin-top: 0.5rem;
+}
+
+.backup-form {
+  .secret-field {
+    align-self: stretch;
+  }
+
+  .wide-row,
+  .hint,
+  .banner {
+    flex: 1 1 100%;
+  }
+
+  .hint {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--wl-text-muted, #64748b);
   }
 }

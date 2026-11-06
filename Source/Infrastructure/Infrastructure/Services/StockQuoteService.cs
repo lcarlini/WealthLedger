@@ -59,15 +59,30 @@ public class StockQuoteService : IStockQuoteService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<StockQuoteService> _logger;
+    private readonly IAppSettingsService? _settings;
 
     public StockQuoteService(
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
-        ILogger<StockQuoteService> logger)
+        ILogger<StockQuoteService> logger,
+        IAppSettingsService? settings = null)
     {
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
         _logger = logger;
+        _settings = settings;
+    }
+
+    /// <summary>Token saved in Settings wins over appsettings.</summary>
+    private async Task<string?> GetBrapiTokenAsync(CancellationToken ct)
+    {
+        if (_settings is not null)
+        {
+            var saved = await _settings.GetSecretAsync(AppSecret.BrapiToken, ct);
+            if (!string.IsNullOrWhiteSpace(saved)) return saved;
+        }
+        var configured = _configuration["StockQuotes:BrapiToken"];
+        return string.IsNullOrWhiteSpace(configured) ? null : configured;
     }
 
     public async Task<StockQuote?> GetQuoteAsync(
@@ -122,7 +137,7 @@ public class StockQuoteService : IStockQuoteService
 
         // One brapi request per batch instead of one per holding. Needs a token: brapi refuses
         // multi-ticker requests without one, so without a token each ticker is fetched on its own.
-        if (!string.IsNullOrWhiteSpace(_configuration["StockQuotes:BrapiToken"]))
+        if (!string.IsNullOrWhiteSpace(await GetBrapiTokenAsync(cancellationToken)))
         {
             var batchable = pending.Where(p => p.Type != AccountType.Crypto && IsB3Ticker(p.Ticker)).ToList();
             foreach (var chunk in batchable.Chunk(BrapiBatchSize))
@@ -185,7 +200,7 @@ public class StockQuoteService : IStockQuoteService
         string ticker,
         CancellationToken cancellationToken)
     {
-        var url = BrapiUrl(Uri.EscapeDataString(ticker));
+        var url = await BrapiUrlAsync(Uri.EscapeDataString(ticker), cancellationToken);
 
         using var response = await client.GetAsync(url, cancellationToken);
         if (!response.IsSuccessStatusCode)
@@ -219,7 +234,7 @@ public class StockQuoteService : IStockQuoteService
             var client = CreateClient();
             var list = string.Join(",", tickers.Select(Uri.EscapeDataString));
 
-            using var response = await client.GetAsync(BrapiUrl(list), cancellationToken);
+            using var response = await client.GetAsync(await BrapiUrlAsync(list, cancellationToken), cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("brapi batch returned {Status} for {Count} tickers", (int)response.StatusCode, tickers.Count);
@@ -255,9 +270,9 @@ public class StockQuoteService : IStockQuoteService
         return quotes;
     }
 
-    private string BrapiUrl(string tickerList)
+    private async Task<string> BrapiUrlAsync(string tickerList, CancellationToken ct)
     {
-        var token = _configuration["StockQuotes:BrapiToken"];
+        var token = await GetBrapiTokenAsync(ct);
         return string.IsNullOrWhiteSpace(token)
             ? $"https://brapi.dev/api/quote/{tickerList}"
             : $"https://brapi.dev/api/quote/{tickerList}?token={Uri.EscapeDataString(token)}";

@@ -93,6 +93,9 @@ public static class ServiceRegistration
         // Singleton: owns the single-writer gate that serializes backup create/restore/prune.
         services.AddSingleton<IBackupService, BackupService>();
 
+        // Singleton: owns the gate that serializes settings read-modify-write.
+        services.AddSingleton<IAppSettingsService, WealthLedger.Infrastructure.Settings.AppSettingsService>();
+
         services.AddAutoMapper(typeof(ServiceRegistration).Assembly);
 
         return services;

@@ -20,5 +20,10 @@ public sealed class DatabaseLocation
 
     public string SettingsPath => Path.Combine(DataDirectory, "backup-settings.json");
 
+    public string AppSettingsPath => Path.Combine(DataDirectory, "app-settings.json");
+
+    /// <summary>Key file used to encrypt secrets on platforms without DPAPI.</summary>
+    public string AppSettingsKeyPath => Path.Combine(DataDirectory, "app-settings.key");
+
     public string PendingRestorePath => Path.Combine(DataDirectory, "restore.pending");
 }

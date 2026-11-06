@@ -62,6 +62,11 @@ export class BackupService {
     return this.call(this.http.delete<ApiResponse<BackupStatus>>(`${this.baseUrl}/${encodeURIComponent(fileName)}`));
   }
 
+  /** Asks the local server to open the backup folder in the OS file manager. */
+  openFolder(): Promise<BackupStatus> {
+    return this.call(this.http.post<ApiResponse<BackupStatus>>(`${this.baseUrl}/open-folder`, {}));
+  }
+
   downloadUrl(fileName: string): string {
     return `${this.baseUrl}/${encodeURIComponent(fileName)}/download`;
   }
